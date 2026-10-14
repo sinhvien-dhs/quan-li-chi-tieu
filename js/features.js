@@ -562,17 +562,34 @@ const Features = {
 
     // Receipt preview
     const receiptInput = document.getElementById('inputReceipt');
+    const showReceipt = (dataUrl) => {
+      this._pendingReceipt = dataUrl || null;
+      const preview = document.getElementById('receiptPreview');
+      if (preview) {
+        preview.src = dataUrl || '';
+        preview.style.display = dataUrl ? 'block' : 'none';
+      }
+      const btnRemove = document.getElementById('btnRemoveReceipt');
+      if (btnRemove) btnRemove.style.display = dataUrl ? '' : 'none';
+    };
+    this._showReceipt = showReceipt;
+
     if (receiptInput) {
       receiptInput.addEventListener('change', e => {
         const file = e.target.files[0];
         if (file) {
-          this.handleReceiptFile(file, dataUrl => {
-            this._pendingReceipt = dataUrl;
-            const preview = document.getElementById('receiptPreview');
-            preview.src = dataUrl;
-            preview.style.display = 'block';
-          });
+          this.handleReceiptFile(file, dataUrl => showReceipt(dataUrl));
         }
+      });
+    }
+
+    // Bỏ ảnh hóa đơn đang gắn vào giao dịch
+    const btnRemoveReceipt = document.getElementById('btnRemoveReceipt');
+    if (btnRemoveReceipt) {
+      btnRemoveReceipt.addEventListener('click', () => {
+        showReceipt(null);
+        if (receiptInput) receiptInput.value = '';
+        Toast.show('Đã bỏ ảnh hóa đơn khỏi giao dịch này.', 'info');
       });
     }
 

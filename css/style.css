@@ -787,6 +787,25 @@ body {
   transform: translateY(0);
 }
 
+/* Nút phụ dạng liên kết trong form (VD: bỏ ảnh hóa đơn) */
+.form__link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--danger-text);
+  cursor: pointer;
+}
+
+.form__link-btn:hover {
+  text-decoration: underline;
+}
+
 /* ===== Bottom Navigation ===== */
 .bottom-nav {
   position: fixed;

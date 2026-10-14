@@ -280,7 +280,17 @@ const FormManager = {
     if (receiptInput) receiptInput.value = '';
     const preview = document.getElementById('receiptPreview');
     if (preview) { preview.style.display = 'none'; preview.src = ''; }
-    if (typeof Features !== 'undefined') Features._pendingReceipt = null;
+    if (typeof Features !== 'undefined') {
+      Features._pendingReceipt = null;
+      if (typeof Features._showReceipt === 'function') {
+        Features._showReceipt(null);
+      } else {
+        const preview = document.getElementById('receiptPreview');
+        if (preview) { preview.style.display = 'none'; preview.src = ''; }
+        const btnRemove = document.getElementById('btnRemoveReceipt');
+        if (btnRemove) btnRemove.style.display = 'none';
+      }
+    }
   },
 
   fillForm(transaction) {
@@ -310,6 +320,8 @@ const FormManager = {
       const preview = document.getElementById('receiptPreview');
       preview.src = transaction.receipt;
       preview.style.display = 'block';
+      const btnRemove = document.getElementById('btnRemoveReceipt');
+      if (btnRemove) btnRemove.style.display = '';
     }
   },
 

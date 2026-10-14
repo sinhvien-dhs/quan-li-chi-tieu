@@ -213,7 +213,7 @@ const Features = {
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:var(--font-size-sm)">${Utils.formatCurrency(g.saved)} / ${Utils.formatCurrency(g.target)}
-            ${progress.completed ? '<strong style="color:var(--success)"> — Đạt!</strong>' : ''}</span>
+            ${progress.completed ? '<strong style="color:var(--success-text)"> — Đạt!</strong>' : ''}</span>
           <span style="display:flex;gap:var(--space-xs)">
             <button class="settings-btn" data-goal-add="${g.id}" aria-label="Nạp tiền vào mục tiêu ${this.esc(g.name)}"><i class="fa-solid fa-plus"></i> Nạp</button>
             <button class="settings-btn settings-btn--danger" data-goal-del="${g.id}" aria-label="Xóa mục tiêu ${this.esc(g.name)}"><i class="fa-solid fa-trash"></i></button>
@@ -495,7 +495,7 @@ const Features = {
         <td>${Utils.formatDate(t.date)}</td>
         <td>${this.esc(t.name)}${t.note ? `<br><small style="color:#888">${this.esc(t.note)}</small>` : ''}</td>
         <td>${t.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</td>
-        <td style="text-align:right;color:${t.type === 'income' ? '#00C897' : '#FF6B6B'}">
+        <td style="text-align:right;color:${t.type === 'income' ? '#0B7D59' : '#C0392B'}">
           ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
         </td>
       </tr>`).join('');

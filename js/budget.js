@@ -274,7 +274,7 @@ const BudgetManager = {
     if (totalSpentEl) totalSpentEl.textContent = Utils.formatCurrency(totalSpent);
     if (remainingEl) {
       remainingEl.textContent = Utils.formatCurrency(remaining);
-      remainingEl.style.color = remaining < 0 ? 'var(--danger)' : 'var(--success)';
+      remainingEl.style.color = remaining < 0 ? 'var(--danger-text)' : 'var(--success-text)';
     }
     if (overallBar) {
       overallBar.style.width = `${pct}%`;

@@ -75,7 +75,7 @@
   border: 2px solid var(--border);
   border-radius: var(--radius-xl);
   background: var(--bg-card);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -86,12 +86,12 @@
 
 .stats-period-btn:hover {
   border-color: var(--primary-light);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .stats-period-btn.active {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: var(--primary-dark);
+  border-color: var(--primary-text);
   color: white;
 }
 
@@ -138,7 +138,7 @@
 
 .stats-summary__card--avg .stats-summary__icon {
   background: var(--primary-bg);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .stats-summary__info {
@@ -173,7 +173,7 @@
 }
 
 .stats-info-bar strong {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 /* ===== Chart Section ===== */
@@ -198,7 +198,7 @@
 }
 
 .stats-chart-section__header h3 i {
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: var(--font-size-sm);
 }
 

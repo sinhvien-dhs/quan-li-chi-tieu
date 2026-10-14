@@ -306,7 +306,7 @@ const TransactionManager = {
     // Thêm class nếu số dư âm
     const balanceEl = document.getElementById('totalBalance');
     if (balance < 0) {
-      balanceEl.style.color = '#FF6B6B';
+      balanceEl.style.color = 'var(--danger-text)';
     } else {
       balanceEl.style.color = '';
     }

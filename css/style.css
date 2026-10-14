@@ -60,7 +60,7 @@ body {
   gap: var(--space-sm);
   font-size: var(--font-size-xl);
   font-weight: 700;
-  color: var(--primary);
+  color: var(--primary-text);
   text-decoration: none;
 }
 
@@ -173,12 +173,12 @@ body {
 
 .summary__card-icon--income {
   background: var(--success-light);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .summary__card-icon--expense {
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .summary__card-label {
@@ -192,11 +192,11 @@ body {
 }
 
 .summary__card-amount--income {
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .summary__card-amount--expense {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 /* ===== Section ===== */
@@ -219,7 +219,7 @@ body {
 
 .section__link {
   font-size: var(--font-size-sm);
-  color: var(--primary);
+  color: var(--primary-text);
   text-decoration: none;
   font-weight: 500;
   cursor: pointer;
@@ -332,11 +332,11 @@ body {
 }
 
 .transaction-item__amount--income {
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .transaction-item__amount--expense {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .transaction-item__date {
@@ -371,7 +371,7 @@ body {
 
 .transaction-item__action-btn--edit {
   background: var(--primary-bg);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .transaction-item__action-btn--edit:hover {
@@ -381,7 +381,7 @@ body {
 
 .transaction-item__action-btn--delete {
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .transaction-item__action-btn--delete:hover {
@@ -442,7 +442,7 @@ body {
 }
 
 .search-bar__box:focus-within {
-  border-color: var(--primary);
+  border-color: var(--primary-text);
 }
 
 .search-bar__input {
@@ -481,7 +481,7 @@ body {
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-card);
-  color: var(--primary);
+  color: var(--primary-text);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -636,7 +636,7 @@ body {
 
 .modal__close:hover {
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 /* ===== Form ===== */
@@ -666,7 +666,7 @@ body {
 }
 
 .form__input:focus {
-  border-color: var(--primary);
+  border-color: var(--primary-text);
 }
 
 .form__input::placeholder {
@@ -707,13 +707,13 @@ body {
 .form__type-btn--expense.active {
   border-color: var(--danger);
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .form__type-btn--income.active {
   border-color: var(--success);
   background: var(--success-light);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 /* Category select */
@@ -742,7 +742,7 @@ body {
 }
 
 .form__category-btn.active {
-  border-color: var(--primary);
+  border-color: var(--primary-text);
   background: var(--primary-bg);
 }
 
@@ -758,7 +758,7 @@ body {
 }
 
 .form__category-btn.active .form__category-name {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 /* Submit button */
@@ -767,7 +767,7 @@ body {
   padding: var(--space-md) var(--space-lg);
   border: none;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary-btn-deep));
   color: white;
   font-family: var(--font-family);
   font-size: var(--font-size-base);
@@ -830,11 +830,11 @@ body {
 }
 
 .bottom-nav__item.active {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .bottom-nav__item:hover {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 /* ===== Toast Notification ===== */
@@ -881,8 +881,8 @@ body {
   font-size: var(--font-size-lg);
 }
 
-.toast--success .toast__icon { color: var(--success); }
-.toast--error .toast__icon { color: var(--danger); }
+.toast--success .toast__icon { color: var(--success-text); }
+.toast--error .toast__icon { color: var(--danger-text); }
 .toast--warning .toast__icon { color: var(--warning); }
 
 .toast__message {
@@ -956,7 +956,7 @@ body {
 
 .confirm-dialog__icon {
   font-size: 3rem;
-  color: var(--danger);
+  color: var(--danger-text);
   margin-bottom: var(--space-md);
 }
 
@@ -993,7 +993,7 @@ body {
 
 .confirm-dialog__btn--cancel {
   background: var(--bg-primary);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .confirm-dialog__btn--cancel:hover {
@@ -1001,7 +1001,7 @@ body {
 }
 
 .confirm-dialog__btn--confirm {
-  background: var(--danger);
+  background: var(--danger-text);
   color: white;
 }
 
@@ -1040,11 +1040,11 @@ body {
 
 .filter-tab:hover {
   background: var(--primary-bg);
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .filter-tab.active {
-  background: var(--primary);
+  background: var(--primary-dark);
   color: white;
 }
 

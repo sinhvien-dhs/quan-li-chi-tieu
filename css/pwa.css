@@ -231,7 +231,7 @@
 .splitter-result__amount {
   font-size: var(--font-size-2xl);
   font-weight: 700;
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .splitter-copy-btn {
@@ -244,7 +244,7 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--primary);
   background: transparent;
-  color: var(--primary);
+  color: var(--primary-text);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: 600;

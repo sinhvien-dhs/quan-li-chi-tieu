@@ -4,6 +4,10 @@
   --primary: #6C63FF;
   --primary-light: #8B85FF;
   --primary-dark: #5A52E0;
+  /* Màu tím dùng cho CHỮ trên nền sáng (đạt WCAG AA) */
+  --primary-text: #5A52E0;
+  /* Nền nút tím (chữ trắng) */
+  --primary-btn-deep: #4A43C8;
   --primary-bg: rgba(108, 99, 255, 0.08);
 
   /* Semantic Colors */
@@ -14,13 +18,18 @@
   --warning: #FFB946;
   --warning-light: #FFF4E0;
 
+  /* Màu dùng cho CHỮ (đạt chuẩn WCAG AA trên nền trắng) */
+  --success-text: #0B7D59;
+  --danger-text: #C0392B;
+  --warning-text: #8A5A00;
+
   /* Neutral Colors */
   --bg-primary: #F8F9FE;
   --bg-secondary: #FFFFFF;
   --bg-card: #FFFFFF;
   --text-primary: #2D3436;
   --text-secondary: #636E72;
-  --text-muted: #B2BEC3;
+  --text-muted: #5F6E73;
   --border: #E8ECF1;
   --border-light: #F1F3F8;
 
@@ -73,7 +82,12 @@
   --bg-card: #2A2B4A;
   --text-primary: #EAECF0;
   --text-secondary: #A0A3BD;
-  --text-muted: #6B6F8D;
+  --text-muted: #9BA0C2;
+  --primary-dark: #5A52E0;
+  --primary-text: #B5B1FF;
+  --success-text: #2BD9A8;
+  --danger-text: #FF8A8A;
+  --warning-text: #FFC46B;
   --border: #3A3B5A;
   --border-light: #2F3050;
   --primary-bg: rgba(108, 99, 255, 0.15);

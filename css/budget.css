@@ -26,7 +26,7 @@
 
 .budget-summary__btn {
   background: var(--primary-bg);
-  color: var(--primary);
+  color: var(--primary-text);
   border: none;
   border-radius: var(--radius-sm);
   padding: var(--space-xs) var(--space-md);
@@ -176,17 +176,17 @@
 
 .budget-item__badge--safe {
   background: var(--success-light);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .budget-item__badge--warning {
   background: var(--warning-light);
-  color: #D97706;
+  color: var(--warning-text);
 }
 
 .budget-item__badge--danger {
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .budget-item__edit-btn {
@@ -200,7 +200,7 @@
 }
 
 .budget-item__edit-btn:hover {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .budget-item__amounts {
@@ -220,7 +220,7 @@
 }
 
 .budget-item__limit {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .budget-item__progress-bar {
@@ -276,7 +276,7 @@
 }
 
 .settings-section__title i {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .settings-group {
@@ -335,25 +335,25 @@
 
 .settings-btn:hover {
   background: var(--primary-bg);
-  border-color: var(--primary);
-  color: var(--primary);
+  border-color: var(--primary-text);
+  color: var(--primary-text);
 }
 
 .settings-btn--primary {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: var(--primary-dark);
+  border-color: var(--primary-text);
   color: white;
 }
 
 .settings-btn--primary:hover {
-  background: var(--primary-dark);
+  background: var(--primary);
   color: white;
 }
 
 .settings-btn--danger {
   background: var(--danger-light);
   border-color: var(--danger);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .settings-btn--danger:hover {
@@ -372,17 +372,17 @@
 
 .status-tag--success {
   background: var(--success-light);
-  color: var(--success);
+  color: var(--success-text);
 }
 
 .status-tag--warning {
   background: var(--warning-light);
-  color: #D97706;
+  color: var(--warning-text);
 }
 
 .status-tag--danger {
   background: var(--danger-light);
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 /* Time input in settings */
@@ -398,5 +398,5 @@
 }
 
 .settings-time-input:focus {
-  border-color: var(--primary);
+  border-color: var(--primary-text);
 }

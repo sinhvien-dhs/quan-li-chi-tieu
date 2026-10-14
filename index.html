@@ -11,7 +11,7 @@
     script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
     font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
-    img-src 'self' data: blob:;
+    img-src 'self' data: blob: https://img.vietqr.io;
     connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://cdn.sheetjs.com;
     worker-src 'self' blob:;
     object-src 'none';
@@ -28,20 +28,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=61">
+  <link rel="manifest" href="manifest.json?v=62">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css?v=61">
-  <link rel="stylesheet" href="css/style.css?v=61">
-  <link rel="stylesheet" href="css/stats.css?v=61">
-  <link rel="stylesheet" href="css/budget.css?v=61">
-  <link rel="stylesheet" href="css/pwa.css?v=61">
-  <link rel="stylesheet" href="css/home.css?v=61">
-  <link rel="stylesheet" href="css/responsive.css?v=61">
+  <link rel="stylesheet" href="css/variables.css?v=62">
+  <link rel="stylesheet" href="css/style.css?v=62">
+  <link rel="stylesheet" href="css/stats.css?v=62">
+  <link rel="stylesheet" href="css/budget.css?v=62">
+  <link rel="stylesheet" href="css/pwa.css?v=62">
+  <link rel="stylesheet" href="css/home.css?v=62">
+  <link rel="stylesheet" href="css/debts.css?v=62">
+  <link rel="stylesheet" href="css/lock.css?v=62">
+  <link rel="stylesheet" href="css/responsive.css?v=62">
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
@@ -649,6 +651,65 @@
         </div>
       </section>
 
+      <!-- Section: AI & Bảo mật -->
+      <section class="settings-section">
+        <h3 class="settings-section__title">
+          <i class="fa-solid fa-robot"></i> Trợ lý AI
+        </h3>
+        <div class="settings-group">
+          <div class="settings-item">
+            <div class="settings-item__info">
+              <span class="settings-item__title">Kết nối Gemini API (tuỳ chọn)</span>
+              <span class="settings-item__desc">
+                Bộ đọc câu nhập nhanh đã chạy sẵn trong máy. Thêm API key để hiểu được câu phức tạp hơn.
+                Key chỉ lưu trên thiết bị này, không gửi lên máy chủ của SpendWise.
+              </span>
+            </div>
+            <input type="password" class="form__input" id="inputGeminiKey"
+                   placeholder="AIza..." aria-label="Gemini API key" style="max-width:220px">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item__info">
+              <span class="settings-item__title">Trạng thái AI</span>
+              <span class="settings-item__desc" id="aiStatusText">Đang dùng bộ phân tích trong máy</span>
+            </div>
+            <span class="status-tag status-tag--success" id="aiStatusTag">Offline</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Bảo mật -->
+      <section class="settings-section">
+        <h3 class="settings-section__title">
+          <i class="fa-solid fa-shield-halved"></i> Bảo mật
+        </h3>
+        <div class="settings-group">
+          <div class="settings-item">
+            <div class="settings-item__info">
+              <span class="settings-item__title">Khoá ứng dụng bằng mã PIN</span>
+              <span class="settings-item__desc">Mã PIN được băm PBKDF2 trước khi lưu, không lưu thẳng. Tự khoá lại sau 5 phút không thao tác.</span>
+            </div>
+            <input type="password" class="form__input" id="inputPin" inputmode="numeric" maxlength="8"
+                   placeholder="PIN 4-8 số" aria-label="Mã PIN khoá ứng dụng" style="max-width:140px">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item__info">
+              <span class="settings-item__title">Trạng thái khoá</span>
+              <span class="settings-item__desc" id="lockStatusText">Chưa bật khoá ứng dụng</span>
+            </div>
+            <button class="settings-btn" id="btnSavePin">Lưu PIN</button>
+          </div>
+          <div class="settings-item">
+            <div class="settings-item__info">
+              <span class="settings-item__title">Ẩn số dư khỏi màn hình</span>
+              <span class="settings-item__desc">Hiện dấu •••••• thay cho số tiền trên Trang chủ — hữu ích khi ở nơi công cộng</span>
+            </div>
+            <button class="settings-btn" id="btnToggleBalance">Bật/Tắt</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Vùng nguy hiểm -->
       <!-- Section: Vùng nguy hiểm -->
       <section class="settings-section">
         <h3 class="settings-section__title" style="color: var(--danger-text)">
@@ -870,6 +931,68 @@
       <button type="button" class="splitter-copy-btn" id="splitterCopyBtn">
         <i class="fa-solid fa-copy"></i> Copy tin nhắn gửi Zalo / Messenger
       </button>
+
+      <!-- ===== VietQR + Sổ nợ nhóm ===== -->
+      <div class="debt-section">
+        <div class="debt-section__title">
+          <i class="fa-solid fa-qrcode"></i> Mã QR nhận tiền (VietQR)
+        </div>
+        <p class="split-members__hint">
+          Nhập tài khoản người thu tiền (ví điện tử cũng được) — SpendWise tạo mã QR
+          chứa sẵn <strong>số tiền và nội dung</strong> để người khác chỉ cần quét.
+        </p>
+        <div class="vietqr__row">
+          <select class="form__input" id="vietqrBank" style="width:130px;min-width:130px;cursor:pointer" aria-label="Ngân hàng">
+            <option value="momo">MoMo</option>
+            <option value="zalo">ZaloPay</option>
+            <option value="vcb">Vietcombank</option>
+            <option value="techcombank">Techcombank</option>
+            <option value="vietinbank">VietinBank</option>
+            <option value="mb">MB Bank</option>
+            <option value="BIDV">BIDV</option>
+            <option value="acb">ACB</option>
+            <option value="agribank">Agribank</option>
+            <option value="vpbank">VPBank</option>
+            <option value="tpb">TPBank</option>
+          </select>
+          <input type="text" class="form__input" id="vietqrAccount" inputmode="numeric"
+                 placeholder="Số tài khoản / số ví" aria-label="Số tài khoản nhận tiền">
+        </div>
+        <div class="vietqr__row">
+          <input type="text" class="form__input" id="vietqrHolder" placeholder="Tên chủ tài khoản (VD: NGUYEN VAN A)" aria-label="Tên chủ tài khoản">
+        </div>
+        <div class="vietqr" id="vietqrBox" hidden>
+          <div class="vietqr__title">Quét mã để chuyển đúng số tiền</div>
+          <div class="vietqr__frame" id="vietqrImgWrap">
+            <img id="vietqrImg" alt="Mã QR VietQR nhận tiền" width="210" height="210">
+          </div>
+          <div class="vietqr__amount" id="vietqrAmount">75.000đ</div>
+          <div class="vietqr__content" id="vietqrContent">chiatien 75000</div>
+          <p style="font-size:0.7rem;color:var(--text-muted);margin-top:6px">
+            Mã được tạo bởi dịch vụ VietQR — số tiền &amp; nội dung đã đóng sẵn trong mã.
+          </p>
+        </div>
+
+        <div class="split-members">
+          <p class="split-members__hint">
+            Người tham gia (tên cách nhau bằng dấu phẩy) — để lập sổ nợ:
+          </p>
+          <input type="text" class="form__input" id="splitMemberNames"
+                 placeholder="VD: An, Bình, Chi, tôi" aria-label="Danh sách người cùng chia">
+          <div class="split-tags" id="splitMemberTags"></div>
+          <div class="vietqr__row">
+            <button type="button" class="splitter-copy-btn" id="btnSaveDebt" style="flex:1">
+              <i class="fa-solid fa-book"></i> Lưu sổ nợ
+            </button>
+            <button type="button" class="splitter-copy-btn" id="btnSplitToExpense" style="flex:1">
+              <i class="fa-solid fa-receipt"></i> Ghi vào chi tiêu
+            </button>
+          </div>
+        </div>
+
+        <div class="debt-summary" id="debtSummary"></div>
+        <div id="debtList"></div>
+      </div>
     </div>
   </div>
 
@@ -939,24 +1062,26 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-  <script src="js/utils.js?v=61"></script>
-  <script src="js/business.js?v=61"></script>
-  <script src="js/storage.js?v=61"></script>
-  <script src="js/category.js?v=61"></script>
-  <script src="js/transaction.js?v=61"></script>
-  <script src="js/chart.js?v=61"></script>
-  <script src="js/budget.js?v=61"></script>
-  <script src="js/export.js?v=61"></script>
-  <script src="js/notification.js?v=61"></script>
-  <script src="js/pwa.js?v=61"></script>
-  <script src="js/features.js?v=61"></script>
-  <script src="js/sync.js?v=61"></script>
-  <script src="js/config.js?v=61"></script>
-  <script src="js/auth.js?v=61"></script>
-  <script src="js/ai.js?v=61"></script>
-  <script src="js/home.js?v=61"></script>
-  <script src="js/demo.js?v=61"></script>
-  <script src="js/app.js?v=61"></script>
+  <script src="js/utils.js?v=62"></script>
+  <script src="js/business.js?v=62"></script>
+  <script src="js/storage.js?v=62"></script>
+  <script src="js/category.js?v=62"></script>
+  <script src="js/transaction.js?v=62"></script>
+  <script src="js/chart.js?v=62"></script>
+  <script src="js/budget.js?v=62"></script>
+  <script src="js/export.js?v=62"></script>
+  <script src="js/notification.js?v=62"></script>
+  <script src="js/pwa.js?v=62"></script>
+  <script src="js/features.js?v=62"></script>
+  <script src="js/sync.js?v=62"></script>
+  <script src="js/config.js?v=62"></script>
+  <script src="js/auth.js?v=62"></script>
+  <script src="js/lock.js?v=62"></script>
+  <script src="js/split.js?v=62"></script>
+  <script src="js/ai.js?v=62"></script>
+  <script src="js/home.js?v=62"></script>
+  <script src="js/demo.js?v=62"></script>
+  <script src="js/app.js?v=62"></script>
 </body>
 </html>
 

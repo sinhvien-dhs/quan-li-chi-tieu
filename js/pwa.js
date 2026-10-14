@@ -47,6 +47,9 @@ const PWAManager = {
           });
       });
     }
+
+    this.bindVietQR();
+    this.bindDebtLedger();
   },
 
   /**
@@ -239,5 +242,163 @@ const PWAManager = {
         });
       });
     }
+  },
+  /**
+   * Sinh mã VietQR theo số tiền mỗi người phải trả (chuẩn VietQR)
+   */
+  bindVietQR() {
+    const bank = document.getElementById('vietqrBank');
+    const account = document.getElementById('vietqrAccount');
+    const holder = document.getElementById('vietqrHolder');
+    const box = document.getElementById('vietqrBox');
+    const img = document.getElementById('vietqrImg');
+    const amountEl = document.getElementById('vietqrAmount');
+    const contentEl = document.getElementById('vietqrContent');
+    if (!account || !box || !img) return;
+
+    const noteInput = document.getElementById('splitterMealNote');
+    const totalInput = document.getElementById('splitterTotalAmount');
+    const peopleInput = document.getElementById('splitterPeopleCount');
+
+    const render = () => {
+      const acc = account.value.replace(/\s/g, '');
+      if (!acc) { box.hidden = true; return; }
+
+      const total = Business.parseAmount(totalInput.value) || 0;
+      const count = parseInt(peopleInput.value, 10) || 1;
+      const split = Business.splitBill(total, count);
+      const perPerson = split.base + (split.remainder > 0 ? 1 : 0);
+      const note = (noteInput && noteInput.value.trim()) || 'Bua an';
+
+      const content = SplitManager.buildTransferContent(note, perPerson);
+      const url = SplitManager.buildQrUrl({
+        bank: bank ? bank.value : 'default',
+        account: acc,
+        amount: perPerson,
+        addInfo: content,
+        accountName: holder ? holder.value.trim() : ''
+      });
+
+      img.src = url;
+      img.alt = 'Ma QR VietQR ' + Utils.formatCurrency(perPerson);
+      img.onerror = () => {
+        const holder = document.getElementById('vietqrImgWrap');
+        if (holder && !holder.querySelector('.vietqr__fallback')) {
+          const p = document.createElement('p');
+          p.className = 'vietqr__fallback';
+          p.textContent = 'Khong tai duoc anh QR (mat mang?). Van co the gui so tien & noi dung ben duoi.';
+          holder.appendChild(p);
+        }
+      };
+      if (amountEl) amountEl.textContent = Utils.formatCurrency(perPerson);
+      if (contentEl) contentEl.textContent = content;
+      box.hidden = false;
+    };
+
+    [account, bank, holder, totalInput, peopleInput, noteInput].forEach((el) => {
+      if (el) el.addEventListener('input', render);
+    });
+  },
+
+  /** Đọc danh sách người tham gia từ ô nhập tên (phân tách bằng dấu phẩy) */
+  readSplitMembers() {
+    const input = document.getElementById('splitMemberNames');
+    if (!input) return [];
+    return input.value.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 30);
+  },
+
+  /** Sổ nợ nhóm: lập phiếu nợ, đánh dấu đã trả, ghi nhanh vào chi tiêu */
+  bindDebtLedger() {
+    const tags = document.getElementById('splitMemberTags');
+    const membersInput = document.getElementById('splitMemberNames');
+    const totalInput = document.getElementById('splitterTotalAmount');
+    const peopleInput = document.getElementById('splitterPeopleCount');
+    const noteInput = document.getElementById('splitterMealNote');
+
+    const renderTags = () => {
+      if (!tags) return;
+      const members = this.readSplitMembers();
+      tags.innerHTML = members.map((m, i) =>
+        '<span class="split-tag">' + Utils.escapeHtml(m) +
+        '<button type="button" data-idx="' + i + '" aria-label="Bỏ ' + Utils.escapeAttr(m) + '">×</button></span>'
+      ).join('');
+      tags.querySelectorAll('[data-idx]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const arr = this.readSplitMembers();
+          arr.splice(Number(btn.dataset.idx), 1);
+          if (membersInput) membersInput.value = arr.join(', ');
+          renderTags();
+        });
+      });
+    };
+
+    if (membersInput) membersInput.addEventListener('input', renderTags);
+
+    const btnSave = document.getElementById('btnSaveDebt');
+    if (btnSave) {
+      btnSave.addEventListener('click', () => {
+        const members = this.readSplitMembers();
+        if (members.length < 2) {
+          Toast.error('Nhập ít nhất 2 người (VD: An, Bình, tôi) để lập sổ nợ.');
+          return;
+        }
+        const total = Business.parseAmount(totalInput ? totalInput.value : '') || 0;
+        const count = parseInt(peopleInput ? peopleInput.value : '1', 10) || 1;
+        const split = Business.splitBill(total, count);
+
+        SplitManager.upsertDebt({
+          title: (noteInput && noteInput.value.trim()) || 'Bữa ăn',
+          total: total,
+          perPerson: split.base + (split.remainder > 0 ? 1 : 0),
+          members: members,
+          myName: members[members.length - 1],
+          date: Utils.getToday()
+        });
+        PWAManager.renderDebtSummary();
+        Toast.success('Đã lập phiếu nợ — bấm vào tên để đánh dấu đã trả.');
+      });
+    }
+
+    const btnExpense = document.getElementById('btnSplitToExpense');
+    if (btnExpense) {
+      btnExpense.addEventListener('click', () => {
+        const total = Business.parseAmount(totalInput ? totalInput.value : '') || 0;
+        const count = parseInt(peopleInput ? peopleInput.value : '1', 10) || 1;
+        const split = Business.splitBill(total, count);
+        const myShare = split.base + (split.remainder > 0 ? 1 : 0);
+        if (myShare <= 0) { Toast.error('Nhập tổng số tiền hợp lệ trước nhé!'); return; }
+
+        const members = this.readSplitMembers();
+        const wallets = (typeof Features !== 'undefined') ? Features.getWallets() : [];
+        const wallet = wallets.length ? wallets[0].id : null;
+
+        Storage.addTransaction({
+          name: (noteInput && noteInput.value.trim()) || 'Bữa ăn',
+          amount: myShare,
+          type: 'expense',
+          category: 'food',
+          wallet: wallet,
+          date: Utils.getToday(),
+          note: 'Phần của tôi trong phiếu chia ' + count + ' người'
+        });
+
+        TransactionManager.renderTransactions();
+        TransactionManager.updateSummary();
+        if (typeof BudgetManager !== 'undefined') BudgetManager.updateBudgetSummary();
+        Toast.success('Đã ghi ' + Utils.formatCurrency(myShare) + ' vào chi tiêu của bạn.');
+      });
+    }
+
+    SplitManager.renderDebts();
+    PWAManager.renderDebtSummary();
+  },
+
+  renderDebtSummary() {
+    const box = document.getElementById('debtSummary');
+    if (!box) return;
+    const s = SplitManager.summary();
+    box.innerHTML =
+      '<div class="debt-summary__pending">Còn phải thu<b>' + Utils.formatCurrency(s.pending) + '</b></div>' +
+      '<div class="debt-summary__collected">Đã thu hồi<b>' + Utils.formatCurrency(s.collected) + '</b></div>';
   }
 };

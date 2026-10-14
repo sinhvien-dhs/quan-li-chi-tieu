@@ -272,7 +272,7 @@ const Features = {
   },
 
   getNextDate(date, frequency) {
-    const d = new Date(date);
+    const d = Utils.parseDateLocal(date);
     if (frequency === 'daily') {
       d.setDate(d.getDate() + 1);
     } else if (frequency === 'weekly') {
@@ -294,7 +294,7 @@ const Features = {
    * => bảo đảm không tạo trùng giao dịch khi mở app nhiều lần
    */
   occurrenceKey(ruleId, date) {
-    const d = new Date(date);
+    const d = Utils.parseDateLocal(date);
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');

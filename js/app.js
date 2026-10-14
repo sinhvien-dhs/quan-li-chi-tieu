@@ -617,6 +617,76 @@ const PageManager = {
   }
 };
 
+// ===== Cài đặt AI & Bảo mật =====
+const SecuritySettings = {
+  /** Cài đặt: Gemini key, PIN khoá app, ẩn số dư */
+  bindSecuritySettings() {
+    // Gemini API key
+    const keyInput = document.getElementById('inputGeminiKey');
+    const aiTag = document.getElementById('aiStatusTag');
+    const aiText = document.getElementById('aiStatusText');
+    const paintAi = () => {
+      const on = AIEntry.hasApiKey();
+      if (aiTag) {
+        aiTag.textContent = on ? 'Gemini' : 'Offline';
+        aiTag.className = 'status-tag ' + (on ? 'status-tag--success' : 'status-tag--warning');
+      }
+      if (aiText) {
+        aiText.textContent = on
+          ? 'Dang dung Gemini cho cau nhap phuc tap (van co bo doc trong may du phong)'
+          : 'Dang dung bo phan tich trong may';
+      }
+      if (keyInput && !keyInput.value) keyInput.value = AIEntry.getApiKey();
+    };
+    if (keyInput) {
+      keyInput.addEventListener('change', () => {
+        AIEntry.setApiKey(keyInput.value);
+        paintAi();
+        Toast.success(keyInput.value ? 'Đã lưu API key Gemini trên máy này.' : 'Đã xoá API key, dùng bộ đọc trong máy.');
+      });
+    }
+    paintAi();
+
+    // PIN khoá ứng dụng
+    const pinInput = document.getElementById('inputPin');
+    const btnSavePin = document.getElementById('btnSavePin');
+    const lockText = document.getElementById('lockStatusText');
+    const paintLock = () => {
+      if (lockText) {
+        lockText.textContent = (AppLock.isEnabled() && AppLock.hasPin())
+          ? 'Đang bật — mở app sẽ yêu cầu mã PIN'
+          : 'Chưa bật khoá ứng dụng';
+      }
+    };
+    if (btnSavePin && pinInput) {
+      btnSavePin.addEventListener('click', async () => {
+        const pin = pinInput.value.trim();
+        if (!/^\d{4,8}$/.test(pin)) { Toast.error('PIN phải có 4-8 chữ số!'); return; }
+        try {
+          await AppLock.setPin(pin);
+          pinInput.value = '';
+          Storage.set('spendwise_lock_at', Date.now());
+          paintLock();
+          Toast.success('Đã bật khoá ứng dụng bằng PIN.');
+        } catch (err) {
+          Toast.error(err.message);
+        }
+      });
+    }
+    paintLock();
+
+    // An so du
+    const btnToggle = document.getElementById('btnToggleBalance');
+    if (btnToggle) {
+      btnToggle.addEventListener('click', () => {
+        const hidden = AppLock.toggleBalanceVisibility();
+        Toast.success(hidden ? 'Đã ẩn số dư trên Trang chủ.' : 'Đã hiện số dư.');
+      });
+    }
+    AppLock.applyBalanceMask();
+  }
+};
+
 // ===== App Initialization =====
 document.addEventListener('DOMContentLoaded', () => {
   // Khởi tạo các module
@@ -639,6 +709,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (typeof HomeWidgets !== 'undefined') {
     HomeWidgets.init();
+  }
+  if (typeof SecuritySettings !== 'undefined') {
+    SecuritySettings.bindSecuritySettings();
+  }
+  if (typeof AppLock !== 'undefined') {
+    AppLock.init();
   }
   if (typeof AuthManager !== 'undefined') {
     AuthManager.init();

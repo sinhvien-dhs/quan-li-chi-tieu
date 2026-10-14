@@ -103,8 +103,24 @@ const Utils = {
    * @param {string} dateStr - ISO date string
    * @returns {string} VD: "04/10/2026"
    */
+  /**
+   * Parse chuỗi ngày YYYY-MM-DD theo GIỜ ĐỊA PHƯƠNG.
+   * `new Date('2026-10-15')` được JS hiểu là 00:00 UTC → ở Việt Nam (UTC+7)
+   * thành 07:00 sáng, khiến giao dịch "hôm nay" bị coi là tương lai và bị loại
+   * khỏi báo cáo. Hàm này trả về Date đúng theo lịch địa phương.
+   */
+  parseDateLocal(dateStr) {
+    if (dateStr instanceof Date) return dateStr;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr || '').trim());
+    if (!m) {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  },
+
   formatDate(dateStr) {
-    const date = new Date(dateStr);
+    const date = Utils.parseDateLocal(dateStr);
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();

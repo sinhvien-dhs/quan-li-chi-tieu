@@ -3,7 +3,7 @@
  * Hỗ trợ chạy offline khi không có kết nối Internet
  */
 
-const CACHE_NAME = 'spendwise-cache-v61';
+const CACHE_NAME = 'spendwise-cache-v62';
 
 // Tài nguyên CỐT LÕI: bắt buộc phải cache thành công, nếu không thì hủy cài đặt
 // (tránh trường hợp bản mới thiếu file cốt lõi nhưng cache cũ đã bị xóa)
@@ -18,7 +18,10 @@ const CORE_ASSETS = [
   './css/pwa.css',
   './css/home.css',
   './css/debts.css',
+  './css/lock.css',
   './js/ai.js',
+  './js/split.js',
+  './js/lock.js',
   './js/home.js',
   './css/responsive.css',
   './js/utils.js',

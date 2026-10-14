@@ -1,0 +1,240 @@
+/* ============================================================
+   debts.css — Sổ nợ nhóm + VietQR trong công cụ Chia tiền
+   ============================================================ */
+
+.debt-section {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--border);
+}
+
+.debt-section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.debt-summary {
+  display: flex;
+  gap: var(--space-md);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.debt-summary b {
+  display: block;
+  font-size: var(--font-size-sm);
+}
+
+.debt-summary__pending {
+  color: var(--danger-text);
+}
+
+.debt-summary__collected {
+  color: var(--success-text);
+}
+
+.debt-empty {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--space-md);
+}
+
+.debt-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  background: var(--bg-secondary);
+}
+
+.debt-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.debt-card__head small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+
+.debt-card__del {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.debt-card__del:hover {
+  color: var(--danger-text);
+}
+
+.debt-card__members {
+  margin: var(--space-sm) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.debt-member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 6px var(--space-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.debt-member:hover {
+  background: var(--primary-bg);
+}
+
+.debt-member__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.debt-member__flag {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--danger-light);
+  color: var(--danger-text);
+  font-weight: 700;
+}
+
+.debt-member.is-paid {
+  opacity: 0.75;
+}
+
+.debt-member.is-paid .debt-member__name {
+  text-decoration: line-through;
+}
+
+.debt-member.is-paid .debt-member__flag {
+  background: var(--success-light);
+  color: var(--success-text);
+}
+
+.debt-card__foot {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.debt-card__done {
+  color: var(--success-text);
+}
+
+/* ===== VietQR ===== */
+.vietqr {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border: 1px dashed var(--primary-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  text-align: center;
+}
+
+.vietqr__title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.vietqr__frame {
+  display: inline-block;
+  padding: var(--space-sm);
+  background: #fff;
+  border-radius: var(--radius-sm);
+  line-height: 0;
+}
+
+.vietqr__frame img {
+  width: 210px;
+  height: 210px;
+  object-fit: contain;
+}
+
+.vietqr__amount {
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--primary-text);
+}
+
+.vietqr__content {
+  font-family: 'SF Mono', Consolas, monospace;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  word-break: break-all;
+  margin-top: 4px;
+}
+
+.vietqr__row {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.vietqr__row .form__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.split-members {
+  margin-top: var(--space-sm);
+}
+
+.split-members__hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.split-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.split-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--primary-bg);
+  color: var(--primary-text);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.split-tag button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+}

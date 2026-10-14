@@ -78,6 +78,18 @@ const ChartManager = {
   /**
    * Lấy giao dịch theo khoảng thời gian
    */
+  /** Đổi Date thành chuỗi YYYY-MM-DD theo giờ địa phương */
+  toDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  },
+
+  /**
+   * Lấy giao dịch theo khoảng thời gian (so sánh CHUỖI ngày YYYY-MM-DD
+   * để không bị lệch múi giờ — giao dịch hôm nay phải luôn nằm trong kỳ)
+   */
   getTransactionsByPeriod() {
     const all = Storage.getTransactions();
     const now = new Date();
@@ -98,11 +110,12 @@ const ChartManager = {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
-    startDate.setHours(0, 0, 0, 0);
+    const startStr = this.toDateStr(startDate);
+    const endStr = Utils.getToday();
 
-    return all.filter(t => {
-      const tDate = new Date(t.date);
-      return tDate >= startDate && tDate <= now;
+    return all.filter((t) => {
+      const d = String(t.date || '');
+      return d >= startStr && d <= endStr;
     });
   },
 
@@ -383,12 +396,12 @@ const ChartManager = {
         incomeMap[key] = 0;
       }
       expenses.forEach(t => {
-        const d = new Date(t.date);
+        const d = Utils.parseDateLocal(t.date);
         const key = `${d.getDate()}/${d.getMonth() + 1}`;
         if (expenseMap[key] !== undefined) expenseMap[key] += t.amount;
       });
       incomes.forEach(t => {
-        const d = new Date(t.date);
+        const d = Utils.parseDateLocal(t.date);
         const key = `${d.getDate()}/${d.getMonth() + 1}`;
         if (incomeMap[key] !== undefined) incomeMap[key] += t.amount;
       });
@@ -407,12 +420,12 @@ const ChartManager = {
         incomeMap[w.label] = 0;
       });
       expenses.forEach(t => {
-        const day = new Date(t.date).getDate();
+        const day = Utils.parseDateLocal(t.date).getDate();
         const week = weeks.find(w => day >= w.start && day <= w.end);
         if (week) expenseMap[week.label] += t.amount;
       });
       incomes.forEach(t => {
-        const day = new Date(t.date).getDate();
+        const day = Utils.parseDateLocal(t.date).getDate();
         const week = weeks.find(w => day >= w.start && day <= w.end);
         if (week) incomeMap[week.label] += t.amount;
       });
@@ -425,11 +438,11 @@ const ChartManager = {
         incomeMap[m] = 0;
       });
       expenses.forEach(t => {
-        const month = new Date(t.date).getMonth();
+        const month = Utils.parseDateLocal(t.date).getMonth();
         expenseMap[monthNames[month]] += t.amount;
       });
       incomes.forEach(t => {
-        const month = new Date(t.date).getMonth();
+        const month = Utils.parseDateLocal(t.date).getMonth();
         incomeMap[monthNames[month]] += t.amount;
       });
     }
@@ -532,7 +545,7 @@ const ChartManager = {
         dateMap[key] = 0;
       }
       expenses.forEach(t => {
-        const d = new Date(t.date);
+        const d = Utils.parseDateLocal(t.date);
         const key = `${d.getDate()}/${d.getMonth() + 1}`;
         if (dateMap[key] !== undefined) dateMap[key] += t.amount;
       });
@@ -545,7 +558,7 @@ const ChartManager = {
         dateMap[key] = 0;
       }
       expenses.forEach(t => {
-        const d = new Date(t.date);
+        const d = Utils.parseDateLocal(t.date);
         const key = `${d.getDate()}`;
         if (dateMap[key] !== undefined) dateMap[key] += t.amount;
       });
@@ -557,7 +570,7 @@ const ChartManager = {
         dateMap[monthNames[i]] = 0;
       }
       expenses.forEach(t => {
-        const month = new Date(t.date).getMonth();
+        const month = Utils.parseDateLocal(t.date).getMonth();
         if (month <= currentMonth) {
           dateMap[monthNames[month]] += t.amount;
         }

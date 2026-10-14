@@ -167,11 +167,28 @@ const PWAManager = {
       });
     }
 
+    // Chia tiền chính xác: chia phần nguyên + phân bổ phần dư cho các người đầu
+// => tổng tiền luôn bằng đúng tổng hóa đơn (không dư, không thiếu)
+const splitBill = (total, count) => {
+      const people = Math.max(1, count);
+      const base = Math.floor(total / people);   // phần nguyên đều cho mọi người
+      const remainder = total - base * people;   // phần dư
+      return {
+        base: base,
+        remainder: remainder,
+        // Người 1..remainder trả thêm 1đ; người còn lại trả `base`
+        amounts: Array.from({ length: people }, (_, i) => base + (i < remainder ? 1 : 0))
+      };
+    };
+
     const calculate = () => {
       const total = parseInt(inputTotal.value) || 0;
       const count = parseInt(inputPeople.value) || 1;
-      const perPerson = Math.ceil(total / count);
-      perPersonEl.textContent = Utils.formatCurrency(perPerson);
+      const result = splitBill(total, count);
+      perPersonEl.textContent = Utils.formatCurrency(result.base);
+      if (result.remainder > 0) {
+        perPersonEl.textContent += ` (+${result.remainder}đ chia thêm cho ${result.remainder} người)`;
+      }
     };
 
     if (inputTotal && inputPeople) {
@@ -184,9 +201,12 @@ const PWAManager = {
         const total = parseInt(inputTotal.value) || 0;
         const count = parseInt(inputPeople.value) || 1;
         const note = inputNote.value.trim() || 'Bữa ăn';
-        const perPerson = Math.ceil(total / count);
+        const split = splitBill(total, count);
+        const perPersonText = split.remainder > 0
+          ? `${split.remainder} người trả ${Utils.formatCurrency(split.base + 1)}, ${count - split.remainder} người trả ${Utils.formatCurrency(split.base)}`
+          : `Mỗi người chuyển ${Utils.formatCurrency(split.base)}`;
 
-        const text = `💸 TIN NHẮN CHIA TIỀN: ${note}\n━━━━━━━━━━━━━━\n• Tổng tiền: ${Utils.formatCurrency(total)}\n• Số người: ${count} người\n👉 Mỗi người chuyển: ${Utils.formatCurrency(perPerson)}\n━━━━━━━━━━━━━━\n(Tính tự động bằng SpendWise 💰)`;
+        const text = `💸 TIN NHẮN CHIA TIỀN: ${note}\n━━━━━━━━━━━━━━\n• Tổng tiền: ${Utils.formatCurrency(total)}\n• Số người: ${count} người\n👉 ${perPersonText}\n━━━━━━━━━━━━━━\n(Tính tự động bằng SpendWise 💰)`;
 
         navigator.clipboard.writeText(text).then(() => {
           Toast.success('Đã copy tin nhắn chia tiền vào clipboard! Dán gửi Zalo/Messenger ngay nhé.');

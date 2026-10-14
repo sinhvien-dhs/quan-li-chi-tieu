@@ -198,6 +198,13 @@ const Features = {
   // ============================================================
   // RECURRING (Giao dịch định kỳ)
   // ============================================================
+  toDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  },
+
   getRecurring() {
     return Storage.get('spendwise_recurring', []);
   },
@@ -220,10 +227,32 @@ const Features = {
 
   getNextDate(date, frequency) {
     const d = new Date(date);
-    if (frequency === 'daily') d.setDate(d.getDate() + 1);
-    else if (frequency === 'weekly') d.setDate(d.getDate() + 7);
-    else if (frequency === 'monthly') d.setMonth(d.getMonth() + 1);
+    if (frequency === 'daily') {
+      d.setDate(d.getDate() + 1);
+    } else if (frequency === 'weekly') {
+      d.setDate(d.getDate() + 7);
+    } else if (frequency === 'monthly') {
+      // Giữ ngày cố định, nhưng không vượt quá số ngày của tháng đích
+      // (VD: 31/01 → 28/02 thay vì nhảy sang 03/03)
+      const day = d.getDate();
+      d.setDate(1);
+      d.setMonth(d.getMonth() + 1);
+      const daysInTarget = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      d.setDate(Math.min(day, daysInTarget));
+    }
     return d;
+  },
+
+  /**
+   * Khóa duy nhất cho một lần lặp: ruleId + ngày phát sinh
+   * => bảo đảm không tạo trùng giao dịch khi mở app nhiều lần
+   */
+  occurrenceKey(ruleId, date) {
+    const d = new Date(date);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${ruleId}__${y}-${m}-${day}`;
   },
 
   processRecurring() {
@@ -231,26 +260,42 @@ const Features = {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     let totalCreated = 0;
+
+    const existingIds = new Set(Storage.getTransactions().map(t => t.id));
+
     list.forEach(rule => {
-      let cursor = rule.lastRun ? new Date(rule.lastRun) : new Date(rule.startDate);
-      if (rule.lastRun) cursor = this.getNextDate(cursor, rule.frequency);
+      // Bắt đầu từ ngày kế tiếp lần chạy trước (nếu có), ngược lại là startDate
+      let cursor = rule.lastRun
+        ? this.getNextDate(new Date(rule.lastRun), rule.frequency)
+        : new Date(rule.startDate);
+
       let created = 0;
       while (cursor <= today && created < 365) {
-        Storage.addTransaction({
-          name: rule.name,
-          amount: rule.amount,
-          type: rule.type,
-          category: rule.category,
-          wallet: rule.wallet,
-          date: cursor.toISOString().slice(0, 10),
-          note: 'Tự động (định kỳ)'
-        });
-        rule.lastRun = cursor.toISOString().slice(0, 10);
+        const dateStr = this.toDateStr(cursor);
+        const key = this.occurrenceKey(rule.id, dateStr);
+
+        // Bỏ qua nếu lần lặp này đã tồn tại (chống tạo trùng)
+        if (!existingIds.has(key)) {
+          Storage.addTransaction({
+            id: key,                      // ID ổn định theo rule + ngày
+            name: rule.name,
+            amount: rule.amount,           // luôn là VNĐ
+            type: rule.type,
+            category: rule.category,
+            wallet: rule.wallet,
+            date: dateStr,
+            note: 'Tự động (định kỳ)'
+          });
+          existingIds.add(key);
+          created++;
+        }
+
+        rule.lastRun = dateStr;
         cursor = this.getNextDate(cursor, rule.frequency);
-        created++;
       }
       totalCreated += created;
     });
+
     this.saveRecurring(list);
 
     if (totalCreated > 0) {
@@ -305,26 +350,14 @@ const Features = {
     return Storage.get('spendwise_currency', 'VND');
   },
 
+  /**
+   * Đổi đơn vị hiển thị.
+   * QUAN TRỌNG: KHÔNG sửa số tiền gốc của giao dịch/ngân sách/mục tiêu.
+   * Mọi số tiền luôn được lưu bằng VNĐ; chỉ định dạng hiển thị thay đổi.
+   */
   setCurrency(code) {
     const oldBase = this.getCurrency();
     if (oldBase === code) return;
-
-    const oldRate = this.CURRENCIES[oldBase].rate;
-    const newRate = this.CURRENCIES[code].rate;
-    const convert = (v) => Math.round((v * oldRate) / newRate);
-
-    // Chuyển toàn bộ dữ liệu tiền sang đơn vị mới
-    const txs = Storage.get('spendwise_transactions', []);
-    txs.forEach(t => { t.amount = convert(t.amount); });
-    Storage.set('spendwise_transactions', txs);
-
-    const budgets = Storage.get('spendwise_budgets', {});
-    Object.keys(budgets).forEach(k => { budgets[k] = convert(budgets[k]); });
-    Storage.set('spendwise_budgets', budgets);
-
-    const goals = this.getGoals();
-    goals.forEach(g => { g.target = convert(g.target); g.saved = convert(g.saved); });
-    this.saveGoals(goals);
 
     Storage.set('spendwise_currency', code);
 

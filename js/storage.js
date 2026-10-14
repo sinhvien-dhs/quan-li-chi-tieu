@@ -18,6 +18,14 @@ const Storage = {
       return true;
     } catch (e) {
       console.error('Lỗi lưu dữ liệu:', e);
+      // Báo rõ cho người dùng thay vì báo "thành công" giả
+      const isQuota = e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
+      if (typeof Toast !== 'undefined') {
+        Toast.error(isQuota
+          ? 'Bộ nhớ trình duyệt đã đầy — không thể lưu thêm. Hãy xóa ảnh hóa đơn cũ hoặc sao lưu rồi dọn dữ liệu.'
+          : 'Không lưu được dữ liệu trên máy này. Hãy kiểm tra cài đặt trình duyệt.');
+      }
+      this.lastSaveFailed = true;
       return false;
     }
   },

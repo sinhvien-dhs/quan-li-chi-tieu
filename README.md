@@ -28,7 +28,7 @@
 - Toast cảnh báo tự động khi chi ≥ 85% hoặc ≥ 100% hạn mức
 
 ### 📑 Dữ liệu & Báo cáo
-- Xuất **Excel (.xlsx)** và **CSV** (UTF-8 BOM, tiếng Việt không lỗi font)
+- Xuất **Excel (.xlsx)** và **báo cáo PDF**; **Sao lưu/Phục hồi JSON** đầy đủ (giao dịch, ngân sách, ví, mục tiêu, quy tắc định kỳ, cài đặt)
 - Sao lưu / khôi phục dữ liệu bằng file **JSON**
 - Nhắc nhở ghi chép hằng ngày qua Web Notification
 
@@ -91,7 +91,17 @@ Không cần `npm install` hay build step — mở là chạy.
 
 ## 💾 Sao lưu dữ liệu
 
-Dữ liệu lưu trên trình duyệt (`localStorage`) — **xóa cache/data trình duyệt sẽ mất dữ liệu**. Hãy dùng mục **Cài đặt → Sao lưu JSON** trong app để tải file backup định kỳ.
+- **Chưa đăng nhập**: dữ liệu chỉ lưu trên trình duyệt này — xóa dữ liệu trình duyệt sẽ mất. Hãy dùng **Cài đặt → Sao lưu & Phục hồi** để tải file JSON.
+- **Đã đăng nhập**: dữ liệu được đồng bộ lên máy chủ Firestore theo tài khoản, dùng lại được trên nhiều thiết bị.
+- **Đăng xuất**: app đẩy nốt thay đổi chưa đồng bộ lên máy chủ *trước*, rồi mới xóa dữ liệu cục bộ.
+
+## 🔐 Nguyên tắc bảo mật đã triển khai
+
+- Firestore Security Rules: mỗi người dùng chỉ đọc/ghi được dữ liệu của chính mình (`firestore.rules`), mặc định chặn mọi truy cập khác.
+- Kiểm tra kiểu dữ liệu, khoảng giá trị và định dạng ngay trong Rules.
+- Kiểm tra (validate) mọi dữ liệu đọc từ cloud, từ file sao lưu và từ bộ nhớ cục bộ trước khi sử dụng.
+- Escape toàn bộ nội dung người dùng khi hiển thị + Content-Security-Policy.
+- **Tiền tệ**: số tiền luôn lưu gốc bằng VNĐ; chọn USD/EUR chỉ thay đổi cách hiển thị, không sửa dữ liệu lịch sử.
 
 ---
 

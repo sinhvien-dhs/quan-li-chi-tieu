@@ -246,11 +246,19 @@ const FormManager = {
     const name = document.getElementById('inputName').value.trim();
     const rawAmount = parseFloat(document.getElementById('inputAmount').value);
     const currency = (document.getElementById('inputCurrencyTx') || {}).value || 'VND';
-    // Quy đổi về đồng tiền hiện tại (base) theo tỉ giá đầu tháng
-    const base = (typeof Features !== 'undefined') ? Features.getCurrency() : 'VND';
-    const srcRate = (typeof Features !== 'undefined' && Features.CURRENCIES[currency]) ? Features.CURRENCIES[currency].rate : 1;
-    const baseRate = (typeof Features !== 'undefined' && Features.CURRENCIES[base]) ? Features.CURRENCIES[base].rate : 1;
-    const amount = Math.round(rawAmount * (srcRate / baseRate));
+
+    // Số tiền LUÔN được lưu bằng VNĐ.
+    // Nếu nhập bằng ngoại tệ → quy đổi sang VNĐ và lưu kèm thông tin gốc để truy vết.
+    const rate = (typeof Features !== 'undefined' && Features.CURRENCIES[currency])
+      ? Features.CURRENCIES[currency].rate : 1;
+    const amount = Math.round(rawAmount * rate);
+
+    const foreign = currency !== 'VND';
+    const originalInfo = foreign ? {
+      originalAmount: rawAmount,
+      originalCurrency: currency,
+      exchangeRate: rate
+    } : {};
     const date = document.getElementById('inputDate').value;
     const note = document.getElementById('inputNote').value.trim();
 
@@ -280,13 +288,20 @@ const FormManager = {
       type: this.currentType,
       category: this.selectedCategory,
       wallet: (document.getElementById('inputWallet') || {}).value || null,
-      receipt: (typeof Features !== 'undefined' && Features._pendingReceipt) || null
+      receipt: (typeof Features !== 'undefined' && Features._pendingReceipt) || null,
+      ...originalInfo
     };
 
     // Lặp định kỳ
     const repeat = (document.getElementById('inputRepeat') || {}).value;
     if (repeat && repeat !== 'none' && typeof Features !== 'undefined' && !TransactionManager.editingId) {
-      Features.addRecurring({ name, amount, type: this.currentType, category: this.selectedCategory, wallet: data.wallet, frequency: repeat, startDate: date });
+      Features.addRecurring({
+        name, amount, type: this.currentType, category: this.selectedCategory,
+        wallet: data.wallet, frequency: repeat,
+        startDate: date,
+        lastRun: date,      // ngày hôm nay đã tạo giao dịch thủ công → không tạo trùng
+        ...originalInfo
+      });
     }
 
     if (typeof Features !== 'undefined') {
@@ -422,9 +437,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Thêm dữ liệu mẫu nếu chưa có — chỉ ở chế độ local (chưa cấu hình Firebase);
   // tài khoản Firebase thật luôn bắt đầu trống
+  // Chỉ thêm dữ liệu mẫu ở chế độ demo (không đăng nhập và chưa từng dùng app)
+  const isDemo = Storage.get('spendwise_demo_mode', false);
+  if (isDemo && Storage.getTransactions().length === 0) {
+    addSampleData();
+  }
+
+  // Nút bật/tắt chế độ dùng thử
+  const btnDemo = document.getElementById('btnDemoMode');
+  if (btnDemo) {
+    const updateDemoBtn = () => {
+      const on = Storage.get('spendwise_demo_mode', false);
+      btnDemo.innerHTML = on
+        ? '<i class="fa-solid fa-flask-vial"></i> Tắt dữ liệu mẫu'
+        : '<i class="fa-solid fa-wand-magic-sparkles"></i> Bật dữ liệu mẫu (demo)';
+    };
+    updateDemoBtn();
+    btnDemo.addEventListener('click', () => {
+      const on = Storage.get('spendwise_demo_mode', false);
+      Storage.set('spendwise_demo_mode', !on);
+      if (!on) addSampleData();
+      Toast.success(!on ? 'Đã bật dữ liệu mẫu cho chế độ demo.' : 'Đã tắt dữ liệu mẫu.');
+      location.reload();
+    });
+  }
+
   if (Storage.getTransactions().length === 0 &&
       (typeof AuthManager === 'undefined' || !AuthManager.isConfigured())) {
-    addSampleData();
+    // Không tự thêm dữ liệu mẫu: tài khoản mới bắt đầu sạch
   }
 
   console.log('🚀 SpendWise đã khởi động thành công!');

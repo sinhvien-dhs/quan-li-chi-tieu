@@ -2,108 +2,176 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ===== Helper: kiểm tra chủ sở hữu =====
+    // ==========================================================
+    //  Helpers
+    // ==========================================================
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // ===== Helper: kiểm tra dữ liệu tài chính hợp lệ =====
-    // Bắt buộc: id (string), name (string 1..80), amount (số 0..1e12),
-    // type thuộc ['expense','income'], category (string), date hợp lệ (YYYY-MM-DD)
+    // Ngày hợp lệ: YYYY-MM-DD, tháng 01-12, ngày 01-31
     function validDate(d) {
       return d is string
         && d.size() == 10
-        && d.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+        && d.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
     }
 
-    function validTransactions(tx) {
+    function validTs(v) {
+      return v is string && v.size() <= 40;
+    }
+
+    // Ảnh hóa đơn: chỉ nhận data URL ảnh, giới hạn kích thước
+    function validReceipt(r) {
+      return r is string
+        && r.size() <= 400000
+        && r.matches('^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
+    }
+
+    function validTransaction(tx) {
       return tx is map
-        && tx.keys().hasAll(['id','name','amount','type','category','date'])
-        && t.keys().hasOnly(['id','name','amount','type','category','date','note','wallet','receipt','createdAt','updatedAt','syncState'])
+        && tx.keys().hasAll(['id', 'name', 'amount', 'type', 'category', 'date'])
+        && tx.keys().hasOnly([
+             'id','name','amount','type','category','date','note','wallet',
+             'receipt','originalAmount','originalCurrency','exchangeRate',
+             'createdAt','updatedAt','syncState'
+           ])
         && tx.id is string && tx.id.size() > 0 && tx.id.size() <= 64
         && tx.name is string && tx.name.size() > 0 && tx.name.size() <= 80
+        // amount LUÔN LUÔN là số tiền gốc bằng VNĐ
         && tx.amount is number && tx.amount >= 0 && tx.amount <= 1000000000000
-        && tx.type in ['expense','income']
+        && tx.type in ['expense', 'income']
         && tx.category is string && tx.category.size() <= 40
         && validDate(tx.date)
         && (!('note' in tx.keys()) || (tx.note is string && tx.note.size() <= 200))
         && (!('wallet' in tx.keys()) || (tx.wallet is string && tx.wallet.size() <= 64))
-        // Ảnh hóa đơn: chỉ nhận chuỗi data:image jpeg/png, base64, giới hạn kích thước
-        && (!('receipt' in tx.keys()) || (
-              tx.receipt is string
-              && tx.receipt.size() <= 700000
-              && tx.receipt.matches('^data:image/(jpeg|png|webp);base64,.*')
-           ))
-        && (!('wallet' in tx.keys()) || !('receipt' in tx.keys()) || true)
-        && (!('syncState' in tx.keys()) || t.syncState in ['pending','synced','failed']);
+        && (!('receipt' in tx.keys()) || validReceipt(tx.receipt))
+        && (!('originalAmount' in tx.keys())
+              || (tx.originalAmount is number && tx.originalAmount >= 0 && tx.originalAmount <= 1000000000000))
+        && (!('originalCurrency' in tx.keys()) || tx.originalCurrency in ['VND','USD','EUR'])
+        && (!('exchangeRate' in tx.keys())
+              || (tx.exchangeRate is number && tx.exchangeRate >= 0 && tx.exchangeRate <= 100000))
+        && (!('createdAt' in tx.keys()) || validTs(tx.createdAt))
+        && (!('updatedAt' in tx.keys()) || validTs(tx.updatedAt))
+        && (!('syncState' in tx.keys()) || tx.syncState in ['pending', 'synced', 'failed']);
     }
 
-    function validGoals(g) {
+    function validWallet(w) {
+      return w is map
+        && w.keys().hasOnly(['id','name','icon','createdAt'])
+        && w.id is string && w.id.size() <= 64
+        && w.name is string && w.name.size() > 0 && w.name.size() <= 40
+        && (!('icon' in w.keys()) || (w.icon is string && w.icon.size() <= 60))
+        && (!('createdAt' in w.keys()) || validTs(w.createdAt));
+    }
+
+    function validGoal(g) {
       return g is map
+        && g.keys().hasOnly(['id','name','target','saved','createdAt'])
         && g.id is string && g.id.size() <= 64
         && g.name is string && g.name.size() > 0 && g.name.size() <= 60
         && g.target is number && g.target > 0 && g.target <= 1000000000000
-        && g.saved is number && g.saved >= 0;
-    }
-
-    function validWallets(w) {
-      return w is map
-        && w.id is string && w.id.size() <= 64
-        && w.name is string && w.name.size() > 0 && w.name.size() <= 40;
+        && g.saved is number && g.saved >= 0 && g.saved <= 1000000000000
+        && (!('createdAt' in g.keys()) || validTs(g.createdAt));
     }
 
     function validRecurring(r) {
       return r is map
+        && r.keys().hasOnly(['id','name','amount','type','category','wallet','frequency','startDate','lastRun','createdAt'])
         && r.id is string && r.id.size() <= 64
         && r.name is string && r.name.size() > 0 && r.name.size() <= 80
         && r.amount is number && r.amount > 0 && r.amount <= 1000000000000
         && r.type in ['expense','income']
-        && r.frequency in ['daily','weekly','monthly'];
+        && r.frequency in ['daily','weekly','monthly']
+        && validDate(r.startDate)
+        && (!('category' in r.keys()) || (r.category is string && r.category.size() <= 40))
+        && (!('wallet' in r.keys()) || (r.wallet is string && r.wallet.size() <= 64))
+        && (!('lastRun' in r.keys()) || validDate(r.lastRun))
+        && (!('createdAt' in r.keys()) || validTs(r.createdAt));
     }
 
-    function validBudgets(b) {
-      return b is map && b.size() <= 50
-        && b.keys().all(k, b[k] is number && b[k] >= 0 && b[k] <= 1000000000000);
+    function validBudgetDoc(b) {
+      return b is map
+        && b.keys().hasOnly(['limits','updatedAt'])
+        && b.limits is map
+        && b.limits.size() <= 50
+        && b.limits.keys().all(k, b.limits[k] is number
+             && b.limits[k] >= 0 && b.limits[k] <= 1000000000000)
+        && (!('updatedAt' in b.keys()) || validTs(b.updatedAt));
     }
 
-    // ===== Dữ liệu cá nhân của từng tài khoản =====
-    match /users/{userId}/data/{docId} {
+    function validSettingsDoc(s) {
+      return s is map
+        && s.keys().hasOnly(['currency','theme','reminderTime','updatedAt'])
+        && (!('currency' in s.keys()) || s.currency in ['VND','USD','EUR'])
+        && (!('theme' in s.keys()) || s.theme in ['light','dark'])
+        && (!('reminderTime' in s.keys()) || (s.reminderTime is string && s.reminderTime.size() <= 10))
+        && (!('updatedAt' in s.keys()) || validTs(s.updatedAt));
+    }
+
+    // ==========================================================
+    //  users/{uid}/transactions/{txId}  — mỗi giao dịch 1 tài liệu
+    //  (Xóa = xóa tài liệu trên server → không "hồi sinh" ở máy khác)
+    // ==========================================================
+    match /users/{userId}/transactions/{txId} {
       allow read: if isOwner(userId);
 
-      // Ghi: chỉ chủ sở hữu, và payload phải hợp lệ
       allow create, update: if isOwner(userId)
-        && request.resource.data.keys().hasOnly([
-             'spendwise_transactions','spendwise_budgets','spendwise_wallets',
-             'spendwise_goals','spendwise_recurring','spendwise_currency',
-             'spendwise_theme','spendwise_settings','spendwise_reminder_time',
-             'spendwise_tombstones','updatedAt'
-           ])
-        && (!('spendwise_transactions' in request.resource.data.keys())
-              || request.resource.data.spendwise_transactions is list
-              && request.resource.data.spendwise_transactions.size() <= 20000
-              && request.resource.data.spendwise_transactions
-                   .all(t, validTransactions(t)))
-        && (!('spendwise_goals' in request.resource.data.keys())
-              || request.resource.data.spendwise_goals is list
-              && request.resource.data.spendwise_goals.size() <= 500
-              && request.resource.data.spendwise_goals.all(g, validGoals(g)))
-        && (!('spendwise_wallets' in request.resource.data.keys())
-              || request.resource.data.spendwise_wallets is list
-              && request.resource.data.spendwise_wallets.size() <= 100
-              && request.resource.data.spendwise_wallets.all(w, validWallets(w)))
-        && (!('spendwise_recurring' in request.resource.data.keys())
-              || request.resource.data.spendwise_recurring is list
-              && request.resource.data.spendwise_recurring.size() <= 200
-              && request.resource.data.spendwise_recurring.all(r, validRecurring(r)))
-        && (!('spendwise_budgets' in request.resource.data.keys())
-              || validBudgets(request.resource.data.spendwise_budgets))
-        && (!('spendwise_currency' in request.resource.data.keys())
-              || request.resource.data.spendwise_currency in ['VND','USD','EUR']);
+        && validTransaction(request.resource.data);
 
       allow delete: if isOwner(userId);
     }
 
-    // ===== Mặc định: chặn tất cả =====
+    // ==========================================================
+    //  users/{uid}/wallets/{walletId}
+    // ==========================================================
+    match /users/{userId}/wallets/{walletId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validWallet(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{uid}/goals/{goalId}
+    // ==========================================================
+    match /users/{userId}/goals/{goalId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validGoal(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{userId}/recurring/{ruleId}
+    // ==========================================================
+    match /users/{userId}/recurring/{ruleId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validRecurring(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{uid}/budgets/{docId}  &  users/{uid}/settings/{docId}
+    // ==========================================================
+    match /users/{userId}/budgets/{docId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validBudgetDoc(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/settings/{docId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validSettingsDoc(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // Dữ liệu cũ (một tài liệu chứa tất cả) — vẫn cho phép đọc để migrate
+    match /users/{userId}/data/{docId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // ==========================================================
+    //  Mặc định: chặn tất cả (kể cả truy cập không đăng nhập)
+    // ==========================================================
     match /{document=**} {
       allow read, write: if false;
     }

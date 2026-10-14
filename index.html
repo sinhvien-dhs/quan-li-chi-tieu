@@ -69,6 +69,9 @@
         <button type="button" class="form__submit" id="authRegisterBtn" style="flex:1;background:var(--danger);box-shadow:0 4px 16px rgba(255,107,107,0.35)">Đăng ký</button>
       </div>
       <div style="text-align:center;margin:var(--space-md) 0;color:var(--text-muted);font-size:var(--font-size-sm)">— Hoặc —</div>
+      <button type="button" class="settings-btn" id="btnForgotPassword" style="width:100%;justify-content:center;margin-top:var(--space-sm);display:none">
+          <i class="fa-solid fa-key"></i> Quên mật khẩu? Nhận link đặt lại qua email
+        </button>
       <button type="button" id="authGoogleBtn" style="width:100%;padding:var(--space-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:9999px;font-weight:600;font-family:var(--font-family);font-size:var(--font-size-base);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--space-sm);box-shadow:var(--shadow-sm);transition:all var(--transition-fast)" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow-sm)'">
         <i class="fa-brands fa-google" style="color:#EA4335"></i> Tiếp tục với Google
       </button>
@@ -478,13 +481,28 @@
           <div class="settings-item">
             <div class="settings-item__info">
               <span class="settings-item__title" id="accountEmail">Chưa đăng nhập</span>
-              <span class="settings-item__desc">Dữ liệu được lưu lên Firestore khi đăng nhập</span>
+              <span class="settings-item__desc">Chưa đăng nhập: dữ liệu chỉ lưu trên máy này. Đăng nhập để đồng bộ lên máy chủ và dùng trên nhiều thiết bị.</span>
             </div>
             <button class="settings-btn" id="btnOpenAuth" style="display:none">
               <i class="fa-solid fa-user-lock"></i> Đăng nhập để lưu đám mây
             </button>
             <button class="settings-btn settings-btn--danger" id="btnLogout" style="display:none">
               <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </button>
+            <button type="button" class="settings-btn settings-btn--danger" id="btnDeleteAccount" style="display:none">
+              <i class="fa-solid fa-user-slash"></i> Xóa tài khoản
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="settings-item">
+            <div class="settings-item__info">
+              <span class="settings-item__title">Chế độ dùng thử</span>
+              <span class="settings-item__desc">Bật dữ liệu mẫu để xem biểu đồ, ngân sách, mục tiêu khi trình diễn</span>
+            </div>
+            <button class="settings-btn" id="btnDemoMode">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Bật dữ liệu mẫu (demo)
             </button>
           </div>
         </div>
@@ -733,7 +751,7 @@
           <i class="fa-solid fa-wallet"></i>
         </div>
         <h3 class="onboarding-title">Chào mừng bạn!</h3>
-        <p class="onboarding-text">SpendWise giúp bạn quản lý thu chi cá nhân cực kỳ thông minh, rõ ràng và bảo mật 100%.</p>
+        <p class="onboarding-text">SpendWise giúp bạn quản lý thu chi cá nhân rõ ràng hơn: ghi chép nhanh, theo dõi ngân sách theo danh mục và phân tích xu hướng chi tiêu.</p>
       </div>
       <div class="onboarding-step">
         <div class="onboarding-icon-circle" style="background: var(--success-light); color: var(--success)">

@@ -89,11 +89,17 @@ const ExportManager = {
    */
   backupJSON(silent = false) {
     const data = {
-      version: '1.0',
+      app: 'SpendWise',
+      version: 2,
       exportedAt: new Date().toISOString(),
       transactions: Storage.getTransactions(),
       budgets: BudgetManager.getBudgets(),
-      theme: Storage.getTheme()
+      wallets: Storage.get('spendwise_wallets', []),
+      goals: Storage.get('spendwise_goals', []),
+      recurring: Storage.get('spendwise_recurring', []),
+      currency: Storage.get('spendwise_currency', 'VND'),
+      theme: Storage.getTheme(),
+      reminderTime: localStorage.getItem('spendwise_reminder_time') || null
     };
 
     const jsonStr = JSON.stringify(data, null, 2);
@@ -147,8 +153,15 @@ const ExportManager = {
         // 4) Kiểm tra & LÀM SẠCH từng giao dịch (loại bỏ field không hợp lệ, ép kiểu dữ liệu)
         const clean = ExportManager.sanitizeTransactions(data.transactions);
         const invalid = data.transactions.length - clean.length;
-        if (clean.length === 0) {
-          throw new Error('Không có giao dịch hợp lệ nào trong file!');
+
+        // 4b) Làm sạch ví / mục tiêu / giao dịch định kỳ (nếu có trong file)
+        const cleanWallets = this.sanitizeSimpleList(data.wallets, ['name'], 100, 40);
+        const cleanGoals = this.sanitizeGoals(data.goals);
+        const cleanRecurring = this.sanitizeRecurring(data.recurring);
+
+        if (clean.length === 0 && cleanGoals.length === 0 &&
+            Object.keys(data.budgets || {}).length === 0) {
+          throw new Error('File không có dữ liệu hợp lệ nào để khôi phục!');
         }
 
         // 5) Kiểm tra budgets nếu có
@@ -164,23 +177,32 @@ const ExportManager = {
         }
 
         const theme = (data.theme === 'dark' || data.theme === 'light') ? data.theme : null;
+        const currency = (['VND', 'USD', 'EUR'].indexOf(data.currency) > -1) ? data.currency : null;
+        const reminderTime = (typeof data.reminderTime === 'string' && /^\d{2}:\d{2}$/.test(data.reminderTime))
+          ? data.reminderTime : null;
 
         // 6) Tự động sao lưu dữ liệu hiện tại trước khi ghi đè (phương án khôi phục)
-        if (Storage.getTransactions().length > 0) {
+        if (Storage.getTransactions().length > 0 || Storage.get('spendwise_goals', []).length > 0) {
           this.backupJSON(true);
         }
 
         ConfirmDialog.show({
           title: 'Khôi phục dữ liệu?',
-          message: `File có ${clean.length} giao dịch hợp lệ` +
-                   (invalid > 0 ? ` (đã loại ${invalid} bản ghi lỗi)` : '') +
-                   `. Dữ liệu hiện tại sẽ bị thay thế. Bản sao lưu tự động đã được tải về.`,
+          message: `Trong file có: ${clean.length} giao dịch` +
+                   (invalid > 0 ? ` (loại ${invalid} bản ghi lỗi)` : '') +
+                   `, ${cleanWallets.length} ví, ${cleanGoals.length} mục tiêu, ${cleanRecurring.length} quy tắc định kỳ.` +
+                   `\nDữ liệu hiện tại của các mục này sẽ bị thay thế. Bản sao lưu tự động đã tải về máy.`,
           confirmText: 'Khôi phục ngay',
           onConfirm: () => {
             Storage.saveTransactions(clean);
             if (budgets) {
               Storage.set(BudgetManager.STORAGE_KEY, budgets);
             }
+            if (cleanWallets.length) Storage.set('spendwise_wallets', cleanWallets);
+            if (cleanGoals.length) Storage.set('spendwise_goals', cleanGoals);
+            if (cleanRecurring.length) Storage.set('spendwise_recurring', cleanRecurring);
+            if (currency) Storage.set('spendwise_currency', currency);
+            if (reminderTime) localStorage.setItem('spendwise_reminder_time', reminderTime);
             if (theme) {
               Storage.setTheme(theme);
               ThemeManager.applyTheme(theme);
@@ -190,6 +212,12 @@ const ExportManager = {
             TransactionManager.updateSummary();
             BudgetManager.renderBudgetList();
             BudgetManager.updateBudgetSummary();
+            if (typeof Features !== 'undefined') {
+              Features.renderWalletList();
+              Features.renderWalletOptions();
+              Features.renderGoals();
+              Features.renderRecurringList();
+            }
 
             Toast.success('Khôi phục dữ liệu thành công!');
           }
@@ -201,6 +229,80 @@ const ExportManager = {
       }
     };
     reader.readAsText(file);
+  },
+
+  /**
+   * Làm sạch danh sách đơn giản (ví...): chỉ giữ id + các trường hợp lệ
+   */
+  sanitizeSimpleList(list, textFields, maxItems, maxLen) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const item of list.slice(0, maxItems || 100)) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+      const clean = {};
+      let id = typeof item.id === 'string' ? item.id.replace(/[<>]/g, '').slice(0, 64) : '';
+      if (!id) id = 'w_' + Utils.generateId();
+      if (seen.has(id)) continue;
+      seen.add(id);
+      clean.id = id;
+      textFields.forEach(f => {
+        if (typeof item[f] === 'string') {
+          clean[f] = item[f].replace(/[<>]/g, '').slice(0, maxLen || 40);
+        }
+      });
+      if (typeof item.icon === 'string') clean.icon = item.icon.replace(/[^a-z0-9-]/gi, '').slice(0, 60);
+      out.push(clean);
+    }
+    return out;
+  },
+
+  sanitizeGoals(list) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const g of list.slice(0, 500)) {
+      if (!g || typeof g !== 'object') continue;
+      const name = typeof g.name === 'string' ? g.name.replace(/[<>]/g, '').slice(0, 60) : '';
+      const target = Number(g.target);
+      const saved = Number(g.saved);
+      if (!name || !isFinite(target) || target <= 0 || !isFinite(saved) || saved < 0) continue;
+      let id = typeof g.id === 'string' ? g.id.replace(/[<>]/g, '').slice(0, 64) : '';
+      if (!id) id = 'g_' + Utils.generateId();
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push({ id: id, name: name, target: Math.round(target), saved: Math.round(saved) });
+    }
+    return out;
+  },
+
+  sanitizeRecurring(list) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const r of list.slice(0, 200)) {
+      if (!r || typeof r !== 'object') continue;
+      const name = typeof r.name === 'string' ? r.name.replace(/[<>]/g, '').slice(0, 80) : '';
+      const amount = Number(r.amount);
+      const freq = ['daily', 'weekly', 'monthly'].indexOf(r.frequency) > -1 ? r.frequency : null;
+      const type = (r.type === 'income' || r.type === 'expense') ? r.type : null;
+      const startDate = typeof r.startDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.startDate)
+        ? r.startDate : null;
+      if (!name || !isFinite(amount) || amount <= 0 || !freq || !type || !startDate) continue;
+      let id = typeof r.id === 'string' ? r.id.replace(/[<>]/g, '').slice(0, 64) : '';
+      if (!id) id = 'r_' + Utils.generateId();
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const item = {
+        id: id, name: name, amount: Math.round(amount), type: type,
+        frequency: freq, startDate: startDate,
+        lastRun: (typeof r.lastRun === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.lastRun)) ? r.lastRun : null
+      };
+      if (typeof r.category === 'string') item.category = r.category.replace(/[<>]/g, '').slice(0, 40);
+      if (typeof r.wallet === 'string') item.wallet = r.wallet.replace(/[<>]/g, '').slice(0, 64);
+      out.push(item);
+    }
+    return out;
   },
 
   /**

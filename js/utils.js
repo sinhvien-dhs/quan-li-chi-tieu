@@ -38,15 +38,21 @@ const Utils = {
    * @param {number} amount
    * @returns {string} VD: "1.500.000đ"
    */
+  /**
+   * Định dạng số tiền.
+   * amount luôn là số tiền gốc bằng VNĐ; hàm này chỉ quy đổi để HIỂN THỊ
+   * theo đơn vị tiền tệ người dùng chọn (không sửa dữ liệu gốc).
+   */
   formatCurrency(amount) {
-    const absAmount = Math.abs(amount);
+    const absVnd = Math.abs(amount);
     const code = (typeof Storage !== 'undefined' && Storage.get) ? Storage.get('spendwise_currency', 'VND') : 'VND';
     const curr = (typeof Features !== 'undefined' && Features.CURRENCIES[code]) || { symbol: 'đ', rate: 1, locale: 'vi-VN' };
-    // Dữ liệu đã lưu ở đơn vị này → không quy đổi thêm
+
     if (code === 'VND') {
-      return `${absAmount.toLocaleString('vi-VN')}đ`;
+      return `${absVnd.toLocaleString('vi-VN')}đ`;
     }
-    return `${absAmount.toLocaleString(curr.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${curr.symbol}`;
+    const converted = absVnd / curr.rate;
+    return `${converted.toLocaleString(curr.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${curr.symbol}`;
   },
 
   /**

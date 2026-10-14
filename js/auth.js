@@ -1,6 +1,15 @@
 /**
- * auth.js — Đăng ký / Đăng nhập / Đăng xuất tài khoản (Firebase Auth)
- *           và đồng bộ dữ liệu lên Firestore
+ * auth.js — Tài khoản (Firebase Auth) + tầng đồng bộ dữ liệu Firestore
+ *
+ * Kiến trúc dữ liệu trên cloud (mỗi bản ghi = 1 tài liệu riêng,
+ * tránh vượt giới hạn 1 MiB/tài liệu của Firestore):
+ *
+ *   users/{uid}/transactions/{txId}
+ *   users/{uid}/wallets/{walletId}
+ *   users/{uid}/goals/{goalId}
+ *   users/{uid}/recurring/{ruleId}
+ *   users/{uid}/budgets/main
+ *   users/{uid}/settings/main
  */
 
 const AuthManager = {
@@ -8,6 +17,7 @@ const AuthManager = {
   auth: null,
   db: null,
   _pushTimer: null,
+  _pushing: false,
 
   DATA_KEYS: [
     'spendwise_transactions',
@@ -20,6 +30,13 @@ const AuthManager = {
     'spendwise_reminder_time'
   ],
 
+  COLLECTIONS: {
+    spendwise_transactions: 'transactions',
+    spendwise_wallets: 'wallets',
+    spendwise_goals: 'goals',
+    spendwise_recurring: 'recurring'
+  },
+
   isConfigured() {
     return typeof FIREBASE_CONFIG !== 'undefined' && !!FIREBASE_CONFIG.apiKey;
   },
@@ -28,7 +45,6 @@ const AuthManager = {
     const overlay = document.getElementById('authOverlay');
 
     if (!this.isConfigured() || typeof firebase === 'undefined') {
-      // Chưa cấu hình Firebase → chạy ở chế độ local như cũ
       if (overlay) overlay.classList.remove('active');
       return;
     }
@@ -37,11 +53,9 @@ const AuthManager = {
     this.auth = firebase.auth();
     this.db = firebase.firestore();
 
-    // Cho phép Firestore chạy offline & tự đồng bộ khi online
     try {
       this.db.enablePersistence({ synchronizeTabs: true });
     } catch (e) {
-      // Tab này có thể đang ở nhiều tab cùng lúc — bỏ qua
       console.warn('Firestore persistence:', e.code);
     }
 
@@ -51,7 +65,7 @@ const AuthManager = {
         if (overlay) overlay.classList.remove('active');
         this.updateAccountUI(user);
 
-        // Đổi tài khoản → xóa dữ liệu cũ của tài khoản trước trên máy này
+        // Đổi tài khoản trên cùng thiết bị → xóa dữ liệu của tài khoản trước
         const storedUid = localStorage.getItem('spendwise_uid');
         if (storedUid && storedUid !== user.uid) {
           this.DATA_KEYS.forEach(key => localStorage.removeItem(key));
@@ -59,60 +73,62 @@ const AuthManager = {
         localStorage.setItem('spendwise_uid', user.uid);
 
         await this.pullFromCloud();
-        Toast.success(`Chào mừng ${user.email}!`);
       } else {
         this.updateAccountUI(null);
       }
     });
 
-    const loginBtn = document.getElementById('authLoginBtn');
-    const registerBtn = document.getElementById('authRegisterBtn');
-    const logoutBtn = document.getElementById('btnLogout');
+    this.bindUI();
+  },
 
-    if (loginBtn) {
-      loginBtn.addEventListener('click', () => this.signIn());
-    }
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => this.signOut());
+  bindUI() {
+    const on = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', fn);
+      return el;
+    };
+
+    on('authLoginBtn', () => this.signIn());
+    on('authRegisterBtn', () => {
+      document.getElementById('authRegisterOverlay').classList.add('active');
+    });
+    on('registerSubmitBtn', () => this.signUp());
+    on('registerBackBtn', () => {
+      document.getElementById('authRegisterOverlay').classList.remove('active');
+    });
+    on('registerCloseBtn', () => {
+      document.getElementById('authRegisterOverlay').classList.remove('active');
+    });
+    on('authGoogleBtn', () => this.signInWithGoogle());
+    on('btnLogout', () => this.signOut());
+    on('btnOpenAuth', () => this.openAuthOverlay());
+    on('btnForgotPassword', () => this.sendPasswordReset());
+
+    // Hiện nút "quên mật khẩu" chỉ khi nhập email
+    const emailEl = document.getElementById('authEmail');
+    const forgotBtn = document.getElementById('btnForgotPassword');
+    if (emailEl && forgotBtn) {
+      emailEl.addEventListener('input', () => {
+        forgotBtn.style.display = emailEl.value.includes('@') ? '' : 'none';
+      });
+      forgotBtn.style.display = 'none';
     }
 
-    const openAuthBtn = document.getElementById('btnOpenAuth');
-    if (openAuthBtn) {
-      openAuthBtn.addEventListener('click', () => this.openAuthOverlay());
-    }
-
-    const googleBtn = document.getElementById('authGoogleBtn');
-    if (googleBtn) {
-      googleBtn.addEventListener('click', () => this.signInWithGoogle());
-    }
-
-    // Nhấn Enter trong ô tài khoản/mật khẩu = đăng nhập
+    // Enter để đăng nhập / đăng ký
     ['authEmail', 'authPassword'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            this.signIn();
-          }
-        });
-      }
+      if (el) el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); this.signIn(); }
+      });
     });
-
-    // Nhấn Enter trong form đăng ký = tạo tài khoản
     ['registerName', 'registerPassword', 'registerPassword2'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            this.signUp();
-          }
-        });
-      }
+      if (el) el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); this.signUp(); }
+      });
     });
 
-    // Chuyển sang giao diện đăng ký
+    // Con mắt hiện/ẩn mật khẩu
     document.querySelectorAll('.pw-eye').forEach(btn => {
       btn.addEventListener('click', () => {
         const target = document.getElementById(btn.dataset.target);
@@ -125,39 +141,18 @@ const AuthManager = {
       });
     });
 
-    const regBtn = document.getElementById('authRegisterBtn');
-    if (regBtn) {
-      regBtn.addEventListener('click', () => {
-        document.getElementById('authRegisterOverlay').classList.add('active');
-      });
-    }
-    const backBtn = document.getElementById('registerBackBtn');
-    if (backBtn) {
-      backBtn.addEventListener('click', () => {
-        document.getElementById('authRegisterOverlay').classList.remove('active');
-      });
-    }
-
-    const closeBtn = document.getElementById('registerCloseBtn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        document.getElementById('authRegisterOverlay').classList.remove('active');
-      });
-    }
-
-    // Bấm vùng nền xám cũng tắt form đăng ký
+    // Bấm nền xám để đóng form đăng ký
     const regOverlay = document.getElementById('authRegisterOverlay');
     if (regOverlay) {
       regOverlay.addEventListener('click', (e) => {
         if (e.target === regOverlay) regOverlay.classList.remove('active');
       });
     }
-    const regSubmit = document.getElementById('registerSubmitBtn');
-    if (regSubmit) {
-      regSubmit.addEventListener('click', () => this.signUp());
-    }
   },
 
+  // ==========================================================
+  //  ĐĂNG KÝ / ĐĂNG NHẬP
+  // ==========================================================
   async signUp() {
     const username = document.getElementById('registerName').value.trim();
     const email = username.includes('@') ? username : username + '@spendwise.app';
@@ -165,7 +160,10 @@ const AuthManager = {
     const password2 = document.getElementById('registerPassword2').value;
 
     if (!username) { Toast.error('Vui lòng nhập tên đăng nhập!'); return; }
-    if (!/^[a-zA-Z0-9_.-]+$/.test(username)) { Toast.error('Tên đăng nhập không được có dấu/khoảng trắng!'); return; }
+    if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+      Toast.error('Tên đăng nhập không được có dấu hoặc khoảng trắng!');
+      return;
+    }
     if (!password || password.length < 6) { Toast.error('Mật khẩu tối thiểu 6 ký tự!'); return; }
     if (password !== password2) { Toast.error('Hai mật khẩu không khớp!'); return; }
 
@@ -176,7 +174,8 @@ const AuthManager = {
       document.getElementById('authRegisterOverlay').classList.remove('active');
     } catch (e) {
       if (e.code === 'auth/email-already-in-use') {
-        document.getElementById('registerNameError').style.display = 'block';
+        const err = document.getElementById('registerNameError');
+        if (err) err.style.display = 'block';
         Toast.error('Đăng ký thất bại: Tên đăng nhập đã được đăng ký!');
       } else {
         Toast.error('Đăng ký thất bại: ' + this.friendlyError(e));
@@ -184,32 +183,12 @@ const AuthManager = {
     }
   },
 
-  /**
-   * Đăng nhập bằng tài khoản Google
-   */
-  async signInWithGoogle() {
-    try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      await this.auth.signInWithPopup(provider);
-    } catch (e) {
-      Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(e));
-    }
-  },
-
-  getCredentials() {
-    const email = document.getElementById('authEmail').value.trim();
-    const password = document.getElementById('authPassword').value;
-    if (!email || !email.includes('@')) { Toast.error('Email không hợp lệ!'); return null; }
-    if (!password || password.length < 6) { Toast.error('Mật khẩu tối thiểu 6 ký tự!'); return null; }
-    return { email, password };
-  },
-
   async signIn() {
     const rawId = document.getElementById('authEmail').value.trim();
     const email = rawId.includes('@') ? rawId : rawId + '@spendwise.app';
     const password = document.getElementById('authPassword').value;
-    if (!rawId) { Toast.error('Vui lòng nhập tên tài khoản!'); return null; }
-    if (!password || password.length < 6) { Toast.error('Mật khẩu tối thiểu 6 ký tự!'); return null; }
+    if (!rawId) { Toast.error('Vui lòng nhập tên tài khoản!'); return; }
+    if (!password || password.length < 6) { Toast.error('Mật khẩu tối thiểu 6 ký tự!'); return; }
     try {
       await this.auth.signInWithEmailAndPassword(email, password);
     } catch (e) {
@@ -217,23 +196,113 @@ const AuthManager = {
     }
   },
 
+  async signInWithGoogle() {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await this.auth.signInWithPopup(provider);
+    } catch (e) {
+      // Người dùng đóng popup
+      if (e && e.code === 'auth/popup-closed-by-user') return;
+      Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(e));
+    }
+  },
+
+  /**
+   * Gửi email đặt lại mật khẩu (luồng quên mật khẩu)
+   */
+  async sendPasswordReset() {
+    const email = document.getElementById('authEmail').value.trim();
+    if (!email.includes('@')) {
+      Toast.error('Vui lòng nhập email đã đăng ký để đặt lại mật khẩu!');
+      return;
+    }
+    try {
+      await this.auth.sendPasswordResetEmail(email);
+      Toast.success('Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư!');
+    } catch (e) {
+      Toast.error('Không gửi được email: ' + this.friendlyError(e));
+    }
+  },
+
+  /**
+   * Đăng xuất: đẩy nốt thay đổi chưa đồng bộ TRƯỚC, rồi mới xóa dữ liệu cục bộ
+   */
   async signOut() {
-    // Xóa dữ liệu tài chính cục bộ để không ai thấy dữ liệu tài khoản cũ trên cùng máy
-    this.clearLocalUserData();
-    await this.auth.signOut();
-    Toast.success('Đã đăng xuất và xóa dữ liệu cụbộ!');
-    Toast.success('Đã đăng xuất!');
+    const doSignOut = async () => {
+      if (this.currentUser) {
+        // Chờ đẩy hết dữ liệu lên máy chủ; nếu thất bại thì KHÔNG xóa cục bộ
+        try {
+          await this.pushToCloud();
+        } catch (e) {
+          console.error(e);
+          Toast.error('Chưa đồng bộ được dữ liệu lên máy chủ. Hãy kiểm tra mạng rồi thử lại!');
+          return; // giữ nguyên dữ liệu cục bộ
+        }
+      }
+      this.clearLocalUserData();
+      await this.auth.signOut();
+      Toast.success('Đã đăng xuất và xóa dữ liệu cục bộ!');
+    };
+
+    // Cảnh báo nếu còn thay đổi chưa đồng bộ
+    if (typeof SyncManager !== 'undefined' && SyncManager.getQueue().length > 0) {
+      ConfirmDialog.show({
+        title: 'Còn thay đổi chưa đồng bộ',
+        message: 'Bạn có ' + SyncManager.getQueue().length +
+          ' thay đổi chưa được đồng bộ lên máy chủ. Tiếp tục đăng xuất?',
+        confirmText: 'Đồng bộ rồi đăng xuất',
+        onConfirm: doSignOut
+      });
+      return;
+    }
+
+    doSignOut();
+  },
+
+  /**
+   * Xóa tài khoản + toàn bộ dữ liệu trên cloud
+   */
+  async deleteAccount() {
+    if (!this.currentUser) { Toast.error('Bạn chưa đăng nhập!'); return; }
+
+    ConfirmDialog.show({
+      title: 'Xóa tài khoản?',
+      message: 'Toàn bộ dữ liệu trên máy chủ (giao dịch, ví, mục tiêu, ngân sách) sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác!',
+      confirmText: 'Xóa tài khoản',
+      onConfirm: async () => {
+        try {
+          const root = this.userRoot();
+          // Xóa từng bộ sưu tập con
+          for (const colName of Object.values(this.COLLECTIONS)) {
+            const snap = await root.collection(colName).get();
+            await Promise.all(snap.docs.map(d => d.ref.delete()));
+          }
+          await root.collection('budgets').doc('main').delete().catch(() => {});
+          await root.collection('settings').doc('main').delete().catch(() => {});
+          await root.delete().catch(() => {});
+
+          this.clearLocalUserData();
+          await this.currentUser.delete().catch(() => {});
+          await this.auth.signOut();
+          Toast.success('Đã xóa tài khoản và toàn bộ dữ liệu.');
+        } catch (e) {
+          console.error(e);
+          Toast.error('Không xóa được tài khoản: ' + this.friendlyError(e));
+        }
+      }
+    });
   },
 
   /**
    * Xóa toàn bộ dữ liệu người dùng khỏi bộ nhớ cục bộ
-   * (tránh rò rỉ dữ liệu tài chính khi dùng chung máy)
    */
   clearLocalUserData() {
     this.DATA_KEYS.forEach(key => localStorage.removeItem(key));
     localStorage.removeItem('spendwise_uid');
     localStorage.removeItem('spendwise_sync_queue');
     localStorage.removeItem('spendwise_rates');
+    localStorage.removeItem('spendwise_tombstones');
 
     ['authOverlay', 'authRegisterOverlay', 'modalOverlay', 'budgetModal', 'confirmOverlay']
       .forEach(id => {
@@ -266,9 +335,11 @@ const AuthManager = {
       'auth/invalid-email': 'Email không hợp lệ!',
       'auth/weak-password': 'Mật khẩu quá yếu (tối thiểu 6 ký tự)!',
       'auth/invalid-credential': 'Tên đăng nhập không tồn tại hoặc sai mật khẩu!',
-      'auth/too-many-requests': 'Thử quá nhiều lần, vui lòng thử lại sau!'
+      'auth/too-many-requests': 'Thử quá nhiều lần, vui lòng thử lại sau!',
+      'auth/network-request-failed': 'Không có kết nối mạng. Dữ liệu vẫn được lưu trên máy này.',
+      'auth/requires-recent-login': 'Vui lòng đăng nhập lại trước khi thực hiện thao tác này.'
     };
-    return map[e.code] || e.message;
+    return (e && map[e.code]) || (e && e.message) || 'Lỗi không xác định';
   },
 
   updateAccountUI(user) {
@@ -276,12 +347,14 @@ const AuthManager = {
     if (emailEl) {
       emailEl.textContent = user
         ? (user.displayName ? `${user.displayName} — ${user.email}` : user.email)
-        : 'Chưa đăng nhập';
+        : 'Chưa đăng nhập — dữ liệu chỉ lưu trên máy này';
     }
     const logoutBtn = document.getElementById('btnLogout');
     if (logoutBtn) logoutBtn.style.display = user ? '' : 'none';
     const openAuthBtn = document.getElementById('btnOpenAuth');
     if (openAuthBtn) openAuthBtn.style.display = user ? 'none' : '';
+    const deleteBtn = document.getElementById('btnDeleteAccount');
+    if (deleteBtn) deleteBtn.style.display = user ? '' : 'none';
   },
 
   openAuthOverlay() {
@@ -289,130 +362,207 @@ const AuthManager = {
     if (overlay) overlay.classList.add('active');
   },
 
-  userDoc() {
-    return this.db.collection('users').doc(this.currentUser.uid).collection('data').doc('main');
+  // ==========================================================
+  //  TẦNG DỮ LIỆU ĐÁM MÂY
+  // ==========================================================
+  userRoot() {
+    return this.db.collection('users').doc(this.currentUser.uid);
   },
 
   /**
-   * Tải dữ liệu từ cloud về ghi đè localStorage rồi render lại UI
+   * Tải dữ liệu từ cloud và gộp với dữ liệu cục bộ
    */
   async pullFromCloud() {
     if (!this.currentUser) return;
-    try {
-      // Giữ một bản dữ liệu local trước khi đọc từ cloud (để gộp nếu cần)
-      const local = {};
-      this.DATA_KEYS.forEach(key => {
-        const raw = localStorage.getItem(key);
-        if (raw !== null) {
-          try { local[key] = JSON.parse(raw); } catch { local[key] = raw; }
-        }
-      });
 
-      const doc = await this.userDoc().get();
-      if (doc.exists) {
-        const data = doc.data();
-
-        // === Kiểm tra & làm sạch dữ liệu từ cloud (phòng dữ liệu bị hỏng/lạm dụng) ===
-        const cloudTx = Array.isArray(data['spendwise_transactions']) ? data['spendwise_transactions'] : [];
-        const localTx = Array.isArray(local['spendwise_transactions']) ? local['spendwise_transactions'] : [];
-
-        // Gộp dữ liệu: giữ cả local (khi chưa đăng nhập) và cloud
-        const mergedTxs = this.mergeById(localTx, cloudTx, 'id');
-        // Lọc bỏ bản ghi không hợp lệ (sai kiểu/giá trị) trước khi lưu
-        const safeTxs = (typeof ExportManager !== 'undefined')
-          ? ExportManager.sanitizeTransactions(mergedTxs)
-          : mergedTxs;
-        localStorage.setItem('spendwise_transactions', JSON.stringify(safeTxs));
-
-        const mergedWallets = this.mergeById(local['spendwise_wallets'] || [], data['spendwise_wallets'] || [], 'id');
-        if (mergedWallets.length) localStorage.setItem('spendwise_wallets', JSON.stringify(mergedWallets));
-
-        const mergedGoals = this.mergeById(local['spendwise_goals'] || [], data['spendwise_goals'] || [], 'id');
-        localStorage.setItem('spendwise_goals', JSON.stringify(mergedGoals));
-
-        const mergedRec = this.mergeById(local['spendwise_recurring'] || [], data['spendwise_recurring'] || [], 'id');
-        localStorage.setItem('spendwise_recurring', JSON.stringify(mergedRec));
-
-        const lb = local['spendwise_budgets'] || {};
-        const cb = data['spendwise_budgets'] || {};
-        const mergedBudgets = { ...cb };
-        Object.keys(lb).forEach(k => {
-          mergedBudgets[k] = Math.max(cb[k] || 0, lb[k] || 0);
-        });
-        localStorage.setItem('spendwise_budgets', JSON.stringify(mergedBudgets));
-
-        // Giữ lại lựa chọn tiền tệ/theme/settings ở local; chỉ nhận các key còn thiếu từ cloud
-        ['spendwise_currency', 'spendwise_theme', 'spendwise_settings', 'spendwise_reminder_time'].forEach(key => {
-          if (local[key] === undefined && data[key] !== undefined) {
-            localStorage.setItem(key, typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]));
-          }
-        });
-
-        this.rerender();
-        Toast.success('Đã tải dữ liệu từ đám mây và gộp dữ liệu trên máy!');
-
-        // Đẩy bản gộp lên cloud để hai bên khớp nhau
-        await this.pushToCloud();
-      } else {
-        // Tài khoản mới → đẩy dữ liệu local hiện có lên cloud
-        await this.pushToCloud();
+    // Giữ bản local (dùng khi chưa đăng nhập) để gộp
+    const local = {};
+    this.DATA_KEYS.forEach(key => {
+      const raw = localStorage.getItem(key);
+      if (raw !== null) {
+        try { local[key] = JSON.parse(raw); } catch { local[key] = raw; }
       }
+    });
+
+    try {
+      const root = this.userRoot();
+      const cloud = {};
+
+      for (const key of Object.keys(this.COLLECTIONS)) {
+        const colName = this.COLLECTIONS[key];
+        const snap = await root.collection(colName).get();
+        cloud[key] = snap.docs.map(d => {
+          const data = Object.assign({}, d.data());
+          if (!data.id) data.id = d.id;
+          return data;
+        });
+      }
+
+      const budgetsSnap = await root.collection('budgets').doc('main').get();
+      cloud.spendwise_budgets = budgetsSnap.exists ? (budgetsSnap.data().limits || {}) : {};
+
+      const settingsSnap = await root.collection('settings').doc('main').get();
+      cloud.settings = settingsSnap.exists ? settingsSnap.data() : {};
+
+      const hasCloudData =
+        cloud.spendwise_transactions.length > 0 ||
+        cloud.spendwise_wallets.length > 0 ||
+        cloud.spendwise_goals.length > 0 ||
+        cloud.spendwise_recurring.length > 0 ||
+        Object.keys(cloud.spendwise_budgets).length > 0;
+
+      if (!hasCloudData) {
+        // Tài khoản mới → đẩy dữ liệu cục bộ (nếu có) lên cloud
+        await this.pushToCloud();
+        this.rerender();
+        Toast.success('Đã tạo kho dữ liệu trên máy chủ!');
+        return;
+      }
+
+      // Gộp danh sách: giữ bản local chưa kịp đồng bộ + bản cloud, ưu tiên bản mới hơn
+      const mergedTxs = this.mergeById(
+        Array.isArray(local.spendwise_transactions) ? local.spendwise_transactions : [],
+        cloud.spendwise_transactions
+      );
+      const safeTxs = (typeof ExportManager !== 'undefined')
+        ? ExportManager.sanitizeTransactions(mergedTxs)
+        : mergedTxs;
+      localStorage.setItem('spendwise_transactions', JSON.stringify(safeTxs));
+
+      localStorage.setItem('spendwise_wallets', JSON.stringify(
+        this.mergeById(local.spendwise_wallets || [], cloud.spendwise_wallets)));
+      localStorage.setItem('spendwise_goals', JSON.stringify(
+        this.mergeById(local.spendwise_goals || [], cloud.spendwise_goals)));
+      localStorage.setItem('spendwise_recurring', JSON.stringify(
+        this.mergeById(local.spendwise_recurring || [], cloud.spendwise_recurring)));
+
+      // Ngân sách: lấy hạn mức lớn hơn (không làm mất hạn mức đã đặt)
+      const mergedBudgets = Object.assign({}, cloud.spendwise_budgets);
+      Object.keys(local.spendwise_budgets || {}).forEach(k => {
+        mergedBudgets[k] = Math.max(cloud.spendwise_budgets[k] || 0, local.spendwise_budgets[k] || 0);
+      });
+      localStorage.setItem('spendwise_budgets', JSON.stringify(mergedBudgets));
+
+      // Cài đặt: ưu tiên lựa chọn trên máy
+      if (local.spendwise_currency === undefined && cloud.settings.currency) {
+        localStorage.setItem('spendwise_currency', cloud.settings.currency);
+      }
+      if (localStorage.getItem(Storage.KEYS.THEME) === null && cloud.settings.theme) {
+        localStorage.setItem(Storage.KEYS.THEME, cloud.settings.theme);
+      }
+      if (localStorage.getItem('spendwise_reminder_time') === null && cloud.settings.reminderTime) {
+        localStorage.setItem('spendwise_reminder_time', cloud.settings.reminderTime);
+      }
+
+      this.rerender();
+      Toast.success('Đã đồng bộ dữ liệu từ máy chủ!');
+      await this.pushToCloud();
     } catch (e) {
       console.error(e);
-      Toast.error('Không tải được dữ liệu đám mây (có thể đang offline).');
+      Toast.error('Không tải được dữ liệu từ máy chủ (có thể đang offline).');
     }
   },
 
   /**
-   * Gộp hai mảng theo khóa id, giữ bản ghi mới nhất (nếu có updatedAt/lastRun)
+   * Gộp hai mảng theo id, giữ bản ghi có updatedAt/lastRun mới hơn
    */
-  mergeById(localArr, cloudArr, idKey) {
+  mergeById(localArr, cloudArr) {
     const map = new Map();
-    const add = (item, source) => {
-      const k = item && item[idKey];
-      if (!k) return;
-      if (!map.has(k)) {
-        map.set(k, item);
-      } else {
-        const cur = map.get(k);
-        const a = cur.updatedAt || cur.lastRun || '';
-        const b = item.updatedAt || item.lastRun || '';
-        if (b > a) map.set(k, item);
-      }
+    const add = (item) => {
+      if (!item || !item.id) return;
+      const cur = map.get(item.id);
+      if (!cur) { map.set(item.id, item); return; }
+      const a = cur.updatedAt || cur.lastRun || '';
+      const b = item.updatedAt || item.lastRun || '';
+      if (b > a) map.set(item.id, item);
     };
-    cloudArr.forEach(item => add(item, 'cloud'));
-    localArr.forEach(item => add(item, 'local'));
+    (Array.isArray(cloudArr) ? cloudArr : []).forEach(add);
+    (Array.isArray(localArr) ? localArr : []).forEach(add);
     return Array.from(map.values());
   },
 
   /**
-   * Đẩy toàn bộ dữ liệu local lên Firestore
+   * Đẩy dữ liệu lên cloud.
+   * - Mỗi bản ghi 1 tài liệu (tránh giới hạn 1MiB)
+   * - Xóa thật trên server khi bản ghi bị xóa ở máy (không "hồi sinh")
+   * - Ghi theo lô (batch) tối đa 400 op/lần
    */
   async pushToCloud() {
-    if (!this.currentUser) return;
-    const payload = {};
-    this.DATA_KEYS.forEach(key => {
-      const raw = localStorage.getItem(key);
-      if (raw !== null) {
-        try { payload[key] = JSON.parse(raw); } catch { payload[key] = raw; }
+    if (!this.currentUser) return false;
+    if (this._pushing) { this.schedulePush(); return false; }
+    this._pushing = true;
+
+    try {
+      const root = this.userRoot();
+      const now = new Date().toISOString();
+
+      for (const key of Object.keys(this.COLLECTIONS)) {
+        const colName = this.COLLECTIONS[key];
+        const list = Storage.get(key, []) || [];
+
+        // Loại bản ghi đã bị xóa trên máy (theo tombstone) trước khi đẩy
+        const tombs = (typeof SyncManager !== 'undefined') ? SyncManager.getTombstones() : [];
+        const toPush = tombs.length ? list.filter(t => !tombs.includes(t.id)) : list;
+
+        const existingSnap = await root.collection(colName).get();
+        const existingIds = new Set(existingSnap.docs.map(d => d.id));
+
+        const ops = [];
+        toPush.forEach(item => {
+          if (!item || !item.id) return;
+          const payload = Object.assign({}, item);
+          delete payload.syncState;      // trạng thái chỉ có ý nghĩa cục bộ
+          ops.push({ path: colName + '/' + item.id, payload: payload });
+          existingIds.delete(item.id);
+        });
+
+        // Xóa trên server các bản ghi không còn ở máy này (xóa thật, không tombstone)
+        existingIds.forEach(id => {
+          ops.push({ path: colName + '/' + id, payload: null }); // null = delete
+        });
+
+        // Ghi theo lô 300 op
+        for (let i = 0; i < ops.length; i += 300) {
+          const chunk = ops.slice(i, i + 300);
+          const batch = this.db.batch();
+          chunk.forEach(op => {
+            const parts = op.path.split('/');
+            const ref = root.collection(parts[0]).doc(parts[1]);
+            if (op.payload === null) {
+              batch.delete(ref);           // xóa thật trên server
+            } else {
+              batch.set(ref, op.payload, { merge: false });
+            }
+          });
+          await batch.commit();
+        }
       }
-    });
-    payload.updatedAt = new Date().toISOString();
-    // Áp dụng tombstone: loại bỏ bản ghi đã xóa ở máy này (xóa offline không bị ghi đè)
-    const tombs = (typeof SyncManager !== 'undefined') ? SyncManager.getTombstones() : [];
-    if (tombs.length && Array.isArray(payload.spendwise_transactions)) {
-      payload.spendwise_transactions = payload.spendwise_transactions.filter(t => !tombs.includes(t.id));
-    }
 
-    // merge:true => gửi lại nhiều lần không tạo bản ghi trùng (idempotent)
-    await this.userDoc().set(payload, { merge: true });
+      // Ngân sách & cài đặt (1 tài liệu mỗi loại)
+      await root.collection('budgets').doc('main').set({
+        limits: Storage.get('spendwise_budgets', {}) || {},
+        updatedAt: now
+      }, { merge: true });
 
-    // Chỉ coi là thành công khi server đã xác nhận
-    if (typeof SyncManager !== 'undefined') {
-      SyncManager.clearTombstones();
-      SyncManager.clearQueue();
+      await root.collection('settings').doc('main').set({
+        currency: Storage.get('spendwise_currency', 'VND'),
+        theme: Storage.getTheme(),
+        reminderTime: localStorage.getItem('spendwise_reminder_time') || null,
+        updatedAt: now
+      }, { merge: true });
+
+      // Server đã xác nhận → mới coi là đồng bộ xong
+      if (typeof SyncManager !== 'undefined') {
+        SyncManager.clearTombstones();
+        SyncManager.clearQueue();
+      }
+      return true;
+    } catch (e) {
+      console.error('pushToCloud:', e);
+      throw e;
+    } finally {
+      this._pushing = false;
     }
-    return true;
   },
 
   /**
@@ -422,9 +572,12 @@ const AuthManager = {
     if (!this.currentUser) return;
     clearTimeout(this._pushTimer);
     this._pushTimer = setTimeout(() => {
-      this.pushToCloud().then(() => {
-        Toast.success('Đã lưu lên đám mây!');
-      }).catch(() => {});
+      this.pushToCloud()
+        .then(ok => { if (ok) Toast.success('Đã lưu lên máy chủ!'); })
+        .catch(() => {
+          // Giữ hàng đợi để thử lại khi có mạng
+          Toast.warning('Chưa đồng bộ được — sẽ thử lại khi có mạng.');
+        });
     }, 1500);
   },
 
@@ -443,9 +596,9 @@ const AuthManager = {
       Features.renderGoals();
       Features.renderRecurringList();
     }
-    if (typeof ChartManager !== 'undefined' && typeof PageManager !== 'undefined' && PageManager.currentPage === 'pageStats') {
+    if (typeof ChartManager !== 'undefined' && typeof PageManager !== 'undefined' &&
+        PageManager.currentPage === 'pageStats') {
       ChartManager.renderAllCharts();
     }
   }
 };
-

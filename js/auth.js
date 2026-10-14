@@ -27,7 +27,9 @@ const AuthManager = {
     'spendwise_recurring',
     'spendwise_currency',
     'spendwise_theme',
-    'spendwise_reminder_time'
+    'spendwise_reminder_time',
+    'spendwise_demo_ids',
+    'spendwise_demo_mode'
   ],
 
   COLLECTIONS: {
@@ -523,7 +525,9 @@ const AuthManager = {
 
         // Loại bản ghi đã bị xóa trên máy (theo tombstone) trước khi đẩy
         const tombs = (typeof SyncManager !== 'undefined') ? SyncManager.getTombstones() : [];
-        const toPush = tombs.length ? list.filter(t => !tombs.includes(t.id)) : list;
+        // Dữ liệu demo chỉ có ở máy này, tuyệt đối không đẩy lên tài khoản thật
+        const real = (typeof DemoData !== 'undefined') ? DemoData.filterForCloud(list) : list;
+        const toPush = tombs.length ? real.filter(t => !tombs.includes(t.id)) : real;
 
         const existingSnap = await root.collection(colName).get();
         const existingIds = new Set(existingSnap.docs.map(d => d.id));

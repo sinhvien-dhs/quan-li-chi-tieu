@@ -19,6 +19,7 @@ const CORE_ASSETS = [
   './css/responsive.css',
   './js/utils.js',
   './js/business.js',
+  './js/demo.js',
   './js/storage.js',
   './js/category.js',
   './js/transaction.js',

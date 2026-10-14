@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Chỉ thêm dữ liệu mẫu ở chế độ demo (không đăng nhập và chưa từng dùng app)
   const isDemo = Storage.get('spendwise_demo_mode', false);
   if (isDemo && Storage.getTransactions().length === 0) {
-    addSampleData();
+    DemoData.add();
   }
 
   // Nút bật/tắt chế độ dùng thử
@@ -511,10 +511,19 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDemoBtn();
     btnDemo.addEventListener('click', () => {
       const on = Storage.get('spendwise_demo_mode', false);
-      Storage.set('spendwise_demo_mode', !on);
-      if (!on) addSampleData();
-      Toast.success(!on ? 'Đã bật dữ liệu mẫu cho chế độ demo.' : 'Đã tắt dữ liệu mẫu.');
-      location.reload();
+      if (on) {
+        // Tắt demo: xoá đúng các giao dịch mẫu, giữ nguyên dữ liệu thật
+        const removed = DemoData.remove();
+        Storage.set('spendwise_demo_mode', false);
+        Toast.success(`Đã tắt dữ liệu mẫu${removed ? ` (xoá ${removed} giao dịch mẫu)` : ''}.`);
+      } else {
+        Storage.set('spendwise_demo_mode', true);
+        const added = DemoData.add();
+        Toast.success(added
+          ? `Đã thêm ${added} giao dịch mẫu. Dữ liệu mẫu không được đồng bộ lên cloud.`
+          : 'Dữ liệu mẫu đã có sẵn trên máy này.');
+      }
+      updateDemoBtn();
     });
   }
 
@@ -529,6 +538,11 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Thêm dữ liệu mẫu cho lần đầu sử dụng
  */
+function addSampleData() {
+  return DemoData.add();
+}
+
+/* ===== Code cũ: đã thay bằng module DemoData (js/demo.js) =====
 function addSampleData() {
   const today = Utils.getToday();
   const yesterday = new Date();
@@ -564,3 +578,4 @@ function addSampleData() {
   TransactionManager.renderTransactions();
   TransactionManager.updateSummary();
 }
+===== Hết code cũ ===== */

@@ -12,8 +12,15 @@ const vm = require('vm');
 const src = fs.readFileSync(path.join(__dirname, '..', 'js', 'business.js'), 'utf8');
 const sandbox = { console };
 vm.createContext(sandbox);
-vm.runInContext(src, sandbox);
+// const ở top-level tạo lexical binding, không tự gắn lên sandbox
+// → gán thủ công vào global để đọc được từ Node
+vm.runInContext(src + '\n;this.Business = Business;', sandbox);
 const Business = sandbox.Business;
+
+if (!Business) {
+  console.error('Không nạp được Business từ js/business.js');
+  process.exit(1);
+}
 
 let passed = 0, failed = 0;
 function test(name, fn) {

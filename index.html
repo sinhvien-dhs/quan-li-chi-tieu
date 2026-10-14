@@ -48,6 +48,24 @@
 <body>
   <div id="printReport"></div>
 
+  <!-- Nội dung dự phòng cho công cụ đọc trang không chạy JavaScript -->
+  <noscript>
+    <div style="max-width:640px;margin:40px auto;padding:0 20px;font-family:system-ui,sans-serif;line-height:1.7">
+      <h1>SpendWise — Quản lý chi tiêu cá nhân</h1>
+      <p><strong>Ứng dụng cần JavaScript để chạy.</strong> Nếu bạn đang đọc nội dung này, trình duyệt của bạn đang tắt JavaScript.</p>
+      <ul>
+        <li>Quản lý giao dịch thu/chi theo 14 danh mục, nhiều ví/tài khoản</li>
+        <li>Ngân sách theo danh mục, cảnh báo khi vượt hạn mức (≥85%, ≥100%)</li>
+        <li>Mục tiêu tiết kiệm, giao dịch định kỳ, ảnh hóa đơn</li>
+        <li>Biểu đồ thống kê (Chart.js), xuất Excel và báo cáo PDF</li>
+        <li>Sao lưu/phục hồi JSON, đa tiền tệ (tỉ giá cố định)</li>
+        <li>PWA chạy offline, đồng bộ đám mây Firebase theo tài khoản</li>
+      </ul>
+      <p>Mã nguồn: <a href="https://github.com/sinhvien-dhs/quan-li-chi-tieu">github.com/sinhvien-dhs/quan-li-chi-tieu</a></p>
+      <p>Hãy bật JavaScript rồi tải lại trang để sử dụng ứng dụng.</p>
+    </div>
+  </noscript>
+
   <!-- Thanh trạng thái: offline / đồng bộ -->
   <div id="connBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:1200;background:var(--warning);color:#fff;text-align:center;font-size:var(--font-size-sm);padding:6px 12px">
     <i class="fa-solid fa-wifi"></i> Đang offline — giao dịch vẫn được lưu trên máy này và sẽ đồng bộ khi có mạng
@@ -384,6 +402,7 @@
       <section class="settings-section">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-file-excel"></i> Xuất báo cáo & Dữ liệu
+          <span class="status-tag status-tag--success" id="appVersionTag" style="float:right">v1.0.0</span>
         </h3>
         <div class="settings-group">
           <div class="settings-item">

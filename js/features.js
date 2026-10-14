@@ -464,6 +464,12 @@ const Features = {
       this.renderGoals();
     });
 
+    // Phiên bản build (giúp xác nhận đang chạy bản mới nhất)
+    const verTag = document.getElementById('appVersionTag');
+    if (verTag && typeof AuthManager !== 'undefined' && AuthManager.APP_VERSION) {
+      verTag.textContent = 'v' + AuthManager.APP_VERSION;
+    }
+
     // Currency select
     const currencySelect = document.getElementById('inputCurrency');
     if (currencySelect) {

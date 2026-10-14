@@ -37,6 +37,9 @@ const AuthManager = {
     spendwise_recurring: 'recurring'
   },
 
+  // Phiên bản build — hiển thị ở Cài đặt để xác nhận đang chạy bản mới nhất
+  APP_VERSION: '1.0.0',
+
   isConfigured() {
     return typeof FIREBASE_CONFIG !== 'undefined' && !!FIREBASE_CONFIG.apiKey;
   },

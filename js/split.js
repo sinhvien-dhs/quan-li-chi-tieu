@@ -57,6 +57,8 @@ const SplitManager = {
   saveDebts(list) {
     Storage.set(this.KEY, list);
     this.renderDebts();
+    // Cap nhat luon tong "con phai thu / da thu hoi" o phia tren
+    if (typeof PWAManager !== 'undefined') PWAManager.renderDebtSummary();
   },
 
   /**

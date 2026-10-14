@@ -159,6 +159,49 @@ const AIEntry = {
     return name.charAt(0).toUpperCase() + name.slice(1);
   },
 
+  /**
+   * Kiểm tra API key Gemini có hoạt động không (gọi thử 1 lần, rất nhỏ)
+   */
+  async testConnection() {
+    const key = this.getApiKey();
+    if (!key) {
+      return { ok: false, message: 'Chưa có API key. Hãy dán key rồi bấm Lưu trước.' };
+    }
+    try {
+      const res = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key),
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Trả lời duy nhất bằng chữ OK' }] }],
+            generationConfig: { temperature: 0, maxOutputTokens: 10 }
+          })
+        }
+      );
+
+      if (!res.ok) {
+        const detail = await res.text();
+        let msg = 'Gemini trả về lỗi ' + res.status;
+        if (res.status === 400) msg = 'Key không hợp lệ — hãy kiểm tra lại chuỗi AIza...';
+        if (res.status === 403) msg = 'Key bị từ chối — có thể chưa bật Generative Language API cho project.';
+        if (res.status === 429) msg = 'Đã vượt hạn mức miễn phí, thử lại sau ít phút.';
+        console.warn('Gemini test:', detail.slice(0, 200));
+        return { ok: false, message: msg };
+      }
+
+      const data = await res.json();
+      const text = data.candidates && data.candidates[0] &&
+        data.candidates[0].content && data.candidates[0].content.parts &&
+        data.candidates[0].content.parts[0].text;
+      return {
+        ok: true,
+        message: 'Kết nối thành công! Gemini trả lời: "' + String(text || 'OK').trim().slice(0, 30) + '"'
+      };
+    } catch (err) {
+      return { ok: false, message: 'Không gọi được Gemini (kiểm tra mạng): ' + err.message };
+    }
+  },
   // ============================================================
   //  PARSER CỤC BỘ (không cần mạng)
   // ============================================================

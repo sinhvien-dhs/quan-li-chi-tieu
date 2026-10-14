@@ -649,9 +649,31 @@ const SecuritySettings = {
         Toast.success(keyInput.value ? 'Đã lưu API key Gemini trên máy này.' : 'Đã xoá API key, dùng bộ đọc trong máy.');
       });
     }
-    paintAi();
+    // Nút thử kết nối Gemini
+    const btnTestGemini = document.getElementById('btnTestGemini');
+    const geminiTestText = document.getElementById('geminiTestText');
+    if (btnTestGemini && keyInput) {
+      btnTestGemini.addEventListener('click', async () => {
+        AIEntry.setApiKey(keyInput.value);
+        btnTestGemini.disabled = true;
+        const original = btnTestGemini.innerHTML;
+        btnTestGemini.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang thử...';
+        if (geminiTestText) geminiTestText.textContent = 'Đang gửi câu thử nghiệm tới Gemini...';
 
-    // PIN khoá ứng dụng
+        const result = await AIEntry.testConnection();
+
+        btnTestGemini.disabled = false;
+        btnTestGemini.innerHTML = original;
+        if (geminiTestText) geminiTestText.textContent = result.message;
+        if (result.ok) {
+          paintAi();
+          Toast.success(result.message);
+        } else {
+          Toast.error(result.message);
+        }
+      });
+    }
+    paintAi();
     const pinInput = document.getElementById('inputPin');
     const btnSavePin = document.getElementById('btnSavePin');
     const lockText = document.getElementById('lockStatusText');

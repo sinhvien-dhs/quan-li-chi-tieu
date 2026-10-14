@@ -60,6 +60,23 @@ const HomeWidgets = {
     const btnMic = document.getElementById('btnAiMic');
     if (!input || !btnGo) return;
 
+    // Lối tắt: nhảy tới Cài đặt để dán API key Gemini
+    const configLink = document.getElementById('aiConfigLink');
+    if (configLink) {
+      configLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        PageManager.switchTo('pageSettings');
+        setTimeout(() => {
+          const key = document.getElementById('inputGeminiKey');
+          if (key) {
+            key.scrollIntoView({ block: 'center' });
+            key.focus();
+            Toast.show('Dán API key Gemini vào ô trên rồi bấm Thử kết nối.', 'info');
+          }
+        }, 350);
+      });
+    }
+
     btnGo.addEventListener('click', () => this.run());
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); this.run(); }

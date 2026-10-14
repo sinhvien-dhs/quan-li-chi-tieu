@@ -28,19 +28,19 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json?v=61">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/stats.css">
-  <link rel="stylesheet" href="css/budget.css">
-  <link rel="stylesheet" href="css/pwa.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/variables.css?v=61">
+  <link rel="stylesheet" href="css/style.css?v=61">
+  <link rel="stylesheet" href="css/stats.css?v=61">
+  <link rel="stylesheet" href="css/budget.css?v=61">
+  <link rel="stylesheet" href="css/pwa.css?v=61">
+  <link rel="stylesheet" href="css/responsive.css?v=61">
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
@@ -160,7 +160,7 @@
     </div>
   </div>
 
-  <div class="app">
+  <main class="app" id="appMain">
     <!-- ===== Header ===== -->
     <header class="header">
       <a href="#" class="header__logo">
@@ -402,8 +402,8 @@
       </div>
       <div style="padding: 0 var(--space-lg); margin-bottom: var(--space-lg)">
         <div class="settings-item" style="margin-bottom: var(--space-sm)">
-          <input type="text" class="form__input" id="inputGoalName" placeholder="Tên mục tiêu (VD: Mua laptop)" style="flex:2">
-          <input type="text" class="form__input" id="inputGoalTarget" placeholder="VD: 20000000 hoặc 20tr" inputmode="numeric" style="flex:1">
+          <input type="text" class="form__input" id="inputGoalName" aria-label="Tên mục tiêu" placeholder="Tên mục tiêu (VD: Mua laptop)" style="flex:2">
+          <input type="text" class="form__input" id="inputGoalTarget" aria-label="Số tiền mục tiêu" placeholder="VD: 20000000 hoặc 20tr" inputmode="numeric" style="flex:1">
           <button class="settings-btn settings-btn--primary" id="btnAddGoal">
             <i class="fa-solid fa-plus"></i> Thêm
           </button>
@@ -455,7 +455,7 @@
               <span class="settings-item__title">Đơn vị tiền tệ</span>
               <span class="settings-item__desc">Dữ liệu lưu bằng VNĐ, chỉ đổi cách hiển thị</span>
             </div>
-            <select class="form__input" id="inputCurrency" style="width:auto;cursor:pointer">
+            <select class="form__input" id="inputCurrency" aria-label="Đơn vị tiền tệ hiển thị" style="width:auto;cursor:pointer">
               <option value="VND">VNĐ (đ)</option>
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
@@ -471,7 +471,7 @@
         </h3>
         <div class="settings-group">
           <div class="settings-item">
-            <input type="text" class="form__input" id="inputWalletName" placeholder="VD: ShopeePay, VCB..." style="flex:1">
+            <input type="text" class="form__input" id="inputWalletName" aria-label="Tên ví mới" placeholder="VD: ShopeePay, VCB..." style="flex:1">
             <button class="settings-btn settings-btn--primary" id="btnAddWallet">
               <i class="fa-solid fa-plus"></i> Thêm ví
             </button>
@@ -592,7 +592,7 @@
               <span class="settings-item__title">Giờ nhắc nhở mỗi ngày</span>
               <span class="settings-item__desc">Gợi ý: Buổi tối sau bữa ăn hoặc trước khi ngủ</span>
             </div>
-            <input type="time" id="inputReminderTime" class="settings-time-input" value="21:00">
+            <input type="time" id="inputReminderTime" aria-label="Giờ nhắc nhở hằng ngày" class="settings-time-input" value="21:00">
           </div>
           <div class="settings-item">
             <div class="settings-item__info">
@@ -623,7 +623,7 @@
           </div>
         </div>
       </section>
-    </div>
+    </main>
   </div>
 
   <!-- ===== FAB Button ===== -->
@@ -667,7 +667,7 @@
           <label class="form__label" for="inputAmount">Số tiền</label>
           <div style="display:flex;gap:var(--space-sm)">
             <input type="text" class="form__input" id="inputAmount" placeholder="VD: 50000, 1.500.000 hoặc 2tr" inputmode="decimal" required style="flex:1">
-            <select class="form__input" id="inputCurrencyTx" style="width:120px;min-width:120px;cursor:pointer;white-space:nowrap;padding-right:28px">
+            <select class="form__input" id="inputCurrencyTx" aria-label="Đơn vị tiền của giao dịch" style="width:120px;min-width:120px;cursor:pointer;white-space:nowrap;padding-right:28px">
               <option value="VND">VNĐ</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
@@ -712,7 +712,7 @@
         <!-- Ảnh hóa đơn -->
         <div class="form__group">
           <label class="form__label">Ảnh hóa đơn (tùy chọn)</label>
-          <input type="file" class="form__input" id="inputReceipt" accept="image/*">
+          <input type="file" class="form__input" id="inputReceipt" aria-label="Chọn ảnh hóa đơn" accept="image/*">
           <img id="receiptPreview" style="display:none;max-width:120px;border-radius:8px;margin-top:8px" alt="Hóa đơn">
           <button type="button" id="btnRemoveReceipt" class="form__link-btn" style="display:none;margin-top:6px">
             <i class="fa-solid fa-trash"></i> Bỏ ảnh hóa đơn này
@@ -789,15 +789,15 @@
       </div>
       <div class="form__group">
         <label class="form__label">Tên bữa ăn / dịp chia tiền</label>
-        <input type="text" class="form__input" id="splitterMealNote" placeholder="VD: Lẩu Haidilao, Trà sữa..." value="Ăn uống cùng nhóm">
+        <input type="text" class="form__input" id="splitterMealNote" aria-label="Tên bữa ăn" placeholder="VD: Lẩu Haidilao, Trà sữa..." value="Ăn uống cùng nhóm">
       </div>
       <div class="form__group">
         <label class="form__label">Tổng số tiền bill (VNĐ)</label>
-        <input type="text" class="form__input" id="splitterTotalAmount" placeholder="VD: 300000 hoặc 1,2tr" value="300000" inputmode="numeric">
+        <input type="text" class="form__input" id="splitterTotalAmount" aria-label="Tổng số tiền bill" placeholder="VD: 300000 hoặc 1,2tr" value="300000" inputmode="numeric">
       </div>
       <div class="form__group">
         <label class="form__label">Số người cùng chia</label>
-        <input type="number" class="form__input" id="splitterPeopleCount" value="4" min="2" max="50">
+        <input type="number" class="form__input" id="splitterPeopleCount" aria-label="Số người cùng chia" value="4" min="2" max="50">
       </div>
       <div class="splitter-result">
         <span class="splitter-result__label">Mỗi người cần chuyển khoản</span>
@@ -875,22 +875,22 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-  <script src="js/utils.js"></script>
-  <script src="js/business.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/category.js"></script>
-  <script src="js/transaction.js"></script>
-  <script src="js/chart.js"></script>
-  <script src="js/budget.js"></script>
-  <script src="js/export.js"></script>
-  <script src="js/notification.js"></script>
-  <script src="js/pwa.js"></script>
-  <script src="js/features.js"></script>
-  <script src="js/sync.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/demo.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/utils.js?v=61"></script>
+  <script src="js/business.js?v=61"></script>
+  <script src="js/storage.js?v=61"></script>
+  <script src="js/category.js?v=61"></script>
+  <script src="js/transaction.js?v=61"></script>
+  <script src="js/chart.js?v=61"></script>
+  <script src="js/budget.js?v=61"></script>
+  <script src="js/export.js?v=61"></script>
+  <script src="js/notification.js?v=61"></script>
+  <script src="js/pwa.js?v=61"></script>
+  <script src="js/features.js?v=61"></script>
+  <script src="js/sync.js?v=61"></script>
+  <script src="js/config.js?v=61"></script>
+  <script src="js/auth.js?v=61"></script>
+  <script src="js/demo.js?v=61"></script>
+  <script src="js/app.js?v=61"></script>
 </body>
 </html>
 

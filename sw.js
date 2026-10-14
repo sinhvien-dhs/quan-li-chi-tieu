@@ -3,7 +3,7 @@
  * Hỗ trợ chạy offline khi không có kết nối Internet
  */
 
-const CACHE_NAME = 'spendwise-cache-v60';
+const CACHE_NAME = 'spendwise-cache-v61';
 
 // Tài nguyên CỐT LÕI: bắt buộc phải cache thành công, nếu không thì hủy cài đặt
 // (tránh trường hợp bản mới thiếu file cốt lõi nhưng cache cũ đã bị xóa)
@@ -59,6 +59,17 @@ const CDN_HOSTS = [
   'fonts.gstatic.com',
   'www.gstatic.com'
 ];
+
+const stripVersionQuery = (url) => {
+  try {
+    const clean = new URL(url);
+    if (!/^v\d+$/.test(clean.searchParams.get('v') || '')) return null;
+    clean.searchParams.delete('v');
+    return clean.toString();
+  } catch (err) {
+    return null;
+  }
+};
 
 const isCacheableUrl = (url) =>
   url.origin === self.location.origin || CDN_HOSTS.indexOf(url.hostname) > -1;
@@ -127,13 +138,24 @@ self.addEventListener('fetch', (event) => {
         (cacheable || networkResponse.type === 'basic');
       if (canStore) {
         const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache.clone());
+          // Lưu thêm bản không có ?v= để lần sau offline vẫn khớp
+          const stripped = stripVersionQuery(request.url);
+          if (stripped) cache.put(stripped, responseToCache);
+        });
       }
       return networkResponse;
     }).catch(() => {
-      // Offline: dùng cache
+      // Offline: dùng cache (thử cả bản có và không có tham số ?v=)
       return caches.match(request).then((cached) => {
         if (cached) return cached;
+        const stripped = stripVersionQuery(request.url);
+        if (stripped) {
+          return caches.match(stripped).then((cachedBase) => {
+            if (cachedBase) return cachedBase;
+          });
+        }
         if (request.mode === 'navigate') {
           return caches.match('./index.html');
         }

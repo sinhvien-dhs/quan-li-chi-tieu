@@ -170,6 +170,71 @@ const FormManager = {
     this.setDefaultDate();
   },
 
+  /**
+   * Cập nhật giao diện form theo loại giao dịch đang chọn
+   * (Chi tiêu / Thu nhập / Chuyển ví)
+   */
+  applyTypeUI() {
+    const isTransfer = this.currentType === 'transfer';
+
+    // Ô danh mục: ẩn với giao dịch chuyển ví
+    const catGroup = document.getElementById('categoryContainer');
+    if (catGroup && catGroup.parentElement) {
+      catGroup.parentElement.hidden = isTransfer;
+    }
+
+    // Ô lặp định kỳ: không áp dụng cho chuyển ví
+    const repeatSel = document.getElementById('inputRepeat');
+    if (repeatSel && repeatSel.parentElement) {
+      repeatSel.parentElement.hidden = isTransfer;
+    }
+
+    // Khối chuyển ví
+    const box = document.getElementById('transferBox');
+    if (box) box.hidden = !isTransfer;
+
+    // Nhãn ví đơn lẻ -> ẩn (dùng 2 ô From/To)
+    const walletSel = document.getElementById('inputWallet');
+    if (walletSel && walletSel.parentElement) {
+      walletSel.parentElement.hidden = isTransfer;
+    }
+
+    if (isTransfer) {
+      this.renderTransferWallets();
+      this.selectedCategory = 'transfer';
+      const nameInput = document.getElementById('inputName');
+      if (nameInput && !nameInput.value.trim()) nameInput.value = 'Chuyển tiền giữa ví';
+    } else {
+      this.renderCategories(this.currentType);
+      this.selectedCategory = null;
+    }
+  },
+
+  /** Đổ danh sách ví cho 2 ô From / To (luôn khác nhau) */
+  renderTransferWallets() {
+    if (typeof Features === 'undefined') return;
+    const wallets = Features.getWallets();
+    const from = document.getElementById('inputFromWallet');
+    const to = document.getElementById('inputToWallet');
+    if (!from || !to) return;
+
+    const prevFrom = from.value;
+    const prevTo = to.value;
+    from.innerHTML = wallets.map(w =>
+      `<option value="${Utils.escapeAttr(w.id)}">${Utils.escapeHtml(w.name)}</option>`).join('');
+    to.innerHTML = from.innerHTML;
+
+    if (prevFrom) from.value = prevFrom;
+    if (prevTo && prevTo !== from.value) to.value = prevTo;
+    else to.selectedIndex = from.selectedIndex === 0 ? Math.min(1, wallets.length - 1) : 0;
+
+    from.onchange = () => {
+      if (from.value === to.value) {
+        to.selectedIndex = from.selectedIndex === 0 ? Math.min(1, to.options.length - 1) : 0;
+      }
+    };
+  },
+
   bindEvents() {
     // Type toggle buttons
     document.querySelectorAll('.form__type-btn').forEach(btn => {
@@ -177,8 +242,7 @@ const FormManager = {
         document.querySelectorAll('.form__type-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.currentType = btn.dataset.type;
-        this.renderCategories(this.currentType);
-        this.selectedCategory = null;
+        this.applyTypeUI();
       });
     });
 
@@ -371,6 +435,40 @@ const FormManager = {
       Toast.error('Không thể chọn ngày trong tương lai!');
       return;
     }
+
+    // ===== Chuyển tiền giữa các ví =====
+    if (this.currentType === 'transfer') {
+      const transfer = Business.buildTransfer({
+        name: name,
+        amount: validAmount,
+        fromWallet: (document.getElementById('inputFromWallet') || {}).value || null,
+        toWallet: (document.getElementById('inputToWallet') || {}).value || null,
+        date: date,
+        note: note
+      });
+      if (!transfer) {
+        Toast.error('Chuyển ví cần chọn 2 ví khác nhau và số tiền hợp lệ!');
+        return;
+      }
+
+      this._saving = true;
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang lưu...'; }
+      try {
+        const ok = TransactionManager.handleSubmit(transfer);
+        this._saving = false;
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu giao dịch'; }
+        if (ok) {
+          this.closeModal();
+          Toast.success('Đã ghi nhận chuyển tiền giữa 2 ví (tổng số dư không đổi).');
+        }
+      } catch (err) {
+        this._saving = false;
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Lưu giao dịch'; }
+        Toast.error('Không lưu được: ' + err.message);
+      }
+      return;
+    }
+
     if (!this.selectedCategory) {
       Toast.error('Vui lòng chọn danh mục!');
       return;

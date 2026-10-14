@@ -696,6 +696,9 @@
             <button type="button" class="form__type-btn form__type-btn--income" data-type="income">
               <i class="fa-solid fa-arrow-up"></i> Thu nhập
             </button>
+            <button type="button" class="form__type-btn form__type-btn--transfer" data-type="transfer">
+              <i class="fa-solid fa-right-left"></i> Chuyển ví
+            </button>
           </div>
         </div>
 
@@ -719,6 +722,24 @@
           <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:4px">Cả đô/euro đều được — hệ thống lưu bằng VNĐ theo tỉ giá đầu tháng.</p>
         </div>
 
+        <!-- Chuyển tiền giữa các ví (chỉ hiện khi chọn loại "Chuyển ví") -->
+        <div class="form__group" id="transferBox" hidden>
+          <label class="form__label" for="inputFromWallet">Chuyển từ ví → sang ví</label>
+          <div class="transfer-line">
+            <select class="form__input" id="inputFromWallet" style="cursor:pointer" aria-label="Ví nguồn">
+              <!-- Rendered by JS -->
+            </select>
+            <i class="fa-solid fa-arrow-right transfer-line__arrow" aria-hidden="true"></i>
+            <select class="form__input" id="inputToWallet" style="cursor:pointer" aria-label="Ví nhận">
+              <!-- Rendered by JS -->
+            </select>
+          </div>
+          <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:4px">
+            Chuyển tiền giữa 2 ví của bạn không làm thay đổi tổng số dư — chỉ thay đổi nơi tiền nằm.
+          </p>
+        </div>
+
+        <!-- Danh mục -->
         <!-- Danh mục -->
         <div class="form__group">
           <label class="form__label">Danh mục</label>

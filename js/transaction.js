@@ -208,13 +208,22 @@ const TransactionManager = {
    * @returns {string} HTML
    */
   renderTransactionItem(t) {
+    const isTransfer = t.type === 'transfer';
     const category = Categories.getById(t.category);
-    const iconClass = category ? category.icon : 'fa-circle';
-    const iconColor = category ? category.color : '#94A3B8';
-    const iconBg = category ? category.bg : '#F1F5F9';
-    const categoryName = category ? category.name : 'Khác';
-    const walletName = (typeof Features !== 'undefined' && Features.getWalletById(t.wallet))
-      ? Features.getWalletById(t.wallet).name : '';
+    const iconClass = isTransfer ? 'fa-right-left' : (category ? category.icon : 'fa-circle');
+    const iconColor = isTransfer ? '#636E72' : (category ? category.color : '#94A3B8');
+    const iconBg = isTransfer ? '#E8ECF1' : (category ? category.bg : '#F1F5F9');
+    const categoryName = isTransfer ? 'Chuyển ví' : (category ? category.name : 'Khác');
+
+    let walletName = '';
+    if (isTransfer && typeof Features !== 'undefined') {
+      const from = Features.getWalletById(t.fromWallet || t.wallet);
+      const to = Features.getWalletById(t.toWallet);
+      walletName = (from ? from.name : '?') + ' → ' + (to ? to.name : '?');
+    } else if (typeof Features !== 'undefined' && Features.getWalletById(t.wallet)) {
+      walletName = Features.getWalletById(t.wallet).name;
+    }
+
     const safeName = Utils.escapeHtml(t.name);
     const safeCategory = Utils.escapeHtml(categoryName);
     const safeWallet = Utils.escapeHtml(walletName);
@@ -223,9 +232,16 @@ const TransactionManager = {
       /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]*$/.test(t.receipt)) ? t.receipt : '';
     const safeId = Utils.escapeAttr(t.id);
 
+    const typeLabel = isTransfer ? 'chuyển tiền giữa ví' : (t.type === 'income' ? 'thu nhập' : 'chi tiêu');
+    const amountClass = isTransfer ? 'transaction-item__amount--transfer'
+      : (t.type === 'income' ? 'transaction-item__amount--income' : 'transaction-item__amount--expense');
+    const amountText = isTransfer
+      ? Utils.formatCurrency(t.amount)
+      : Utils.formatCurrencyWithSign(t.amount, t.type);
+
     return `
-      <div class="transaction-item transaction-item--${t.type === 'income' ? 'income' : 'expense'}" data-id="${safeId}" role="button" tabindex="0"
-           aria-label="${safeName}, ${t.type === 'income' ? 'thu nhập' : 'chi tiêu'} ${Utils.formatCurrency(t.amount)}. Nhấn Enter để sửa.">
+      <div class="transaction-item transaction-item--${isTransfer ? 'transfer' : (t.type === 'income' ? 'income' : 'expense')}" data-id="${safeId}" role="button" tabindex="0"
+           aria-label="${safeName}, ${typeLabel} ${Utils.formatCurrency(t.amount)}. Nhấn Enter để sửa.">
         <div class="transaction-item__icon" style="background: ${iconBg}; color: ${iconColor}">
           <i class="fa-solid ${iconClass}"></i>
         </div>
@@ -235,8 +251,8 @@ const TransactionManager = {
         </div>
         ${safeReceipt ? `<img src="${safeReceipt}" alt="Hóa đơn" title="Ảnh hóa đơn" loading="lazy" style="width:36px;height:36px;object-fit:cover;border-radius:8px;flex-shrink:0">` : ''}
         <div class="transaction-item__right">
-          <div class="transaction-item__amount transaction-item__amount--${t.type === 'income' ? 'income' : 'expense'}">
-            ${Utils.formatCurrencyWithSign(t.amount, t.type)}
+          <div class="transaction-item__amount ${amountClass}">
+            ${amountText}
           </div>
           <div class="transaction-item__date">${Utils.formatDateFriendly(t.date)}</div>
         </div>

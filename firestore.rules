@@ -32,18 +32,23 @@ service cloud.firestore {
         && tx.keys().hasAll(['id', 'name', 'amount', 'type', 'category', 'date'])
         && tx.keys().hasOnly([
              'id','name','amount','type','category','date','note','wallet',
-             'receipt','originalAmount','originalCurrency','exchangeRate',
+             'fromWallet','toWallet','receipt','originalAmount','originalCurrency','exchangeRate',
              'createdAt','updatedAt','syncState'
            ])
         && tx.id is string && tx.id.size() > 0 && tx.id.size() <= 64
         && tx.name is string && tx.name.size() > 0 && tx.name.size() <= 80
-        // amount LUÔN LUÔN là số tiền gốc bằng VNĐ
         && tx.amount is number && tx.amount >= 0 && tx.amount <= 1000000000000
-        && tx.type in ['expense', 'income']
+        && tx.type in ['expense', 'income', 'transfer']
         && tx.category is string && tx.category.size() <= 40
         && validDate(tx.date)
         && (!('note' in tx.keys()) || (tx.note is string && tx.note.size() <= 200))
         && (!('wallet' in tx.keys()) || (tx.wallet is string && tx.wallet.size() <= 64))
+        && (tx.type != 'transfer' || (
+              ('fromWallet' in tx.keys() && tx.fromWallet is string && tx.fromWallet.size() > 0 && tx.fromWallet.size() <= 64)
+              && ('toWallet' in tx.keys() && tx.toWallet is string && tx.toWallet.size() > 0 && tx.toWallet.size() <= 64)
+              && tx.fromWallet != tx.toWallet
+              && tx.amount > 0
+           ))
         && (!('receipt' in tx.keys()) || validReceipt(tx.receipt))
         && (!('originalAmount' in tx.keys())
               || (tx.originalAmount is number && tx.originalAmount >= 0 && tx.originalAmount <= 1000000000000))

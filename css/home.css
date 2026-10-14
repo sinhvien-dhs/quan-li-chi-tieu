@@ -196,6 +196,17 @@
 }
 
 /* ===== Chuyển tiền giữa các ví ===== */
+.transaction-item__amount--transfer {
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+.form__type-btn--transfer.active {
+  border-color: var(--primary-text);
+  background: var(--primary-bg);
+  color: var(--primary-text);
+}
+
 .transfer-line {
   display: flex;
   align-items: center;

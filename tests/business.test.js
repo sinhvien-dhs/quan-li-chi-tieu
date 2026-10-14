@@ -62,6 +62,39 @@ test('gộp: tombstone cũng loại bản đang có ở máy', () => {
   eq(merged.length, 0);
 });
 
+test('chuyển tiền giữa 2 ví không làm đổi tổng số dư', () => {
+  const wallets = [{ id: 'cash', name: 'Tiền mặt' }, { id: 'bank', name: 'Ngân hàng' }];
+  const tx = [
+    { type: 'income', amount: 1000000, wallet: 'bank', category: 'salary' },
+    { type: 'expense', amount: 300000, wallet: 'bank', category: 'food' },
+    Business.buildTransfer({ amount: 400000, fromWallet: 'bank', toWallet: 'cash', date: '2026-10-10' })
+  ];
+  eq(Business.totalIncome(tx), 1000000);
+  eq(Business.totalExpense(tx), 300000);
+  eq(Business.balance(tx), 700000, 'chuyển ví không được cộng/trừ vào tổng');
+
+  const byWallet = Business.balanceByWallet(tx, wallets);
+  const bank = byWallet.find(w => w.id === 'bank');
+  const cash = byWallet.find(w => w.id === 'cash');
+  eq(bank.balance, 1000000 - 300000 - 400000);
+  eq(cash.balance, 400000);
+});
+
+test('buildTransfer kiểm tra đầu vào', () => {
+  const ok = Business.buildTransfer({ amount: 1000, fromWallet: 'a', toWallet: 'b' });
+  eq(ok.type, 'transfer');
+  eq(ok.category, 'transfer');
+  eq(ok.amount, 1000);
+  eq(Business.buildTransfer({ amount: 0, fromWallet: 'a', toWallet: 'b' }), null);
+  eq(Business.buildTransfer({ amount: 1000, fromWallet: 'a', toWallet: 'a' }), null);
+  eq(Business.buildTransfer({ amount: 1000, fromWallet: 'a' }), null);
+});
+
+test('chuyển ví hợp lệ qua parseAmount (2tr)', () => {
+  const t = Business.buildTransfer({ amount: Business.parseAmount('2tr'), fromWallet: 'cash', toWallet: 'momo' });
+  eq(t.amount, 2000000);
+});
+
 console.log('\n== Lớp nghiệp vụ SpendWise ==\n');
 
 test('tổng thu / tổng chi / số dư', () => {

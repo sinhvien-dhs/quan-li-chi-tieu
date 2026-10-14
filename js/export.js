@@ -357,7 +357,7 @@ const ExportManager = {
       const amount = num(t.amount);
       const date = isoDate(t.date);
       const name = str(t.name, 80);
-      const type = t.type === 'income' ? 'income' : (t.type === 'expense' ? 'expense' : null);
+      const type = ['income', 'expense', 'transfer'].indexOf(t.type) > -1 ? t.type : null;
 
       if (isNaN(amount) || amount <= 0 || !date || !name || !type) continue;
 
@@ -377,6 +377,20 @@ const ExportManager = {
 
       const wallet = str(t.wallet, 64);
       if (wallet) item.wallet = wallet;
+
+      // Giao dịch chuyển ví: giữ đúng ví nguồn & ví đích
+      if (type === 'transfer') {
+        const from = str(t.fromWallet, 64);
+        const to = str(t.toWallet, 64);
+        if (from && to && from !== to) {
+          item.fromWallet = from;
+          item.toWallet = to;
+          item.wallet = from;
+          item.category = 'transfer';
+        } else {
+          continue; // chuyển ví thiếu thông tin -> loại bản ghi
+        }
+      }
 
       // Chỉ giữ ảnh hóa đơn đúng định dạng data URL và giới hạn kích thước
       if (typeof t.receipt === 'string' &&

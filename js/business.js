@@ -11,7 +11,12 @@
  */
 
 const Business = {
-  /** Tổng thu trong một mảng giao dịch */
+  /** Loai giao dich chuyen tien giua cac vi (khong lam thay doi tong so du) */
+  isTransfer(t) {
+    return !!t && t.type === 'transfer';
+  },
+
+  /** Tong thu trong mot mang giao dich (bo qua giao dich chuyen khoan) */
   totalIncome(transactions) {
     if (!Array.isArray(transactions)) return 0;
     return transactions
@@ -146,10 +151,21 @@ const Business = {
     const map = new Map(result.map(r => [r.id, r]));
 
     (transactions || []).forEach(t => {
-      if (!t || !t.wallet) return;
+      if (!t) return;
+      const amt = Math.round(Number(t.amount) || 0);
+
+      // Chuyen tien giua 2 vi: tru vi nguon, cong vi dich (tong khong doi)
+      if (Business.isTransfer(t)) {
+        const from = map.get(t.fromWallet || t.wallet);
+        const to = map.get(t.toWallet);
+        if (from) { from.balance -= amt; from.expense += amt; }
+        if (to) { to.balance += amt; to.income += amt; }
+        return;
+      }
+
+      if (!t.wallet) return;
       const row = map.get(t.wallet);
       if (!row) return;
-      const amt = Math.round(Number(t.amount) || 0);
       if (t.type === 'income') { row.income += amt; row.balance += amt; }
       else { row.expense += amt; row.balance -= amt; }
     });
@@ -158,12 +174,36 @@ const Business = {
   },
 
   /**
+   * Chuyển tiền giữa các ví: tiền đi từ ví nguồn sang ví đích.
+   * Lưu ý: tổng số dư toàn hệ thống KHÔNG đổi khi chuyển khoản.
+   * @param {Object} o {amount, fromWallet, toWallet, date, note}
+   * @returns {Object|null} giao dịch chuyển khoản hợp lệ
+   */
+  buildTransfer(o) {
+    const amount = Math.round(Number(o && o.amount) || 0);
+    const from = o && o.fromWallet;
+    const to = o && o.toWallet;
+    if (!(amount > 0) || !from || !to || from === to) return null;
+    return {
+      name: (o.name && String(o.name).slice(0, 50)) || 'Chuyển tiền giữa ví',
+      amount: amount,
+      type: 'transfer',
+      category: 'transfer',
+      wallet: from,
+      fromWallet: from,
+      toWallet: to,
+      date: o.date || new Date().toISOString().slice(0, 10),
+      note: o.note ? String(o.note).slice(0, 200) : ''
+    };
+  },
+
+  /**
    * Gộp hai mảng bản ghi theo id khi đồng bộ cloud:
    * - Bản có updatedAt/lastRun mới hơn thắng
    * - Bản ghi nằm trong `tombstones` (đã xoá trên máy này) bị loại khỏi cả
    *   bản cloud lẫn kết quả → không bao giờ "hồi sinh" bản ghi đã xoá.
    */
-  mergeById(localArr, cloudArr, tombstones = []) {
+  mergeById(localArr, cloudArr, tombstones) {
     const tombs = Array.isArray(tombstones) ? tombstones : [];
     const map = new Map();
 

@@ -27,7 +27,8 @@ const PWAManager = {
             navigator.serviceWorker.addEventListener('controllerchange', () => {
               if (refreshing) return;
               refreshing = true;
-              window.location.reload();
+              // Không tải lại khi người dùng đang nhập liệu → chờ họ xong
+              this.reloadWhenIdle();
             });
 
             reg.addEventListener('updatefound', () => {
@@ -46,6 +47,40 @@ const PWAManager = {
           });
       });
     }
+  },
+
+  /**
+   * Tải lại trang khi người dùng không còn đang nhập liệu.
+   * Tránh mất dữ liệu form đang gõ khi có bản cập nhật mới.
+   */
+  reloadWhenIdle() {
+    const isBusy = () => {
+      const modalOpen = document.querySelector('.modal-overlay.active, .confirm-overlay.active, .onboarding-overlay.active');
+      if (modalOpen) return true;
+      const active = document.activeElement;
+      if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) &&
+          String(active.value || '').trim() !== '') return true;
+      return false;
+    };
+
+    if (!isBusy()) {
+      window.location.reload();
+      return;
+    }
+
+    console.log('⏳ Có bản cập nhật mới — chờ bạn hoàn tất đang nhập để tải lại.');
+    if (typeof Toast !== 'undefined') {
+      Toast.show('Có bản cập nhật mới. Trang sẽ tải lại ngay khi bạn xong thao tác nhập.', 'info');
+    }
+
+    let waited = 0;
+    const timer = setInterval(() => {
+      waited += 2000;
+      if (!isBusy() || waited >= 120000) {
+        clearInterval(timer);
+        window.location.reload();
+      }
+    }, 2000);
   },
 
   /**

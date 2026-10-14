@@ -539,6 +539,27 @@ document.addEventListener('DOMContentLoaded', () => {
     TransactionManager.openAddModal();
   });
 
+  // Mở theo tham số URL: ?action=add (shortcut PWA) hoặc ?page=stats
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const pageParam = params.get('page');
+    if (pageParam && typeof PageManager !== 'undefined') {
+      // Chấp nhận cả dạng ngắn (stats) lẫn dạng đầy đủ (pageStats)
+      const aliases = { home: 'pageHome', stats: 'pageStats', budget: 'pageBudget', settings: 'pageSettings' };
+      const pageId = aliases[pageParam] || (/^page[A-Z]/.test(pageParam) ? pageParam : null);
+      if (pageId && document.getElementById(pageId)) {
+        PageManager.switchTo(pageId);
+        document.querySelectorAll('.bottom-nav__item').forEach((b) =>
+          b.classList.toggle('active', b.dataset.page === pageId));
+      }
+    }
+    if (params.get('action') === 'add') {
+      TransactionManager.openAddModal();
+    }
+  } catch (err) {
+    console.warn('Không đọc được tham số URL:', err);
+  }
+
   // Thêm dữ liệu mẫu nếu chưa có — chỉ ở chế độ local (chưa cấu hình Firebase);
   // tài khoản Firebase thật luôn bắt đầu trống
   // Chỉ thêm dữ liệu mẫu ở chế độ demo (không đăng nhập và chưa từng dùng app)

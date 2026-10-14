@@ -28,5 +28,21 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["finance", "utilities", "productivity"]
+  "categories": ["finance", "utilities", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Thêm giao dịch",
+      "short_name": "Thêm",
+      "description": "Ghi nhanh một khoản chi hoặc thu nhập",
+      "url": "./index.html?action=add",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Xem thống kê",
+      "short_name": "Thống kê",
+      "description": "Biểu đồ chi tiêu theo danh mục",
+      "url": "./index.html?page=stats",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }

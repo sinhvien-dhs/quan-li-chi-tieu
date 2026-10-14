@@ -204,11 +204,19 @@ const FormManager = {
       });
     }
 
-    // Format amount input on blur
-    document.getElementById('inputAmount').addEventListener('input', (e) => {
-      // Chỉ cho phép số
-      e.target.value = e.target.value.replace(/[^0-9.]/g, '')
-        .split('.').map((p, i) => i === 0 ? p : p.replace(/\./g, '')).join('.');
+    // Ô số tiền: cho phép gõ theo kiểu Việt (1.500.000, 2tr, 20k)
+    const amountInput = document.getElementById('inputAmount');
+    amountInput.addEventListener('input', (e) => {
+      // Giữ chữ số, dấu . , khoảng trắng và chữ cái (dùng cho hậu tố tr/k/tỷ)
+      e.target.value = e.target.value.replace(/[^\d.,\sÀ-ỹa-zA-Z]/g, '');
+    });
+
+    // Rời ô nhập → hiển thị lại dạng dễ đọc (2tr → 2.000.000)
+    amountInput.addEventListener('blur', (e) => {
+      const parsed = Business.parseAmount(e.target.value);
+      if (parsed !== null) {
+        e.target.value = Utils.formatNumber(parsed);
+      }
     });
   },
 

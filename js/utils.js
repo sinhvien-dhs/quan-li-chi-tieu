@@ -61,6 +61,18 @@ const Utils = {
    * @param {string} type - 'income' | 'expense'
    * @returns {string} VD: "+1.500.000đ" hoặc "-500.000đ"
    */
+  /**
+   * Định dạng số nguyên theo kiểu Việt Nam (dấu chấm phân cách nghìn)
+   * VD: 2000000 → "2.000.000" (dùng cho ô nhập số tiền)
+   */
+  formatNumber(amount) {
+    const n = Math.round(Number(amount) || 0);
+    return n.toLocaleString('vi-VN');
+  },
+
+  /**
+   * Format số tiền có dấu +/-
+   */
   formatCurrencyWithSign(amount, type) {
     const sign = type === 'income' ? '+' : '-';
     return `${sign}${this.formatCurrency(amount)}`;

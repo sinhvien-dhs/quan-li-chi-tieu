@@ -224,7 +224,8 @@ const TransactionManager = {
     const safeId = Utils.escapeAttr(t.id);
 
     return `
-      <div class="transaction-item transaction-item--${t.type === 'income' ? 'income' : 'expense'}" data-id="${safeId}">
+      <div class="transaction-item transaction-item--${t.type === 'income' ? 'income' : 'expense'}" data-id="${safeId}" role="button" tabindex="0"
+           aria-label="${safeName}, ${t.type === 'income' ? 'thu nhập' : 'chi tiêu'} ${Utils.formatCurrency(t.amount)}. Nhấn Enter để sửa.">
         <div class="transaction-item__icon" style="background: ${iconBg}; color: ${iconColor}">
           <i class="fa-solid ${iconClass}"></i>
         </div>
@@ -241,11 +242,11 @@ const TransactionManager = {
         </div>
         <div class="transaction-item__actions">
           <button class="transaction-item__action-btn transaction-item__action-btn--edit"
-                  data-action="edit" data-id="${safeId}" title="Sửa">
+                  data-action="edit" data-id="${safeId}" title="Sửa" aria-label="Sửa giao dịch ${safeName}">
             <i class="fa-solid fa-pen"></i>
           </button>
           <button class="transaction-item__action-btn transaction-item__action-btn--delete"
-                  data-action="delete" data-id="${safeId}" title="Xóa">
+                  data-action="delete" data-id="${safeId}" title="Xóa" aria-label="Xóa giao dịch ${safeName}">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
@@ -272,6 +273,16 @@ const TransactionManager = {
         this.confirmDelete(id);
       });
     });
+
+    // Bàn phím: Enter / Space trên dòng giao dịch để mở form sửa
+    document.querySelectorAll('.transaction-item[data-id]').forEach(row => {
+      row.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+        if (e.target.closest('button')) return;
+        e.preventDefault();
+        this.openEditModal(row.dataset.id);
+      });
+    });
   },
 
   /**
@@ -279,17 +290,6 @@ const TransactionManager = {
    */
   updateSummary() {
     const transactions = Storage.getTransactions();
-
-    let totalIncome = 0;
-    let totalExpense = 0;
-
-    transactions.forEach(t => {
-      if (t.type === 'income') {
-        totalIncome += t.amount;
-      } else {
-        totalExpense += t.amount;
-      }
-    });
 
     // Dùng lớp nghiệp vụ dùng chung để số liệu khớp với Thống kê / Ngân sách / Báo cáo
     const income = Business.totalIncome(transactions);

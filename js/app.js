@@ -74,6 +74,46 @@ const ModalHelper = {
         }
       }
     });
+
+    // Giữ tiêu điểm bàn phím bên trong modal đang mở (focus trap)
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const overlay = this.topActive();
+      if (!overlay) return;
+
+      const focusables = Array.prototype.slice.call(
+        overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+      ).filter(el => !el.disabled && el.offsetParent !== null);
+
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  },
+
+  /** Lớp phủ trên cùng đang mở */
+  topActive() {
+    for (let i = this.OVERLAYS.length - 1; i >= 0; i--) {
+      const el = document.getElementById(this.OVERLAYS[i]);
+      if (el && el.classList.contains('active')) return el;
+    }
+    return null;
+  },
+
+  /** Đưa tiêu điểm vào ô nhập đầu tiên của modal (dùng chung cho các modal khác) */
+  focusFirst(overlayId) {
+    const overlay = document.getElementById(overlayId);
+    if (!overlay) return;
+    const target = overlay.querySelector('input:not([type="hidden"]), select, textarea, button');
+    if (target) target.focus();
   }
 };
 

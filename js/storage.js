@@ -49,7 +49,13 @@ const Storage = {
    * @returns {Array}
    */
   getTransactions() {
-    return this.get(this.KEYS.TRANSACTIONS, []);
+    const list = this.get(this.KEYS.TRANSACTIONS, []);
+    // Không coi dữ liệu cục bộ là đáng tin cậy — kiểm tra trước khi dùng
+    if (!Array.isArray(list)) return [];
+    if (typeof ExportManager !== 'undefined' && typeof ExportManager.sanitizeTransactions === 'function') {
+      return ExportManager.sanitizeTransactions(list);
+    }
+    return list.filter(t => t && typeof t === 'object');
   },
 
   /**
@@ -70,6 +76,8 @@ const Storage = {
     const newTransaction = {
       id: Utils.generateId(),
       ...transaction,
+      // Trạng thái đồng bộ: pending → synced sau khi push thành công
+      syncState: 'pending',
       createdAt: new Date().toISOString()
     };
     transactions.unshift(newTransaction);
@@ -91,6 +99,7 @@ const Storage = {
     transactions[index] = {
       ...transactions[index],
       ...updates,
+      syncState: 'pending',
       updatedAt: new Date().toISOString()
     };
     this.saveTransactions(transactions);

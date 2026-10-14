@@ -79,30 +79,39 @@ const TransactionManager = {
     const iconColor = category ? category.color : '#94A3B8';
     const iconBg = category ? category.bg : '#F1F5F9';
     const categoryName = category ? category.name : 'Khác';
+    const walletName = (typeof Features !== 'undefined' && Features.getWalletById(t.wallet))
+      ? Features.getWalletById(t.wallet).name : '';
+    const safeName = Utils.escapeHtml(t.name);
+    const safeCategory = Utils.escapeHtml(categoryName);
+    const safeWallet = Utils.escapeHtml(walletName);
+    // Chỉ chấp nhận ảnh hóa đơn dạng data URL an toàn
+    const safeReceipt = (typeof t.receipt === 'string' &&
+      /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]*$/.test(t.receipt)) ? t.receipt : '';
+    const safeId = Utils.escapeAttr(t.id);
 
     return `
-      <div class="transaction-item transaction-item--${t.type}" data-id="${t.id}">
+      <div class="transaction-item transaction-item--${t.type === 'income' ? 'income' : 'expense'}" data-id="${safeId}">
         <div class="transaction-item__icon" style="background: ${iconBg}; color: ${iconColor}">
           <i class="fa-solid ${iconClass}"></i>
         </div>
         <div class="transaction-item__info">
-          <div class="transaction-item__name">${this.escapeHtml(t.name)}</div>
-          <div class="transaction-item__category">${categoryName}${(typeof Features !== 'undefined' && Features.getWalletById(t.wallet)) ? ' • ' + Features.getWalletById(t.wallet).name : ''}</div>
+          <div class="transaction-item__name" title="${safeName}">${safeName}</div>
+          <div class="transaction-item__category">${safeCategory}${safeWallet ? ' • ' + safeWallet : ''}</div>
         </div>
-        ${t.receipt ? `<img src="${t.receipt}" alt="Hóa đơn" title="Ảnh hóa đơn" style="width:36px;height:36px;object-fit:cover;border-radius:8px;flex-shrink:0">` : ''}
+        ${safeReceipt ? `<img src="${safeReceipt}" alt="Hóa đơn" title="Ảnh hóa đơn" loading="lazy" style="width:36px;height:36px;object-fit:cover;border-radius:8px;flex-shrink:0">` : ''}
         <div class="transaction-item__right">
-          <div class="transaction-item__amount transaction-item__amount--${t.type}">
+          <div class="transaction-item__amount transaction-item__amount--${t.type === 'income' ? 'income' : 'expense'}">
             ${Utils.formatCurrencyWithSign(t.amount, t.type)}
           </div>
           <div class="transaction-item__date">${Utils.formatDateFriendly(t.date)}</div>
         </div>
         <div class="transaction-item__actions">
-          <button class="transaction-item__action-btn transaction-item__action-btn--edit" 
-                  data-action="edit" data-id="${t.id}" title="Sửa">
+          <button class="transaction-item__action-btn transaction-item__action-btn--edit"
+                  data-action="edit" data-id="${safeId}" title="Sửa">
             <i class="fa-solid fa-pen"></i>
           </button>
-          <button class="transaction-item__action-btn transaction-item__action-btn--delete" 
-                  data-action="delete" data-id="${t.id}" title="Xóa">
+          <button class="transaction-item__action-btn transaction-item__action-btn--delete"
+                  data-action="delete" data-id="${safeId}" title="Xóa">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
@@ -238,6 +247,8 @@ const TransactionManager = {
       confirmText: 'Xóa',
       onConfirm: () => {
         Storage.deleteTransaction(id);
+        // Ghi nhận đã xóa để không bị ghi đè khi đồng bộ (tombstone)
+        if (typeof SyncManager !== 'undefined') SyncManager.markDeleted(id);
         Toast.success('Đã xóa giao dịch!');
         this.renderTransactions();
         this.updateSummary();
@@ -253,11 +264,9 @@ const TransactionManager = {
   },
 
   /**
-   * Escape HTML để tránh XSS
+   * Escape HTML (dùng chung Utils.escapeHtml — không tin dữ liệu)
    */
   escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return Utils.escapeHtml(text);
   }
 };

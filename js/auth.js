@@ -218,8 +218,44 @@ const AuthManager = {
   },
 
   async signOut() {
+    // Xóa dữ liệu tài chính cục bộ để không ai thấy dữ liệu tài khoản cũ trên cùng máy
+    this.clearLocalUserData();
     await this.auth.signOut();
+    Toast.success('Đã đăng xuất và xóa dữ liệu cụbộ!');
     Toast.success('Đã đăng xuất!');
+  },
+
+  /**
+   * Xóa toàn bộ dữ liệu người dùng khỏi bộ nhớ cục bộ
+   * (tránh rò rỉ dữ liệu tài chính khi dùng chung máy)
+   */
+  clearLocalUserData() {
+    this.DATA_KEYS.forEach(key => localStorage.removeItem(key));
+    localStorage.removeItem('spendwise_uid');
+    localStorage.removeItem('spendwise_sync_queue');
+    localStorage.removeItem('spendwise_rates');
+
+    ['authOverlay', 'authRegisterOverlay', 'modalOverlay', 'budgetModal', 'confirmOverlay']
+      .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+    document.body.style.overflow = '';
+
+    if (typeof TransactionManager !== 'undefined') {
+      TransactionManager.renderTransactions();
+      TransactionManager.updateSummary();
+    }
+    if (typeof BudgetManager !== 'undefined') {
+      BudgetManager.renderBudgetList();
+      BudgetManager.updateBudgetSummary();
+    }
+    if (typeof Features !== 'undefined') {
+      Features.renderWalletList();
+      Features.renderWalletOptions();
+      Features.renderGoals();
+      Features.renderRecurringList();
+    }
   },
 
   friendlyError(e) {
@@ -276,9 +312,17 @@ const AuthManager = {
       if (doc.exists) {
         const data = doc.data();
 
-        // Gộp dữ liệu: giữ cả local (gom lại) và cloud
-        const mergedTxs = this.mergeById(local['spendwise_transactions'] || [], data['spendwise_transactions'] || [], 'id');
-        localStorage.setItem('spendwise_transactions', JSON.stringify(mergedTxs));
+        // === Kiểm tra & làm sạch dữ liệu từ cloud (phòng dữ liệu bị hỏng/lạm dụng) ===
+        const cloudTx = Array.isArray(data['spendwise_transactions']) ? data['spendwise_transactions'] : [];
+        const localTx = Array.isArray(local['spendwise_transactions']) ? local['spendwise_transactions'] : [];
+
+        // Gộp dữ liệu: giữ cả local (khi chưa đăng nhập) và cloud
+        const mergedTxs = this.mergeById(localTx, cloudTx, 'id');
+        // Lọc bỏ bản ghi không hợp lệ (sai kiểu/giá trị) trước khi lưu
+        const safeTxs = (typeof ExportManager !== 'undefined')
+          ? ExportManager.sanitizeTransactions(mergedTxs)
+          : mergedTxs;
+        localStorage.setItem('spendwise_transactions', JSON.stringify(safeTxs));
 
         const mergedWallets = this.mergeById(local['spendwise_wallets'] || [], data['spendwise_wallets'] || [], 'id');
         if (mergedWallets.length) localStorage.setItem('spendwise_wallets', JSON.stringify(mergedWallets));
@@ -354,7 +398,21 @@ const AuthManager = {
       }
     });
     payload.updatedAt = new Date().toISOString();
-    await this.userDoc().set(payload);
+    // Áp dụng tombstone: loại bỏ bản ghi đã xóa ở máy này (xóa offline không bị ghi đè)
+    const tombs = (typeof SyncManager !== 'undefined') ? SyncManager.getTombstones() : [];
+    if (tombs.length && Array.isArray(payload.spendwise_transactions)) {
+      payload.spendwise_transactions = payload.spendwise_transactions.filter(t => !tombs.includes(t.id));
+    }
+
+    // merge:true => gửi lại nhiều lần không tạo bản ghi trùng (idempotent)
+    await this.userDoc().set(payload, { merge: true });
+
+    // Chỉ coi là thành công khi server đã xác nhận
+    if (typeof SyncManager !== 'undefined') {
+      SyncManager.clearTombstones();
+      SyncManager.clearQueue();
+    }
+    return true;
   },
 
   /**

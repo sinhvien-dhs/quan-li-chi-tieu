@@ -7,6 +7,7 @@ const SyncManager = {
   QUEUE_KEY: 'spendwise_sync_queue',
   URL_KEY: 'spendwise_sync_url',
   LAST_SYNC_KEY: 'spendwise_last_sync',
+  TOMBSTONE_KEY: 'spendwise_tombstones',
 
   getUrl() {
     return localStorage.getItem(this.URL_KEY) || '';
@@ -34,6 +35,26 @@ const SyncManager = {
   clearQueue() {
     localStorage.removeItem(this.QUEUE_KEY);
     this.updateBadge();
+  },
+
+  /**
+   * Ghi nhận "đã xóa" để không bị ghi đè khi đồng bộ (xóa offline)
+   * @param {string} txId
+   */
+  markDeleted(txId) {
+    const list = Storage.get(this.TOMBSTONE_KEY, []) || [];
+    if (!list.includes(txId)) {
+      list.push(txId);
+      Storage.set(this.TOMBSTONE_KEY, list.slice(-2000));
+    }
+  },
+
+  getTombstones() {
+    return Storage.get(this.TOMBSTONE_KEY, []) || [];
+  },
+
+  clearTombstones() {
+    Storage.remove(this.TOMBSTONE_KEY);
   },
 
   /**

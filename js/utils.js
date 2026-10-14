@@ -4,6 +4,36 @@
 
 const Utils = {
   /**
+   * Escape HTML — dùng mọi khi chèn dữ liệu người dùng vào innerHTML
+   * @param {*} value
+   * @returns {string}
+   */
+  escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  },
+
+  /**
+   * Escape thuộc tính (dùng trong data-*, title=...)
+   */
+  escapeAttr(value) {
+    return Utils.escapeHtml(value);
+  },
+
+  /**
+   * Làm sạch chuỗi để tránh chèn kịch bản (dùng khi render textContent)
+   */
+  sanitizeText(value, maxLength = 200) {
+    return String(value ?? '')
+      .replace(/[<>]/g, '')
+      .slice(0, maxLength);
+  },
+  /**
    * Format số tiền theo kiểu Việt Nam
    * @param {number} amount
    * @returns {string} VD: "1.500.000đ"

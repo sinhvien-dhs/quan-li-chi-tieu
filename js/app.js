@@ -26,11 +26,14 @@ const Toast = {
     toast.className = `toast toast--${type}`;
     toast.innerHTML = `
       <i class="fa-solid ${icons[type]} toast__icon"></i>
-      <span class="toast__message">${message}</span>
+      <span class="toast__message"></span>
       <button class="toast__close" aria-label="Đóng" style="background:none;border:none;color:inherit;cursor:pointer;padding:0 0 0 8px;font-size:14px">
         <i class="fa-solid fa-xmark"></i>
       </button>
     `;
+
+    // Dùng textContent để tuyệt đối an toàn với dữ liệu người dùng (chống XSS)
+    toast.querySelector('.toast__message').textContent = String(message ?? '');
 
     this.container.appendChild(toast);
 

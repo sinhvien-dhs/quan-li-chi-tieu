@@ -1,9 +1,22 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SpendWise - Ứng dụng quản lý chi tiêu cá nhân thông minh">
+
+  <!-- Content Security Policy: chặn tải/nhúng mã độc từ nguồn lạ -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
+    img-src 'self' data: blob:;
+    connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://cdn.sheetjs.com;
+    worker-src 'self' blob:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self'">
   <title>SpendWise - Quản Lý Chi Tiêu</title>
 
   <!-- Google Fonts -->
@@ -30,7 +43,7 @@
   <link rel="stylesheet" href="css/responsive.css">
 
   <!-- Favicon -->
-  <link rel="icon" href="assets/icon.svg">
+  <link rel="icon" href="assets/icon-192.png">
 </head>
 <body>
   <div id="printReport"></div>
@@ -109,7 +122,7 @@
   <!-- ===== PWA Install Banner ===== -->
   <div class="pwa-install-banner" id="pwaInstallBanner" style="display: none;">
     <div class="pwa-install-banner__left">
-      <img src="assets/icon.svg" class="pwa-install-banner__icon" alt="SpendWise">
+      <img src="assets/icon-192.png" class="pwa-install-banner__icon" alt="SpendWise">
       <div>
         <div class="pwa-install-banner__title">Cài đặt SpendWise</div>
         <div class="pwa-install-banner__desc">Dùng như app điện thoại, mở nhanh & offline</div>

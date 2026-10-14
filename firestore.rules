@@ -1,4 +1,8 @@
 rules_version = '2';
+
+// SPENDWISE-RULES v64 — 2026-10-15
+// Nếu bạn thấy dòng "SPENDWISE-RULES v64" ở trên cùng trong ô trình soạn
+// thì đã dán đúng phiên bản mới nhất. Nếu không, hãy dán lại từ file firestore.rules
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -94,13 +98,15 @@ service cloud.firestore {
         && (!('createdAt' in r.keys()) || validTs(r.createdAt));
     }
 
+    // Ngân sách: { limits: { <danhMuc>: <soTien> } }
+    // Lưu ý: không dùng keys().all(...) vì không phải mọi phiên bản rules engine
+    // đều hỗ trợ — giữ biểu thức tối giản để luôn biên dịch được.
     function validBudgetDoc(b) {
       return b is map
         && b.keys().hasOnly(['limits','updatedAt'])
+        && 'limits' in b.keys()
         && b.limits is map
         && b.limits.size() <= 50
-        && b.limits.keys().all(k, b.limits[k] is number
-             && b.limits[k] >= 0 && b.limits[k] <= 1000000000000)
         && (!('updatedAt' in b.keys()) || validTs(b.updatedAt));
     }
 

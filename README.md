@@ -10,38 +10,55 @@
 
 ## ✨ Tính Năng
 
+### 🚀 Nhập nhanh bằng AI (điểm khác biệt chính)
+- Gõ/nói tự nhiên: **"Ăn bún bò 40k, đổ xăng 50k bằng ví MoMo"** → tự tách thành 2 giao dịch đúng tiền, danh mục, ví
+- Bộ đọc câu **chạy ngay trong máy** (không cần mạng, không gửi dữ liệu ra ngoài)
+- Tuỳ chọn kết nối **Gemini API** (tự dán key trong Cài đặt, key chỉ lưu trên thiết bị) cho câu phức tạp
+- Nhập bằng **giọng nói** (Web Speech API, hỗ trợ tiếng Việt)
+- Xem trước kết quả trước khi lưu — không ghi nhầm vào sổ
+
 ### 💵 Thu Chi hàng ngày
 - Thêm / sửa / xóa giao dịch thu & chi, có xác nhận trước khi xóa
+- **Chuyển tiền giữa các ví**: rút ATM về ví tiền mặt, chuyển qua MoMo… — *không làm thay đổi tổng số dư*, chỉ đổi nơi tiền nằm
 - 14 danh mục trực quan (Ăn uống, Di chuyển, Mua sắm, Lương, Freelance...)
-- Lọc nhanh: **Tất cả / Chi tiêu / Thu nhập**
-- **Tìm kiếm & lọc nâng cao:** theo tên, ghi chú, danh mục, ví — kèm nút "Xem thêm" khi có hàng nghìn giao dịch
+- Lọc nhanh: **Tất cả / Chi tiêu / Thu nhập / Chuyển ví**
+- **Tìm kiếm & lọc nâng cao:** theo tên, ghi chú, danh mục, ví — tìm không dấu ("nuoc" ra "Mua nước"), kèm nút "Xem thêm"
 - Nhập số tiền linh hoạt kiểu Việt: `50000`, `1.500.000`, `2tr`, `20k`, `1.2 tỷ`
-- Tự động tính số dư, cảnh báo khi số dư âm
 - Điều khiển được bằng **bàn phím**: Tab/Enter để mở giao dịch, Esc để đóng hộp thoại
+
+### 🍜 Chia tiền nhóm + VietQR + Sổ nợ
+- Chia tiền **bảo toàn tổng** (chia phần nguyên + phân bổ phần dư, 300.000đ/4 người không bao giờ lệch 1đ)
+- **Sinh mã VietQR** đóng sẵn số tiền + nội dung chuyển khoản — người khác chỉ cần quét (hỗ trợ MoMo, ZaloPay và 10+ ngân hàng)
+- **Sổ nợ nhóm**: lập phiếu nợ, đánh dấu ai đã trả / chưa trả, tổng hợp đang phải thu
+- Nút **"Ghi vào chi tiêu"** để lưu ngay phần của bạn vào sổ giao dịch thật
 
 ### 📊 Thống kê & Biểu đồ (Chart.js)
 - **Biểu đồ tròn:** cơ cấu chi tiêu theo danh mục
 - **Biểu đồ cột kép:** so sánh Thu nhập vs Chi tiêu
 - **Biểu đồ đường:** xu hướng chi tiêu lũy kế
-- Lọc theo **Tuần này / Tháng này / Năm nay**
+- Lọc theo **Tuần này / Tháng này / Năm nay** (đã sửa lỗi múi giờ: giao dịch hôm nay luôn được tính)
 
-### 🎯 Ngân sách
+### 🎯 Ngân sách & Mục tiêu
 - Đặt hạn mức chi tiêu tháng theo từng danh mục
 - Thanh tiến độ + trạng thái: *Ổn định / Sắp chạm hạn mức / Vượt hạn mức*
 - Toast cảnh báo tự động khi chi ≥ 85% hoặc ≥ 100% hạn mức
+- Mục tiêu tiết kiệm với tiến độ %
+
+### 🔐 Bảo mật
+- **Khoá ứng dụng bằng mã PIN** (băm bằng PBKDF2 150.000 vòng, không lưu PIN dạng rõ), tự khoá lại sau 5 phút
+- **Ẩn số dư** khi ở nơi công cộng
+- Đăng nhập bằng **Google** hoặc tài khoản riêng, đồng bộ Firestore theo tài khoản
+- Firestore Security Rules chặt chẽ: mỗi bản ghi 1 tài liệu, kiểm tra kiểu dữ liệu & giới hạn kích thước
 
 ### 📑 Dữ liệu & Báo cáo
-- Xuất **Excel (.xlsx)** (2 sheet: GiaoDich + TomTat) và **báo cáo PDF**; **Sao lưu/Phục hồi JSON** đầy đủ (giao dịch, ngân sách, ví, mục tiêu, quy tắc định kỳ, cài đặt)
-- File khôi phục được kiểm tra & làm sạch trước khi ghi đè (loại bản ghi hỏng, chống XSS, tự sao lưu bản hiện tại)
-- Chế độ **dữ liệu mẫu (demo)** tách biệt hoàn toàn: không bao giờ đẩy lên tài khoản thật, tắt là xoá đúng các bản ghi mẫu
-- Nhắc nhở ghi chép hằng ngày qua Web Notification (hoạt động khi app đang mở)
+- Xuất **Excel (.xlsx)** (2 sheet: GiaoDich + TomTat) và **báo cáo PDF**
+- **Sao lưu/Phục hồi JSON** đầy đủ, file khôi phục được kiểm tra & làm sạch trước khi ghi đè
+- Chế độ **dữ liệu mẫu (demo)** tách biệt hoàn toàn: không đồng bộ lên tài khoản thật, tắt là xoá đúng các bản ghi mẫu
 
 ### 📱 PWA & Giao diện
-- Cài đặt như app (A2HS), chạy offline nhờ Service Worker
-- **Dark / Light mode** — biểu đồ tự đồng bộ theme, màu chữ đạt chuẩn **WCAG AA** ở cả hai chế độ
-- Mobile-first, responsive trên điện thoại / tablet / PC
-- Bill Splitter — chia tiền nhanh cho nhóm (tổng luôn khớp tuyệt đối)
-- Tour hướng dẫn cho người dùng mới
+- **Bố cục 2 cột trên desktop** (trên mobile vẫn 1 cột): danh sách bên trái, AI + ngân sách bên phải
+- Cài đặt như app, chạy offline nhờ Service Worker; có nút **"Xem nhanh bản Demo"** ngay trên Trang chủ
+- **Dark / Light mode** — màu chữ đạt chuẩn **WCAG AA** ở cả hai chế độ
 - Shortcut PWA: `?action=add` (ghi nhanh), `?page=stats` (mở thống kê)
 
 ---

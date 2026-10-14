@@ -168,6 +168,9 @@ const TransactionManager = {
     container.innerHTML = shown.map(t => this.renderTransactionItem(t)).join('');
     this.bindTransactionEvents();
 
+    // Dong bo the demo / o nhap nhanh tren trang chu
+    if (typeof HomeWidgets !== 'undefined') HomeWidgets.refreshDemoCard();
+
     const btnMore = document.getElementById('btnLoadMore');
     if (btnMore) {
       btnMore.style.display = transactions.length > this.visibleCount ? '' : 'none';

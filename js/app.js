@@ -597,7 +597,11 @@ const PageManager = {
 
       // Render charts khi mở trang Stats
       if (pageId === 'pageStats' && typeof ChartManager !== 'undefined') {
-        requestAnimationFrame(() => ChartManager.renderAllCharts());
+        // Gọi trực tiếp để chắc chắn có dữ liệu, rAF chỉ để canvas có kích thước
+        ChartManager.renderAllCharts();
+        requestAnimationFrame(() => {
+          if (!ChartManager.pieChart) ChartManager.renderAllCharts();
+        });
       }
 
       // Render ngân sách khi mở trang Budget

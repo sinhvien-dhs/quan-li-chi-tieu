@@ -26,9 +26,13 @@ const SyncManager = {
   },
 
   pushQueue(entry) {
-    const q = this.getQueue();
+    // Gộp theo key: mỗi key chỉ giữ thay đổi mới nhất, tránh hàng đợi phình to
+    const q = this.getQueue().filter(e => e.key !== entry.key);
     q.push({ ...entry, at: Date.now() });
-    localStorage.setItem(this.QUEUE_KEY, JSON.stringify(q));
+
+    // Giới hạn số mục chờ (bản ghi mới nhất được giữ)
+    const capped = q.slice(-200);
+    localStorage.setItem(this.QUEUE_KEY, JSON.stringify(capped));
     this.updateBadge();
   },
 
@@ -161,6 +165,7 @@ const SyncManager = {
     const badge = document.getElementById('syncStatusBadge');
     if (!badge) return;
     const pending = this.getQueue().length;
+    if (this.getQueue().length > 200) this.pushQueue(this.getQueue().slice(-1)[0]);
     if (!navigator.onLine) {
       badge.className = 'status-tag status-tag--danger';
       badge.textContent = `Offline • chờ đồng bộ ${pending}`;

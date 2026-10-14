@@ -54,6 +54,29 @@ const Toast = {
   warning(msg) { this.show(msg, 'warning'); }
 };
 
+// ===== Trợ giúp đóng modal bằng phím Esc (hỗ trợ bàn phím) =====
+const ModalHelper = {
+  OVERLAYS: ['onboardingOverlay', 'authRegisterOverlay', 'authOverlay', 'splitterModal',
+             'budgetModal', 'modalOverlay', 'confirmOverlay'],
+
+  init() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      // Đóng lớp trên cùng đang mở
+      for (let i = this.OVERLAYS.length - 1; i >= 0; i--) {
+        const el = document.getElementById(this.OVERLAYS[i]);
+        if (el && el.classList.contains('active')) {
+          // Modal xác nhận xóa cần bấm chọn, không đóng bằng Esc để tránh mất dữ liệu
+          if (el.id === 'confirmOverlay') return;
+          el.classList.remove('active');
+          document.body.style.overflow = '';
+          return;
+        }
+      }
+    });
+  }
+};
+
 // ===== Confirm Dialog =====
 const ConfirmDialog = {
   overlay: null,
@@ -439,6 +462,7 @@ const PageManager = {
 // ===== App Initialization =====
 document.addEventListener('DOMContentLoaded', () => {
   // Khởi tạo các module
+  ModalHelper.init();
   Toast.init();
   ConfirmDialog.init();
   FormManager.init();

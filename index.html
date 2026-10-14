@@ -72,7 +72,7 @@
   </div>
 
   <!-- ===== Auth Overlay (Đăng nhập / Đăng ký) ===== -->
-  <div class="modal-overlay" id="authOverlay" style="z-index:400">
+  <div class="modal-overlay" id="authOverlay" style="z-index:400" role="dialog" aria-modal="true" aria-label="Tài khoản SpendWise">
     <div class="modal" style="border-radius:var(--radius-xl) var(--radius-xl) 0 0">
       <h3 class="modal__title" style="margin-bottom:var(--space-md)">
         <i class="fa-solid fa-user-circle" style="color:var(--primary)"></i> Tài khoản SpendWise
@@ -102,7 +102,7 @@
   </div>
 
   <!-- ===== Register Overlay (Đăng ký tài khoản mới) ===== -->
-  <div class="modal-overlay" id="authRegisterOverlay" style="z-index:401">
+  <div class="modal-overlay" id="authRegisterOverlay" style="z-index:401" role="dialog" aria-modal="true" aria-label="Tạo tài khoản mới">
     <div class="modal" style="border-radius:var(--radius-xl) var(--radius-xl) 0 0;position:relative">
       <button class="modal__close" id="registerCloseBtn" style="position:absolute;top:var(--space-md);right:var(--space-md)">
         <i class="fa-solid fa-xmark"></i>
@@ -632,7 +632,7 @@
   </button>
 
   <!-- ===== Modal: Thêm/Sửa Giao Dịch ===== -->
-  <div class="modal-overlay" id="modalOverlay">
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal">
       <div class="modal__handle"></div>
       <div class="modal__header">
@@ -731,7 +731,7 @@
   </div>
 
   <!-- ===== Modal: Chỉnh Hạn Mức Ngân Sách ===== -->
-  <div class="modal-overlay" id="budgetModal">
+  <div class="modal-overlay" id="budgetModal" role="dialog" aria-modal="true" aria-label="Thiết lập ngân sách">
     <div class="modal">
       <div class="modal__handle"></div>
       <div class="modal__header">
@@ -762,7 +762,7 @@
   </div>
 
   <!-- ===== Confirm Dialog ===== -->
-  <div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-overlay" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
     <div class="confirm-dialog">
       <div class="confirm-dialog__icon">
         <i class="fa-solid fa-trash-can"></i>
@@ -777,7 +777,7 @@
   </div>
 
   <!-- ===== Modal: Chia Tiền Nhóm (Bill Splitter) ===== -->
-  <div class="modal-overlay" id="splitterModal">
+  <div class="modal-overlay" id="splitterModal" role="dialog" aria-modal="true" aria-label="Chia tiền nhóm">
     <div class="modal">
       <div class="modal__handle"></div>
       <div class="modal__header">

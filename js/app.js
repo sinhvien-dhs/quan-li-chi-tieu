@@ -243,6 +243,9 @@ const FormManager = {
   },
 
   handleSubmit() {
+    const submitBtn = document.getElementById('formSubmitBtn');
+    if (this._saving) return;           // chặn bấm liên tiếp
+
     const name = document.getElementById('inputName').value.trim();
     const rawAmount = parseFloat(document.getElementById('inputAmount').value);
     const currency = (document.getElementById('inputCurrencyTx') || {}).value || 'VND';
@@ -267,12 +270,22 @@ const FormManager = {
       Toast.error('Vui lòng nhập tên giao dịch!');
       return;
     }
-    if (!amount || amount <= 0) {
-      Toast.error('Vui lòng nhập số tiền hợp lệ!');
+    if (name.length > 50) {
+      Toast.error('Tên giao dịch không được vượt quá 50 ký tự!');
       return;
     }
-    if (!date) {
-      Toast.error('Vui lòng chọn ngày!');
+    // Số tiền: chặn âm, rỗng, NaN, vượt giới hạn — dùng chung Business.parseAmount
+    const validAmount = Business.parseAmount(document.getElementById('inputAmount').value);
+    if (validAmount === null) {
+      Toast.error('Số tiền không hợp lệ (phải là số dương, tối đa 1 nghìn tỷ).');
+      return;
+    }
+    if (!Business.isValidDate(date)) {
+      Toast.error('Ngày giao dịch không hợp lệ!');
+      return;
+    }
+    if (date > Utils.getToday()) {
+      Toast.error('Không thể chọn ngày trong tương lai!');
       return;
     }
     if (!this.selectedCategory) {
@@ -282,7 +295,7 @@ const FormManager = {
 
     const data = {
       name,
-      amount,
+      amount: validAmount,
       date,
       note,
       type: this.currentType,
@@ -296,7 +309,7 @@ const FormManager = {
     const repeat = (document.getElementById('inputRepeat') || {}).value;
     if (repeat && repeat !== 'none' && typeof Features !== 'undefined' && !TransactionManager.editingId) {
       Features.addRecurring({
-        name, amount, type: this.currentType, category: this.selectedCategory,
+        name, amount: validAmount, type: this.currentType, category: this.selectedCategory,
         wallet: data.wallet, frequency: repeat,
         startDate: date,
         lastRun: date,      // ngày hôm nay đã tạo giao dịch thủ công → không tạo trùng
@@ -310,7 +323,26 @@ const FormManager = {
       if (preview) { preview.style.display = 'none'; preview.src = ''; }
     }
 
-    TransactionManager.handleSubmit(data);
+    // Trạng thái "đang lưu" để chặn bấm liên tiếp
+    this._saving = true;
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Đang lưu...';
+    }
+
+    try {
+      const ok = TransactionManager.handleSubmit(data);
+      if (ok === false) {
+        // Lưu thất bại (không đủ bộ nhớ): giữ nguyên nội dung người dùng đã nhập
+        Toast.warning('Chưa lưu được. Dữ liệu bạn nhập vẫn còn trong biểu mẫu.');
+      }
+    } finally {
+      this._saving = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = TransactionManager.editingId ? 'Lưu thay đổi' : 'Thêm giao dịch';
+      }
+    }
   }
 };
 

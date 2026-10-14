@@ -48,6 +48,11 @@
 <body>
   <div id="printReport"></div>
 
+  <!-- Thanh trạng thái: offline / đồng bộ -->
+  <div id="connBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:1200;background:var(--warning);color:#fff;text-align:center;font-size:var(--font-size-sm);padding:6px 12px">
+    <i class="fa-solid fa-wifi"></i> Đang offline — giao dịch vẫn được lưu trên máy này và sẽ đồng bộ khi có mạng
+  </div>
+
   <!-- ===== Auth Overlay (Đăng nhập / Đăng ký) ===== -->
   <div class="modal-overlay" id="authOverlay" style="z-index:400">
     <div class="modal" style="border-radius:var(--radius-xl) var(--radius-xl) 0 0">
@@ -148,7 +153,7 @@
         <button class="header__btn" id="btnOpenSplitter" title="Chia tiền nhóm (Bill Splitter)">
           <i class="fa-solid fa-calculator"></i>
         </button>
-        <button class="header__btn" id="themeToggle" title="Đổi giao diện">
+        <button class="header__btn" id="themeToggle" title="Đổi giao diện" aria-label="Đổi giao diện sáng/tối">
           <i class="fa-solid fa-moon"></i>
         </button>
       </div>
@@ -164,6 +169,27 @@
           <div class="summary__balance-label">Số dư hiện tại</div>
           <div class="summary__balance-amount" id="totalBalance">0đ</div>
         </div>
+        <!-- Ngân sách tháng: trả lời "còn bao nhiêu ngân sách?" -->
+        <div class="summary__card" id="homeBudgetBox" style="margin-bottom:var(--space-md);display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-sm)">
+            <span style="font-size:var(--font-size-sm);font-weight:600">
+              <i class="fa-solid fa-bullseye" style="color:var(--primary)"></i> Ngân sách tháng này
+            </span>
+            <span style="font-size:var(--font-size-sm);font-weight:700" id="homeBudgetPercent">0%</span>
+          </div>
+          <div class="budget-summary__progress-bar" style="margin-bottom:var(--space-sm)">
+            <div class="budget-summary__progress-fill budget-summary__progress-fill--safe" id="homeBudgetFill" style="width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm)">
+            <span>Đã chi <strong id="homeBudgetSpent">0đ</strong></span>
+            <span>Còn <strong id="homeBudgetLeft">0đ</strong></span>
+          </div>
+          <div style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:4px">
+            Hạn mức: <span id="homeBudgetLimit">0đ</span>
+          </div>
+          <div id="homeBudgetWarning" style="display:none;font-size:var(--font-size-xs);color:var(--danger);margin-top:6px"></div>
+        </div>
+
         <div class="summary__cards">
           <div class="summary__card">
             <div class="summary__card-header">
@@ -564,7 +590,7 @@
   </div>
 
   <!-- ===== FAB Button ===== -->
-  <button class="fab" id="fabAdd" title="Thêm giao dịch">
+  <button class="fab" id="fabAdd" title="Thêm giao dịch" aria-label="Thêm giao dịch mới">
     <i class="fa-solid fa-plus"></i>
   </button>
 
@@ -810,6 +836,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <script src="js/utils.js"></script>
+  <script src="js/business.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/category.js"></script>
   <script src="js/transaction.js"></script>

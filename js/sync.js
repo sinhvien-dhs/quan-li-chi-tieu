@@ -141,6 +141,22 @@ const SyncManager = {
     this.updateBadge();
   },
 
+  /**
+   * Hiển thị/ẩn thanh "đang offline" + đẩy nội dung xuống dưới
+   */
+  renderConnectionBanner() {
+    const banner = document.getElementById('connBanner');
+    if (!banner) return;
+    const offline = !navigator.onLine;
+    banner.style.display = offline ? 'block' : 'none';
+
+    // Đẩy nội dung app xuống để không bị thanh che mất
+    const app = document.querySelector('.app');
+    if (app) {
+      app.style.paddingTop = offline ? '34px' : '';
+    }
+  },
+
   updateBadge() {
     const badge = document.getElementById('syncStatusBadge');
     if (!badge) return;
@@ -168,6 +184,12 @@ const SyncManager = {
 
     window.addEventListener('online', () => this.onOnline());
     window.addEventListener('offline', () => this.onOffline());
+
+    // Thanh báo trạng thái kết nối (rõ ràng cho người dùng)
+    this.renderConnectionBanner();
+    window.addEventListener('online', () => this.renderConnectionBanner());
+    window.addEventListener('offline', () => this.renderConnectionBanner());
+    this.updateBadge();
 
     const urlInput = document.getElementById('inputSyncUrl');
     if (urlInput) {

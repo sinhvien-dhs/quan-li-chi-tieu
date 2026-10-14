@@ -1,0 +1,34 @@
+name: CI — Kiểm thử tự động
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # 1) Kiểm thử lớp nghiệp vụ (tiền, ngân sách, ngày, chia tiền)
+      - name: Unit test — lớp nghiệp vụ
+        run: node tests/business.test.js
+
+      # 2) Kiểm tra cú pháp các file JS trong js/
+      - name: Syntax check
+        run: |
+          for f in js/*.js; do node --check "$f" || exit 1; done
+
+      # 3) Kiểm tra Firestore Rules biên dịch được không
+      #    (bỏ qua nếu chưa cấu hình FIREBASE_PROJECT_ID)
+      - name: Rules test (nếu có FIREBASE_PROJECT_ID)
+        if: ${{ secrets.FIREBASE_PROJECT_ID != '' }}
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: npx --yes firebase-tools@13 firestore:rules

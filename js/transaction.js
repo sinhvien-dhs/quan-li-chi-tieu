@@ -157,11 +157,17 @@ const TransactionManager = {
       }
     });
 
-    const balance = totalIncome - totalExpense;
+    // Dùng lớp nghiệp vụ dùng chung để số liệu khớp với Thống kê / Ngân sách / Báo cáo
+    const income = Business.totalIncome(transactions);
+    const expense = Business.totalExpense(transactions);
+    const balance = Business.balance(transactions);
 
     document.getElementById('totalBalance').textContent = (balance < 0 ? '-' : '') + Utils.formatCurrency(balance);
-    document.getElementById('totalIncome').textContent = Utils.formatCurrency(totalIncome);
-    document.getElementById('totalExpense').textContent = Utils.formatCurrency(totalExpense);
+    document.getElementById('totalIncome').textContent = Utils.formatCurrency(income);
+    document.getElementById('totalExpense').textContent = Utils.formatCurrency(expense);
+
+    // Cập nhật ô "Ngân sách tháng" trên Trang chủ
+    this.renderHomeBudget();
 
     // Thêm class nếu số dư âm
     const balanceEl = document.getElementById('totalBalance');
@@ -169,6 +175,61 @@ const TransactionManager = {
       balanceEl.style.color = '#FF6B6B';
     } else {
       balanceEl.style.color = '';
+    }
+  },
+
+  /**
+   * Ô "Ngân sách tháng" trên Trang chủ:
+   * hiển thị đã chi / hạn mức / còn lại + thanh tiến độ.
+   * Trả lời trực tiếp câu hỏi "còn bao nhiêu ngân sách?".
+   */
+  renderHomeBudget() {
+    const box = document.getElementById('homeBudgetBox');
+    if (!box) return;
+
+    if (typeof BudgetManager === 'undefined') return;
+    const budgets = BudgetManager.getBudgets();
+    const summary = Business.budgetSummary(budgets, Storage.getTransactions());
+
+    const hasBudget = summary.totalLimit > 0;
+    box.style.display = hasBudget ? '' : 'none';
+    if (!hasBudget) return;
+
+    const pct = Math.min(100, summary.percent);
+    const fill = document.getElementById('homeBudgetFill');
+    if (fill) {
+      fill.style.width = pct + '%';
+      fill.className = 'budget-summary__progress-fill ' +
+        (summary.percent >= 100 ? 'budget-summary__progress-fill--danger'
+          : summary.percent >= 80 ? 'budget-summary__progress-fill--warning'
+            : 'budget-summary__progress-fill--safe');
+    }
+
+    const setText = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+    setText('homeBudgetSpent', Utils.formatCurrency(summary.totalSpent));
+    setText('homeBudgetLimit', Utils.formatCurrency(summary.totalLimit));
+    setText('homeBudgetLeft', Utils.formatCurrency(summary.remaining));
+    setText('homeBudgetPercent', summary.percent + '%');
+
+    // Cảnh báo danh mục vượt hạn mức
+    const warnBox = document.getElementById('homeBudgetWarning');
+    if (warnBox) {
+      const over = Object.keys(budgets).filter(catId => {
+        const limit = Number(budgets[catId]) || 0;
+        return limit > 0 && Business.spentByCategory(Business.filterThisMonth(Storage.getTransactions()), catId) > limit;
+      });
+      if (over.length > 0) {
+        warnBox.style.display = '';
+        warnBox.textContent = '⚠️ Vượt hạn mức: ' + over.map(c => {
+          const cat = Categories.getById(c);
+          return cat ? cat.name : c;
+        }).join(', ');
+      } else {
+        warnBox.style.display = 'none';
+      }
     }
   },
 
@@ -203,13 +264,13 @@ const TransactionManager = {
    * @param {Object} data
    */
   handleSubmit(data) {
+    // Kiểm tra ghi bền vững: nếu lưu thất bại thì báo rõ, không báo thành công giả
+    const saved = this.editingId ? Storage.updateTransaction(this.editingId, data) : Storage.addTransaction(data);
+    if (!saved) return false;
+
     if (this.editingId) {
-      // Sửa
-      Storage.updateTransaction(this.editingId, data);
       Toast.success('Đã cập nhật giao dịch!');
     } else {
-      // Thêm
-      Storage.addTransaction(data);
       Toast.success('Đã thêm giao dịch mới!');
     }
 

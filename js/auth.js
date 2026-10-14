@@ -400,6 +400,7 @@ const AuthManager = {
 
       const budgetsSnap = await root.collection('budgets').doc('main').get();
       cloud.spendwise_budgets = budgetsSnap.exists ? (budgetsSnap.data().limits || {}) : {};
+      cloud.budgetsUpdatedAt = budgetsSnap.exists ? (budgetsSnap.data().updatedAt || '') : '';
 
       const settingsSnap = await root.collection('settings').doc('main').get();
       cloud.settings = settingsSnap.exists ? settingsSnap.data() : {};
@@ -436,12 +437,29 @@ const AuthManager = {
       localStorage.setItem('spendwise_recurring', JSON.stringify(
         this.mergeById(local.spendwise_recurring || [], cloud.spendwise_recurring)));
 
-      // Ngân sách: lấy hạn mức lớn hơn (không làm mất hạn mức đã đặt)
-      const mergedBudgets = Object.assign({}, cloud.spendwise_budgets);
-      Object.keys(local.spendwise_budgets || {}).forEach(k => {
-        mergedBudgets[k] = Math.max(cloud.spendwise_budgets[k] || 0, local.spendwise_budgets[k] || 0);
+      // Ngân sách: "thay đổi mới nhất thắng" (KHÔNG dùng "số lớn hơn thắng",
+      // vì sẽ tự khôi phục hạn mức cũ khi người dùng chủ động giảm hạn mức)
+      const cloudBudgets = cloud.spendwise_budgets || {};
+      const localBudgets = local.spendwise_budgets || {};
+      const mergedBudgets = Object.assign({}, localBudgets, cloudBudgets);
+
+      const localTs = localStorage.getItem('spendwise_budgets_updated_at') || '';
+      const cloudTs = cloud.budgetsUpdatedAt || '';
+      const localIsNewer = localTs > cloudTs;
+
+      Object.keys(mergedBudgets).forEach(k => {
+        const inLocal = localBudgets[k] !== undefined;
+        const inCloud = cloudBudgets[k] !== undefined;
+        if (inLocal && !inCloud) return;
+        if (!inLocal && inCloud) return;
+        mergedBudgets[k] = Business.mergeBudgetValue(
+          localBudgets[k], cloudBudgets[k],
+          localTs, cloudTs
+        );
       });
       localStorage.setItem('spendwise_budgets', JSON.stringify(mergedBudgets));
+      if (cloudTs) localStorage.setItem('spendwise_budgets_updated_at', cloudTs);
+      void localIsNewer;
 
       // Cài đặt: ưu tiên lựa chọn trên máy
       if (local.spendwise_currency === undefined && cloud.settings.currency) {

@@ -4,6 +4,7 @@
 
 const BudgetManager = {
   STORAGE_KEY: 'spendwise_budgets',
+  UPDATED_AT_KEY: 'spendwise_budgets_updated_at',
 
   // Ngân sách mặc định mẫu (VNĐ)
   defaultBudgets: {
@@ -44,6 +45,14 @@ const BudgetManager = {
   },
 
   /**
+   * Thời điểm cập nhật ngân sách gần nhất (dùng cho quy tắc hợp nhất
+   * "thay đổi mới nhất thắng" thay vì "số lớn hơn thắng")
+   */
+  getBudgetsUpdatedAt() {
+    return Storage.get(this.UPDATED_AT_KEY, null);
+  },
+
+  /**
    * Lưu ngân sách cho một danh mục
    * @param {string} categoryId
    * @param {number} amount
@@ -52,8 +61,10 @@ const BudgetManager = {
     const budgets = this.getBudgets();
     budgets[categoryId] = amount;
     Storage.set(this.STORAGE_KEY, budgets);
+    Storage.set(this.UPDATED_AT_KEY, new Date().toISOString());
     this.renderBudgetList();
     this.updateBudgetSummary();
+    if (typeof TransactionManager !== 'undefined') TransactionManager.renderHomeBudget();
   },
 
   /**
@@ -62,19 +73,9 @@ const BudgetManager = {
    * @returns {number}
    */
   getSpentThisMonth(categoryId) {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const transactions = Storage.getTransactions();
-    return transactions
-      .filter(t => {
-        if (t.type !== 'expense') return false;
-        if (categoryId && t.category !== categoryId) return false;
-        const d = new Date(t.date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      })
-      .reduce((sum, t) => sum + t.amount, 0);
+    // Dùng lớp nghiệp vụ dùng chung để khớp với Trang chủ & Thống kê
+    const monthTx = Business.filterThisMonth(Storage.getTransactions());
+    return Business.spentByCategory(monthTx, categoryId);
   },
 
   /**

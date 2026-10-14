@@ -29,7 +29,7 @@ const TransactionManager = {
     const search = document.getElementById('searchInput');
     if (search) {
       search.addEventListener('input', (e) => {
-        this.searchTerm = e.target.value.trim().toLowerCase();
+        this.searchTerm = Utils.normalizeText(e.target.value);
         this.visibleCount = this.PAGE_SIZE;
         this.renderTransactions();
       });
@@ -116,10 +116,10 @@ const TransactionManager = {
       transactions = transactions.filter(t => {
         const cat = Categories.getById(t.category);
         const wallet = (typeof Features !== 'undefined' && Features.getWalletById(t.wallet)) || null;
-        return (t.name || '').toLowerCase().includes(term)
-          || (t.note || '').toLowerCase().includes(term)
-          || (cat ? cat.name.toLowerCase().includes(term) : false)
-          || (wallet ? wallet.name.toLowerCase().includes(term) : false);
+        return Utils.normalizeText(t.name).indexOf(term) > -1
+          || Utils.normalizeText(t.note).indexOf(term) > -1
+          || (cat ? Utils.normalizeText(cat.name).indexOf(term) > -1 : false)
+          || (wallet ? Utils.normalizeText(wallet.name).indexOf(term) > -1 : false);
       });
     }
 

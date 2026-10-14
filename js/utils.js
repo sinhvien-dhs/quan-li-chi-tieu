@@ -65,6 +65,26 @@ const Utils = {
    * Định dạng số nguyên theo kiểu Việt Nam (dấu chấm phân cách nghìn)
    * VD: 2000000 → "2.000.000" (dùng cho ô nhập số tiền)
    */
+  /**
+   * Bo dau tieng Viet + viet thuong, dung cho tim kiem
+   */
+  normalizeText(value) {
+    if (value === null || value === undefined) return '';
+    let s = String(value);
+    try {
+      s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    } catch (e) {
+      s = s.replace(/[àáảãạăằắẳẵặâầấẩẫậ]/g, 'a')
+        .replace(/[èéẻẽẹêềếểễệ]/g, 'e')
+        .replace(/[ìíỉĩị]/g, 'i')
+        .replace(/[òóỏõọôồốổỗộơờớởỡợ]/g, 'o')
+        .replace(/[ùúủũụưừứửữự]/g, 'u')
+        .replace(/[ýỳỷỹỵ]/g, 'y')
+        .replace(/đ/g, 'd');
+    }
+    return s.toLowerCase().trim();
+  },
+
   formatNumber(amount) {
     const n = Math.round(Number(amount) || 0);
     return n.toLocaleString('vi-VN');

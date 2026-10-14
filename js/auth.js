@@ -169,7 +169,15 @@ const AuthManager = {
       Toast.error('Tên đăng nhập không được có dấu hoặc khoảng trắng!');
       return;
     }
-    if (!password || password.length < 6) { Toast.error('Mật khẩu tối thiểu 6 ký tự!'); return; }
+    if (!password || password.length < 8) { Toast.error('Mật khẩu tối thiểu 8 ký tự!'); return; }
+    if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      Toast.error('Mật khẩu cần có cả chữ và số!');
+      return;
+    }
+    if (/^(123456|password|qwerty|abc123|111111)/i.test(password)) {
+      Toast.error('Mật khẩu quá dễ đoán, hãy chọn mật khẩu khác!');
+      return;
+    }
     if (password !== password2) { Toast.error('Hai mật khẩu không khớp!'); return; }
 
     try {
@@ -338,7 +346,7 @@ const AuthManager = {
       'auth/wrong-password': 'Sai mật khẩu!',
       'auth/email-already-in-use': 'Tên đăng nhập đã được đăng ký!',
       'auth/invalid-email': 'Email không hợp lệ!',
-      'auth/weak-password': 'Mật khẩu quá yếu (tối thiểu 6 ký tự)!',
+      'auth/weak-password': 'Mật khẩu quá yếu (tối thiểu 8 ký tự, có chữ và số)!',
       'auth/invalid-credential': 'Tên đăng nhập không tồn tại hoặc sai mật khẩu!',
       'auth/too-many-requests': 'Thử quá nhiều lần, vui lòng thử lại sau!',
       'auth/network-request-failed': 'Không có kết nối mạng. Dữ liệu vẫn được lưu trên máy này.',

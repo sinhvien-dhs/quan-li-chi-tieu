@@ -40,6 +40,28 @@ function eq(actual, expected, msg) {
 }
 function ok(v, msg) { if (!v) throw new Error(msg || 'expected truthy'); }
 
+test('gộp bản ghi local + cloud theo updatedAt', () => {
+  const local = [{ id: 'a', amount: 1, updatedAt: '2026-10-10' }, { id: 'c', amount: 3 }];
+  const cloud = [{ id: 'a', amount: 9, updatedAt: '2026-10-09' }, { id: 'b', amount: 2, updatedAt: '2026-10-08' }];
+  const merged = Business.mergeById(local, cloud);
+  eq(merged.length, 3);
+  const a = merged.find(x => x.id === 'a');
+  eq(a.amount, 1, 'ban local moi hon phai thang');
+  ok(merged.find(x => x.id === 'b'), 'ban chi co tren cloud van duoc giu');
+});
+
+test('gộp: bản ghi đã xoá (tombstone) không hồi sinh từ cloud', () => {
+  const cloud = [{ id: 'x1', amount: 100 }, { id: 'x2', amount: 200 }];
+  const merged = Business.mergeById([], cloud, ['x1']);
+  eq(merged.length, 1);
+  eq(merged[0].id, 'x2');
+});
+
+test('gộp: tombstone cũng loại bản đang có ở máy', () => {
+  const merged = Business.mergeById([{ id: 'y1', amount: 50 }], [], ['y1']);
+  eq(merged.length, 0);
+});
+
 console.log('\n== Lớp nghiệp vụ SpendWise ==\n');
 
 test('tổng thu / tổng chi / số dư', () => {

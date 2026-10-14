@@ -158,6 +158,31 @@ const Business = {
   },
 
   /**
+   * Gộp hai mảng bản ghi theo id khi đồng bộ cloud:
+   * - Bản có updatedAt/lastRun mới hơn thắng
+   * - Bản ghi nằm trong `tombstones` (đã xoá trên máy này) bị loại khỏi cả
+   *   bản cloud lẫn kết quả → không bao giờ "hồi sinh" bản ghi đã xoá.
+   */
+  mergeById(localArr, cloudArr, tombstones = []) {
+    const tombs = Array.isArray(tombstones) ? tombstones : [];
+    const map = new Map();
+
+    const add = (item) => {
+      if (!item || !item.id) return;
+      if (tombs.indexOf(item.id) > -1) return;
+      const cur = map.get(item.id);
+      if (!cur) { map.set(item.id, item); return; }
+      const a = cur.updatedAt || cur.lastRun || '';
+      const b = item.updatedAt || item.lastRun || '';
+      if (b > a) map.set(item.id, item);
+    };
+
+    (Array.isArray(cloudArr) ? cloudArr : []).forEach(add);
+    (Array.isArray(localArr) ? localArr : []).forEach(add);
+    return Array.from(map.values());
+  },
+
+  /**
    * Chuẩn hóa số tiền người dùng nhập → trả về số nguyên hợp lệ hoặc null.
    *
    * Chấp nhận các cách gõ phổ biến tại Việt Nam:

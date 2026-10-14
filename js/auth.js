@@ -425,10 +425,14 @@ const AuthManager = {
         return;
       }
 
+      // Bản ghi đã xoá trên máy này (tombstone) không được "hồi sinh" từ cloud
+      const tombs = (typeof SyncManager !== 'undefined') ? SyncManager.getTombstones() : [];
+
       // Gộp danh sách: giữ bản local chưa kịp đồng bộ + bản cloud, ưu tiên bản mới hơn
       const mergedTxs = this.mergeById(
         Array.isArray(local.spendwise_transactions) ? local.spendwise_transactions : [],
-        cloud.spendwise_transactions
+        cloud.spendwise_transactions,
+        tombs
       );
       const safeTxs = (typeof ExportManager !== 'undefined')
         ? ExportManager.sanitizeTransactions(mergedTxs)
@@ -436,11 +440,11 @@ const AuthManager = {
       localStorage.setItem('spendwise_transactions', JSON.stringify(safeTxs));
 
       localStorage.setItem('spendwise_wallets', JSON.stringify(
-        this.mergeById(local.spendwise_wallets || [], cloud.spendwise_wallets)));
+        this.mergeById(local.spendwise_wallets || [], cloud.spendwise_wallets, tombs)));
       localStorage.setItem('spendwise_goals', JSON.stringify(
-        this.mergeById(local.spendwise_goals || [], cloud.spendwise_goals)));
+        this.mergeById(local.spendwise_goals || [], cloud.spendwise_goals, tombs)));
       localStorage.setItem('spendwise_recurring', JSON.stringify(
-        this.mergeById(local.spendwise_recurring || [], cloud.spendwise_recurring)));
+        this.mergeById(local.spendwise_recurring || [], cloud.spendwise_recurring, tombs)));
 
       // Ngân sách: "thay đổi mới nhất thắng" (KHÔNG dùng "số lớn hơn thắng",
       // vì sẽ tự khôi phục hạn mức cũ khi người dùng chủ động giảm hạn mức)
@@ -487,21 +491,10 @@ const AuthManager = {
   },
 
   /**
-   * Gộp hai mảng theo id, giữ bản ghi có updatedAt/lastRun mới hơn
+   * Gộp hai mảng theo id (dùng Business.mergeById để có thể kiểm thử)
    */
-  mergeById(localArr, cloudArr) {
-    const map = new Map();
-    const add = (item) => {
-      if (!item || !item.id) return;
-      const cur = map.get(item.id);
-      if (!cur) { map.set(item.id, item); return; }
-      const a = cur.updatedAt || cur.lastRun || '';
-      const b = item.updatedAt || item.lastRun || '';
-      if (b > a) map.set(item.id, item);
-    };
-    (Array.isArray(cloudArr) ? cloudArr : []).forEach(add);
-    (Array.isArray(localArr) ? localArr : []).forEach(add);
-    return Array.from(map.values());
+  mergeById(localArr, cloudArr, tombstones = []) {
+    return Business.mergeById(localArr, cloudArr, tombstones);
   },
 
   /**

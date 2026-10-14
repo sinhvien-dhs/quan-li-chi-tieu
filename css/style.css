@@ -970,6 +970,8 @@ body {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   margin-bottom: var(--space-xl);
+  /* Giữ xuống dòng trong thông báo nhiều dòng */
+  white-space: pre-line;
 }
 
 .confirm-dialog__actions {

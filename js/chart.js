@@ -34,10 +34,45 @@ const ChartManager = {
    */
   renderAllCharts() {
     const transactions = this.getTransactionsByPeriod();
+    // Số liệu tổng quan vẫn hiển thị được dù không có thư viện biểu đồ
     this.renderSummaryStats(transactions);
+
+    // Gỡ thông báo thiếu thư viện (nếu có từ lần render trước)
+    document.querySelectorAll('.chart-unavailable').forEach((n) => n.remove());
+    ['pieChart', 'barChart', 'lineChart'].forEach((id) => {
+      const canvas = document.getElementById(id);
+      if (canvas) canvas.style.visibility = '';
+    });
+
+    // Chart.js là tài nguyên ngoài: nếu không tải được (offline lần đầu) thì
+    // báo người dùng thay vì làm hỏng cả trang.
+    if (typeof Chart === 'undefined') {
+      this.showChartUnavailable();
+      return;
+    }
     this.renderPieChart(transactions);
     this.renderBarChart(transactions);
     this.renderLineChart(transactions);
+  },
+
+  /**
+   * Hiển thị thông báo thay cho biểu đồ khi thiếu thư viện Chart.js
+   */
+  showChartUnavailable() {
+    const message = 'Chưa tải được thư viện biểu đồ. Kết nối mạng rồi mở lại trang.';
+    ['pieChart', 'barChart', 'lineChart'].forEach((id) => {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      const holder = canvas.parentElement;
+      let note = holder.querySelector('.chart-unavailable');
+      if (!note) {
+        note = document.createElement('p');
+        note.className = 'chart-unavailable';
+        holder.appendChild(note);
+      }
+      note.textContent = message;
+      canvas.style.visibility = 'hidden';
+    });
   },
 
   /**

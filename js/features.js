@@ -286,6 +286,26 @@ const Features = {
     return `${ruleId}__${y}-${m}-${day}`;
   },
 
+  /**
+   * Kiểm tra định kỳ khi ngày đổi (app mở suốt đêm hoặc tab bị ẩn)
+   */
+  startRecurringScheduler() {
+    let lastCheckedDay = new Date().toDateString();
+
+    const check = () => {
+      const today = new Date().toDateString();
+      if (today === lastCheckedDay) return;
+      lastCheckedDay = today;
+      this.processRecurring();
+    };
+
+    setInterval(check, 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') check();
+    });
+    window.addEventListener('focus', check);
+  },
+
   processRecurring() {
     const list = this.getRecurring();
     const today = new Date();
@@ -374,7 +394,14 @@ const Features = {
     // Tỉ giá CỐ ĐỊNH do người dùng quy định — không gọi API nữa
     this.CURRENCIES.USD.rate = 26000;
     this.CURRENCIES.EUR.rate = 29000;
-    Storage.set('spendwise_rates', { month: new Date().toISOString().slice(0, 7), rates: { USD: 26000, EUR: 29000 } });
+    // Chỉ ghi lại khi thực sự khác, tránh mỗi lần mở app lại tạo thay đổi chờ đồng bộ
+    const month = new Date().toISOString().slice(0, 7);
+    const rates = { USD: 26000, EUR: 29000 };
+    const current = Storage.get('spendwise_rates', null);
+    if (!current || current.month !== month ||
+        !current.rates || current.rates.USD !== rates.USD || current.rates.EUR !== rates.EUR) {
+      Storage.set('spendwise_rates', { month: month, rates: rates });
+    }
   },
 
   getCurrency() {
@@ -474,6 +501,7 @@ const Features = {
     this.bindGoalEvents();
     this.renderRecurringList();
     this.processRecurring();
+    this.startRecurringScheduler();
 
     // Form thêm giao dịch mặc định theo đồng tiền hiện tại
     const txCurInit = document.getElementById('inputCurrencyTx');

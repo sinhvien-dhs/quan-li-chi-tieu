@@ -50,11 +50,49 @@ const Features = {
     this.renderWalletOptions();
   },
 
+  /**
+   * Xóa ví — nếu ví đang được giao dịch sử dụng thì hỏi xử lý,
+   * tránh để lại giao dịch trỏ tới ví không tồn tại.
+   */
   deleteWallet(id) {
-    const wallets = this.getWallets().filter(w => w.id !== id);
-    this.saveWallets(wallets);
-    this.renderWalletList();
-    this.renderWalletOptions();
+    if (this.getWallets().length <= 1) {
+      Toast.error('Cần ít nhất 1 ví!');
+      return;
+    }
+    const wallet = this.getWalletById(id);
+    const used = (Storage.getTransactions() || []).filter(t => t.wallet === id);
+
+    const doDelete = (reassignTo) => {
+      if (used.length > 0 && reassignTo) {
+        const txs = Storage.getTransactions().map(t =>
+          t.wallet === id ? Object.assign({}, t, { wallet: reassignTo }) : t);
+        Storage.saveTransactions(txs);
+      }
+      this.saveWallets(this.getWallets().filter(w => w.id !== id));
+      this.renderWalletList();
+      this.renderWalletOptions();
+      TransactionManager.renderTransactions();
+      if (typeof TransactionManager !== 'undefined') TransactionManager.renderHomeBudget();
+    };
+
+    if (used.length === 0) {
+      doDelete(null);
+      Toast.success('Đã xóa ví "' + (wallet ? wallet.name : '') + '"!');
+      return;
+    }
+
+    // Có giao dịch đang dùng ví này → hỏi cách xử lý
+    const others = this.getWallets().filter(w => w.id !== id);
+    ConfirmDialog.show({
+      title: 'Xóa ví "' + (wallet ? wallet.name : '') + '"?',
+      message: used.length + ' giao dịch đang dùng ví này. ' +
+        'Giao dịch sẽ được chuyển sang ví "' + others[0].name + '".',
+      confirmText: 'Xóa & chuyển ví',
+      onConfirm: () => {
+        doDelete(others[0].id);
+        Toast.success(`Đã xóa ví và chuyển ${used.length} giao dịch sang "${others[0].name}"!`);
+      }
+    });
   },
 
   renderWalletOptions() {
@@ -78,14 +116,7 @@ const Features = {
       </div>
     `).join('');
     container.querySelectorAll('[data-wallet-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (this.getWallets().length <= 1) {
-          Toast.error('Cần ít nhất 1 ví!');
-          return;
-        }
-        this.deleteWallet(btn.dataset.walletId);
-        Toast.success('Đã xóa ví!');
-      });
+      btn.addEventListener('click', () => this.deleteWallet(btn.dataset.walletId));
     });
   },
 

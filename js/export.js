@@ -48,9 +48,11 @@ const ExportManager = {
       return;
     }
 
-    // Chuẩn bị dữ liệu hiển thị tiếng Việt rõ ràng
-    const rows = transactions.map((t, index) => {
+    // Chuẩn bị dữ liệu hiển thị tiếng Việt rõ ràng (mới nhất trước)
+    const sorted = transactions.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const rows = sorted.map((t, index) => {
       const cat = Categories.getById(t.category);
+      const wallet = (typeof Features !== 'undefined' && Features.getWalletById(t.wallet)) || null;
       return {
         'STT': index + 1,
         'Ngày': Utils.formatDate(t.date),
@@ -58,6 +60,7 @@ const ExportManager = {
         'Danh mục': cat ? cat.name : 'Khác',
         'Tên giao dịch': t.name,
         'Số tiền (VNĐ)': t.amount,
+        'Ví': wallet ? wallet.name : '',
         'Ghi chú': t.note || ''
       };
     });
@@ -72,12 +75,28 @@ const ExportManager = {
       { wch: 16 }, // Danh mục
       { wch: 25 }, // Tên
       { wch: 16 }, // Số tiền
+      { wch: 14 }, // Ví
       { wch: 25 }  // Ghi chú
     ];
     worksheet['!cols'] = colWidths;
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'GiaoDich');
+
+    // Sheet tóm tắt: dùng chung lớp nghiệp vụ nên số liệu khớp với app
+    const budgetSummary = Business.budgetSummary(BudgetManager.getBudgets(), transactions);
+    const summaryRows = [
+      { 'Chỉ số': 'Tổng thu nhập', 'Giá trị': Business.totalIncome(transactions) },
+      { 'Chỉ số': 'Tổng chi tiêu', 'Giá trị': Business.totalExpense(transactions) },
+      { 'Chỉ số': 'Số dư', 'Giá trị': Business.balance(transactions) },
+      { 'Chỉ số': 'Số giao dịch', 'Giá trị': transactions.length },
+      { 'Chỉ số': 'Tổng hạn mức ngân sách', 'Giá trị': budgetSummary.totalLimit },
+      { 'Chỉ số': 'Đã chi trong tháng', 'Giá trị': budgetSummary.totalSpent },
+      { 'Chỉ số': 'Còn lại trong hạn mức', 'Giá trị': budgetSummary.remaining }
+    ];
+    const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
+    summarySheet['!cols'] = [{ wch: 28 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'TomTat');
 
     const fileName = `SpendWise_BaoCao_${Utils.getToday()}.xlsx`;
     XLSX.writeFile(workbook, fileName);

@@ -465,12 +465,20 @@ const Features = {
   // ============================================================
   exportPDF() {
     const transactions = Storage.getTransactions();
-    const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const rows = transactions.map(t => `
+    // Dùng lớp nghiệp vụ dùng chung để số liệu khớp với Trang chủ & Thống kê
+    const totalIncome = Business.totalIncome(transactions);
+    const totalExpense = Business.totalExpense(transactions);
+
+    // Báo cáo in: mới nhất trước, giới hạn số dòng để không in hàng nghìn trang
+    const MAX_ROWS = 800;
+    const sorted = transactions.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const printed = sorted.slice(0, MAX_ROWS);
+    const omitted = sorted.length - printed.length;
+
+    const rows = printed.map(t => `
       <tr>
         <td>${Utils.formatDate(t.date)}</td>
-        <td>${this.esc(t.name)}</td>
+        <td>${this.esc(t.name)}${t.note ? `<br><small style="color:#888">${this.esc(t.note)}</small>` : ''}</td>
         <td>${t.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</td>
         <td style="text-align:right;color:${t.type === 'income' ? '#00C897' : '#FF6B6B'}">
           ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
@@ -482,7 +490,8 @@ const Features = {
       <p style="color:#666;margin-bottom:16px">Ngày xuất: ${Utils.formatDate(new Date().toISOString())}</p>
       <p><strong>Tổng thu:</strong> ${Utils.formatCurrency(totalIncome)} &nbsp;|&nbsp;
          <strong>Tổng chi:</strong> ${Utils.formatCurrency(totalExpense)} &nbsp;|&nbsp;
-         <strong>Số dư:</strong> ${Utils.formatCurrency(totalIncome - totalExpense)}</p>
+         <strong>Số dư:</strong> ${Utils.formatCurrency(Business.balance(transactions))}</p>
+      ${omitted > 0 ? `<p style="color:#b45309">Báo cáo chỉ in ${MAX_ROWS} giao dịch mới nhất, còn ${omitted} giao dịch cũ hơn không in. Hãy xuất Excel để xem đầy đủ.</p>` : ''}
       <table>
         <thead><tr><th>Ngày</th><th>Tên giao dịch</th><th>Loại</th><th style="text-align:right">Số tiền</th></tr></thead>
         <tbody>${rows}</tbody>

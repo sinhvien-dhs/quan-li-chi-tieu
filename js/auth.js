@@ -570,12 +570,17 @@ const AuthManager = {
         updatedAt: now
       }, { merge: true });
 
-      await root.collection('settings').doc('main').set({
+      // LƯU Ý: không gửi reminderTime = null — rules chỉ nhận chuỗi.
+      // Gửi null sẽ khiến toàn bộ lần đồng bộ bị Firestore từ chối.
+      const settingsPayload = {
         currency: Storage.get('spendwise_currency', 'VND'),
         theme: Storage.getTheme(),
-        reminderTime: localStorage.getItem('spendwise_reminder_time') || null,
         updatedAt: now
-      }, { merge: true });
+      };
+      const reminderTime = localStorage.getItem('spendwise_reminder_time');
+      if (reminderTime) settingsPayload.reminderTime = reminderTime;
+
+      await root.collection('settings').doc('main').set(settingsPayload, { merge: true });
 
       // Server đã xác nhận → mới coi là đồng bộ xong
       if (typeof SyncManager !== 'undefined') {

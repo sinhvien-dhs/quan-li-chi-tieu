@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// SPENDWISE-RULES v64 — 2026-10-15
+// SPENDWISE-RULES v65 — 2026-10-15
 // Nếu bạn thấy dòng "SPENDWISE-RULES v64" ở trên cùng trong ô trình soạn
 // thì đã dán đúng phiên bản mới nhất. Nếu không, hãy dán lại từ file firestore.rules
 service cloud.firestore {
@@ -115,7 +115,10 @@ service cloud.firestore {
         && s.keys().hasOnly(['currency','theme','reminderTime','updatedAt'])
         && (!('currency' in s.keys()) || s.currency in ['VND','USD','EUR'])
         && (!('theme' in s.keys()) || s.theme in ['light','dark'])
-        && (!('reminderTime' in s.keys()) || (s.reminderTime is string && s.reminderTime.size() <= 10))
+        // reminderTime: cho phép null (chưa đặt giờ nhắc) hoặc chuỗi HH:MM
+        && (!('reminderTime' in s.keys())
+             || s.reminderTime == null
+             || (s.reminderTime is string && s.reminderTime.size() <= 10))
         && (!('updatedAt' in s.keys()) || validTs(s.updatedAt));
     }
 

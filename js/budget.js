@@ -59,7 +59,8 @@ const BudgetManager = {
    */
   setBudget(categoryId, amount) {
     const budgets = this.getBudgets();
-    budgets[categoryId] = amount;
+    // Luon luon luu so (nguyen don) — tránh luu chuoi nhu "3tr"
+    budgets[categoryId] = Math.round(Number(amount) || 0);
     Storage.set(this.STORAGE_KEY, budgets);
     Storage.set(this.UPDATED_AT_KEY, new Date().toISOString());
     this.renderBudgetList();

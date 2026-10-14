@@ -403,7 +403,7 @@
       <div style="padding: 0 var(--space-lg); margin-bottom: var(--space-lg)">
         <div class="settings-item" style="margin-bottom: var(--space-sm)">
           <input type="text" class="form__input" id="inputGoalName" placeholder="Tên mục tiêu (VD: Mua laptop)" style="flex:2">
-          <input type="number" class="form__input" id="inputGoalTarget" placeholder="Số tiền" style="flex:1">
+          <input type="text" class="form__input" id="inputGoalTarget" placeholder="VD: 20000000 hoặc 20tr" inputmode="numeric" style="flex:1">
           <button class="settings-btn settings-btn--primary" id="btnAddGoal">
             <i class="fa-solid fa-plus"></i> Thêm
           </button>
@@ -666,7 +666,7 @@
         <div class="form__group">
           <label class="form__label" for="inputAmount">Số tiền</label>
           <div style="display:flex;gap:var(--space-sm)">
-            <input type="text" class="form__input" id="inputAmount" placeholder="VD: 50000 hoặc 2.5" inputmode="decimal" required style="flex:1">
+            <input type="text" class="form__input" id="inputAmount" placeholder="VD: 50000, 1.500.000 hoặc 2tr" inputmode="decimal" required style="flex:1">
             <select class="form__input" id="inputCurrencyTx" style="width:120px;min-width:120px;cursor:pointer;white-space:nowrap;padding-right:28px">
               <option value="VND">VNĐ</option>
               <option value="USD">USD</option>
@@ -751,7 +751,7 @@
 
         <div class="form__group">
           <label class="form__label" for="budgetAmountInput">Hạn mức tháng (VNĐ)</label>
-          <input type="number" class="form__input" id="budgetAmountInput" placeholder="VD: 2000000" min="10000" step="10000" required>
+          <input type="text" class="form__input" id="budgetAmountInput" placeholder="VD: 2000000 hoặc 2tr" inputmode="numeric" required>
         </div>
 
         <button type="submit" class="form__submit">
@@ -790,7 +790,7 @@
       </div>
       <div class="form__group">
         <label class="form__label">Tổng số tiền bill (VNĐ)</label>
-        <input type="number" class="form__input" id="splitterTotalAmount" placeholder="VD: 300000" value="300000" min="1000" step="5000">
+        <input type="text" class="form__input" id="splitterTotalAmount" placeholder="VD: 300000 hoặc 1,2tr" value="300000" inputmode="numeric">
       </div>
       <div class="form__group">
         <label class="form__label">Số người cùng chia</label>

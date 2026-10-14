@@ -167,24 +167,13 @@ const PWAManager = {
       });
     }
 
-    // Chia tiền chính xác: chia phần nguyên + phân bổ phần dư cho các người đầu
-// => tổng tiền luôn bằng đúng tổng hóa đơn (không dư, không thiếu)
-const splitBill = (total, count) => {
-      const people = Math.max(1, count);
-      const base = Math.floor(total / people);   // phần nguyên đều cho mọi người
-      const remainder = total - base * people;   // phần dư
-      return {
-        base: base,
-        remainder: remainder,
-        // Người 1..remainder trả thêm 1đ; người còn lại trả `base`
-        amounts: Array.from({ length: people }, (_, i) => base + (i < remainder ? 1 : 0))
-      };
-    };
+    // Hàm chia tiền nằm ở Business.splitBill (dùng chung với toàn app)
 
     const calculate = () => {
-      const total = parseInt(inputTotal.value) || 0;
+      // Dùng chung bộ phân tích số tiền: nhận 300000, 1.500.000 hoặc 1,2tr
+      const total = Business.parseAmount(inputTotal.value) || 0;
       const count = parseInt(inputPeople.value) || 1;
-      const result = splitBill(total, count);
+      const result = Business.splitBill(total, count);
       perPersonEl.textContent = Utils.formatCurrency(result.base);
       if (result.remainder > 0) {
         perPersonEl.textContent += ` (+${result.remainder}đ chia thêm cho ${result.remainder} người)`;
@@ -198,10 +187,10 @@ const splitBill = (total, count) => {
 
     if (copyBtn) {
       copyBtn.addEventListener('click', () => {
-        const total = parseInt(inputTotal.value) || 0;
+        const total = Business.parseAmount(inputTotal.value) || 0;
         const count = parseInt(inputPeople.value) || 1;
         const note = inputNote.value.trim() || 'Bữa ăn';
-        const split = splitBill(total, count);
+        const split = Business.splitBill(total, count);
         const perPersonText = split.remainder > 0
           ? `${split.remainder} người trả ${Utils.formatCurrency(split.base + 1)}, ${count - split.remainder} người trả ${Utils.formatCurrency(split.base)}`
           : `Mỗi người chuyển ${Utils.formatCurrency(split.base)}`;

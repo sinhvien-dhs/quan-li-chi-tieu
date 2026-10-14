@@ -127,9 +127,10 @@ const BudgetManager = {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const catId = document.getElementById('budgetCategorySelect').value;
-        const amount = parseInt(document.getElementById('budgetAmountInput').value) || 0;
-        if (amount <= 0) {
-          Toast.error('Vui lòng nhập mức ngân sách hợp lệ!');
+        // Dùng chung bộ phân tích số tiền: nhận 2000000, 2.000.000 hoặc 2tr
+        const amount = Business.parseAmount(document.getElementById('budgetAmountInput').value);
+        if (amount === null) {
+          Toast.error('Vui lòng nhập mức ngân sách hợp lệ (VD: 2000000 hoặc 2tr)!');
           return;
         }
         this.setBudget(catId, amount);

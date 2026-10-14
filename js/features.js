@@ -153,11 +153,22 @@ const Features = {
     Toast.success('Đã thêm mục tiêu!');
   },
 
+  /** Chuẩn hoá mục tiêu trước khi lưu (giống hợp lệ với Firestore rules) */
+  validateGoalInput(name, targetRaw) {
+    const cleanName = String(name || '').trim();
+    if (!cleanName) return { error: 'Vui lòng nhập tên mục tiêu!' };
+    if (cleanName.length > 50) return { error: 'Tên mục tiêu không được vượt quá 50 ký tự!' };
+    const target = Business.parseAmount(targetRaw);
+    if (target === null) return { error: 'Số tiền mục tiêu không hợp lệ (VD: 20000000 hoặc 20tr).' };
+    return { name: cleanName, target };
+  },
+
   addToGoal(id) {
-    const amountStr = prompt('Nhập số tiền muốn nạp vào mục tiêu:');
+    const amountStr = prompt('Nhập số tiền muốn nạp vào mục tiêu (VD: 500000 hoặc 2tr):');
     if (!amountStr) return;
-    const amount = parseInt(amountStr.replace(/[^0-9]/g, ''));
-    if (!amount || amount <= 0) { Toast.error('Số tiền không hợp lệ!'); return; }
+    // Dùng chung bộ phân tích số tiền: chấp nhận 1.500.000, 2tr, 2.5 (triệu USD)...
+    const amount = Business.parseAmount(amountStr);
+    if (amount === null) { Toast.error('Số tiền không hợp lệ!'); return; }
     const goals = this.getGoals();
     const goal = goals.find(g => g.id === id);
     if (!goal) return;
@@ -168,9 +179,10 @@ const Features = {
   },
 
   deleteGoal(id) {
+    const goal = this.getGoals().find(g => g.id === id);
     ConfirmDialog.show({
       title: 'Xóa mục tiêu?',
-      message: 'Bạn có chắc muốn xóa mục tiêu này?',
+      message: goal ? `Bạn có chắc muốn xóa mục tiêu "${goal.name}"?` : 'Bạn có chắc muốn xóa mục tiêu này?',
       onConfirm: () => {
         this.saveGoals(this.getGoals().filter(g => g.id !== id));
         this.renderGoals();
@@ -188,7 +200,8 @@ const Features = {
       return;
     }
     container.innerHTML = goals.map(g => {
-      const pct = Math.min(100, Math.round((g.saved / g.target) * 100));
+      const progress = Business.goalProgress(g);
+      const pct = progress.percent;
       return `
       <div class="goal-item">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-xs)">
@@ -199,10 +212,11 @@ const Features = {
           <div class="budget-summary__progress-fill budget-summary__progress-fill--safe" style="width:${pct}%"></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:var(--font-size-sm)">${Utils.formatCurrency(g.saved)} / ${Utils.formatCurrency(g.target)}</span>
+          <span style="font-size:var(--font-size-sm)">${Utils.formatCurrency(g.saved)} / ${Utils.formatCurrency(g.target)}
+            ${progress.completed ? '<strong style="color:var(--success)"> — Đạt!</strong>' : ''}</span>
           <span style="display:flex;gap:var(--space-xs)">
-            <button class="settings-btn" data-goal-add="${g.id}"><i class="fa-solid fa-plus"></i> Nạp</button>
-            <button class="settings-btn settings-btn--danger" data-goal-del="${g.id}"><i class="fa-solid fa-trash"></i></button>
+            <button class="settings-btn" data-goal-add="${g.id}" aria-label="Nạp tiền vào mục tiêu ${this.esc(g.name)}"><i class="fa-solid fa-plus"></i> Nạp</button>
+            <button class="settings-btn settings-btn--danger" data-goal-del="${g.id}" aria-label="Xóa mục tiêu ${this.esc(g.name)}"><i class="fa-solid fa-trash"></i></button>
           </span>
         </div>
       </div>`;
@@ -215,11 +229,12 @@ const Features = {
     const btn = document.getElementById('btnAddGoal');
     if (btn) {
       btn.addEventListener('click', () => {
-        const name = document.getElementById('inputGoalName').value.trim();
-        const target = parseInt(document.getElementById('inputGoalTarget').value);
-        if (!name) { Toast.error('Nhập tên mục tiêu!'); return; }
-        if (!target || target <= 0) { Toast.error('Nhập số tiền mục tiêu hợp lệ!'); return; }
-        this.addGoal(name, target);
+        const input = this.validateGoalInput(
+          document.getElementById('inputGoalName').value,
+          document.getElementById('inputGoalTarget').value
+        );
+        if (input.error) { Toast.error(input.error); return; }
+        this.addGoal(input.name, input.target);
         document.getElementById('inputGoalName').value = '';
         document.getElementById('inputGoalTarget').value = '';
       });

@@ -157,12 +157,49 @@ const Business = {
     return result;
   },
 
-  /** Chuẩn hóa số tiền người dùng nhập → trả về số nguyên hợp lệ hoặc null */
+  /**
+   * Chuẩn hóa số tiền người dùng nhập → trả về số nguyên hợp lệ hoặc null.
+   *
+   * Chấp nhận các cách gõ phổ biến tại Việt Nam:
+   *   "50000"      → 50000
+   *   "1.500.000"  → 1500000   (dấu chấm/phẩy là dấu phân cách nghìn)
+   *   "1,500,000"  → 1500000
+   *   "12.5"       → 13        (phần thập phân, làm tròn)
+   *   "2tr"        → 2000000   ("k"/"nghìn" = 1e3, "tr"/"triệu" = 1e6, "tỷ"/"ty" = 1e9)
+   *
+   * Quy tắc phân biệt: dấu "." hoặc "," đứng trước đúng 3 chữ số và đi kèm
+   * phần nguyên 1-3 chữ số được hiểu là dấu phân cách nghìn.
+   */
   parseAmount(input) {
     if (input === null || input === undefined) return null;
-    const raw = String(input).replace(/\s/g, '').replace(/,/g, '');
-    if (raw === '' || !/^\d+(\.\d{1,2})?$/.test(raw)) return null;
-    const n = Number(raw);
+    let raw = String(input).trim().toLowerCase();
+    if (raw === '') return null;
+
+    // Hệ số rút gọn: k / nghìn / tr / triệu / tỷ
+    let multiplier = 1;
+    const suffixMatch = raw.match(/^([0-9][0-9.,\s]*?)\s*(nghìn|nghin|triệu|trieu|tỷ|ty|tr|k|b)$/);
+    if (suffixMatch) {
+      const unit = suffixMatch[2];
+      if (unit === 'k' || unit === 'nghìn' || unit === 'nghin') multiplier = 1e3;
+      else if (unit === 'tỷ' || unit === 'ty' || unit === 'b') multiplier = 1e9;
+      else multiplier = 1e6; // tr / triệu
+      raw = suffixMatch[1];
+    }
+
+    raw = raw.replace(/\s/g, '');
+
+    // Dấu phân cách nghìn: 1.500.000 / 1,500,000
+    if (/^\d{1,3}([.,]\d{3})+$/.test(raw)) {
+      raw = raw.replace(/[.,]/g, '');
+    } else {
+      // Còn lại coi dấu phẩy là phần thập phân
+      raw = raw.replace(/,/g, '.');
+      if ((raw.match(/\./g) || []).length > 1) return null;
+    }
+
+    if (!/^\d+(\.\d{1,2})?$/.test(raw)) return null;
+
+    const n = Number(raw) * multiplier;
     if (!Number.isFinite(n) || n <= 0 || n > 1e12) return null;
     return Math.round(n);
   },

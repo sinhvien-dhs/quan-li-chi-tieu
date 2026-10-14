@@ -105,6 +105,20 @@ test('parseAmount chặn giá trị không hợp lệ', () => {
   eq(Business.parseAmount('abc'), null);
   eq(Business.parseAmount('1e12'), null);
   eq(Business.parseAmount('999999999999999'), null);
+  eq(Business.parseAmount('0'), null);
+  eq(Business.parseAmount('1.2.3'), null);
+});
+
+test('parseAmount hiểu cách gõ tiền kiểu Việt Nam', () => {
+  eq(Business.parseAmount('1.500.000'), 1500000);      // dấu chấm phân cách nghìn
+  eq(Business.parseAmount('1,500,000'), 1500000);      // dấu phẩy phân cách nghìn
+  eq(Business.parseAmount('2 500 000'), 2500000);      // khoảng trắng phân cách nghìn
+  eq(Business.parseAmount('2tr'), 2000000);            // triệu
+  eq(Business.parseAmount('2 triệu'), 2000000);
+  eq(Business.parseAmount('1.5tr'), 1500000);
+  eq(Business.parseAmount('20k'), 20000);              // nghìn
+  eq(Business.parseAmount('1.2 tỷ'), 1200000000);      // tỷ
+  eq(Business.parseAmount('12.5'), 13);                // thập phân → làm tròn
 });
 
 test('isValidDate kiểm tra ngày theo lịch', () => {

@@ -230,6 +230,20 @@
         </div>
       </section>
 
+      <!-- Tìm kiếm & lọc nâng cao -->
+      <div class="search-bar">
+        <div class="search-bar__box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" id="searchInput" class="search-bar__input" placeholder="Tìm theo tên, ghi chú, danh mục..." aria-label="Tìm kiếm giao dịch">
+        </div>
+        <select id="filterWallet" class="search-bar__select" aria-label="Lọc theo ví">
+          <option value="">Tất cả ví</option>
+        </select>
+        <select id="filterCategory" class="search-bar__select" aria-label="Lọc theo danh mục">
+          <option value="">Tất cả danh mục</option>
+        </select>
+      </div>
+
       <!-- Filter Tabs -->
       <div class="filter-tabs">
         <button class="filter-tab active" data-filter="all">Tất cả</button>
@@ -241,7 +255,11 @@
       <section class="section">
         <div class="section__header">
           <h2 class="section__title">Giao dịch gần đây</h2>
+          <span class="section__count" id="txCountLabel"></span>
         </div>
+        <button type="button" class="btn-load-more" id="btnLoadMore" style="display:none;margin:var(--space-md) auto 0">
+          <i class="fa-solid fa-chevron-down"></i> Xem thêm giao dịch
+        </button>
         <div class="transactions" id="transactionList">
           <!-- Rendered by JS -->
         </div>

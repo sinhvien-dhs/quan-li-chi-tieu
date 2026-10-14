@@ -75,7 +75,10 @@ const BudgetManager = {
   getSpentThisMonth(categoryId) {
     // Dùng lớp nghiệp vụ dùng chung để khớp với Trang chủ & Thống kê
     const monthTx = Business.filterThisMonth(Storage.getTransactions());
-    return Business.spentByCategory(monthTx, categoryId);
+    // categoryId = null => tổng toàn bộ chi tiêu trong tháng
+    return categoryId
+      ? Business.spentByCategory(monthTx, categoryId)
+      : Business.totalExpense(monthTx);
   },
 
   /**
@@ -252,10 +255,12 @@ const BudgetManager = {
    */
   updateBudgetSummary() {
     const budgets = this.getBudgets();
-    const totalBudget = Object.values(budgets).reduce((sum, v) => sum + (Number(v) || 0), 0);
-    const totalSpent = this.getSpentThisMonth(null);
-    const remaining = totalBudget - totalSpent;
-    const pct = totalBudget > 0 ? Math.min(Math.round((totalSpent / totalBudget) * 100), 100) : 0;
+    // Dùng chung lớp nghiệp vụ để số liệu luôn khớp với Trang chủ
+    const summary = Business.budgetSummary(budgets, Storage.getTransactions());
+    const totalBudget = summary.totalLimit;
+    const totalSpent = summary.totalSpent;
+    const remaining = summary.remaining;
+    const pct = summary.percent;
     const rawPct = totalBudget > 0 ? ((totalSpent / totalBudget) * 100).toFixed(0) : 0;
 
     const totalBudgetEl = document.getElementById('budgetTotalLimit');

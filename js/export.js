@@ -367,6 +367,10 @@ const ExportManager = {
       }
 
       if (typeof t.createdAt === 'string' && t.createdAt.length <= 40) item.createdAt = t.createdAt;
+      // Giữ trạng thái đồng bộ cục bộ để hiển thị "chờ đồng bộ" chính xác
+      if (typeof t.syncState === 'string' && ['pending', 'synced', 'failed'].indexOf(t.syncState) > -1) {
+        item.syncState = t.syncState;
+      }
       if (typeof t.updatedAt === 'string' && t.updatedAt.length <= 40) item.updatedAt = t.updatedAt;
 
       out.push(item);

@@ -5,6 +5,11 @@
 const TransactionManager = {
   currentFilter: 'all', // 'all' | 'income' | 'expense'
   editingId: null,       // ID giao dịch đang sửa
+  searchTerm: '',        // từ khoá tìm kiếm
+  filterWallet: '',      // lọc theo ví
+  filterCategory: '',    // lọc theo danh mục
+  visibleCount: 50,      // số giao dịch đang hiển thị (phân trang dạng "xem thêm")
+  PAGE_SIZE: 50,
 
   /**
    * Khởi tạo
@@ -13,6 +18,67 @@ const TransactionManager = {
     this.renderTransactions();
     this.updateSummary();
     this.bindFilterEvents();
+    this.bindSearchEvents();
+    this.renderFilterOptions();
+  },
+
+  /**
+   * Tìm kiếm / lọc nâng cao
+   */
+  bindSearchEvents() {
+    const search = document.getElementById('searchInput');
+    if (search) {
+      search.addEventListener('input', (e) => {
+        this.searchTerm = e.target.value.trim().toLowerCase();
+        this.visibleCount = this.PAGE_SIZE;
+        this.renderTransactions();
+      });
+    }
+    const walletSel = document.getElementById('filterWallet');
+    if (walletSel) {
+      walletSel.addEventListener('change', (e) => {
+        this.filterWallet = e.target.value;
+        this.visibleCount = this.PAGE_SIZE;
+        this.renderTransactions();
+      });
+    }
+    const catSel = document.getElementById('filterCategory');
+    if (catSel) {
+      catSel.addEventListener('change', (e) => {
+        this.filterCategory = e.target.value;
+        this.visibleCount = this.PAGE_SIZE;
+        this.renderTransactions();
+      });
+    }
+    const btnMore = document.getElementById('btnLoadMore');
+    if (btnMore) {
+      btnMore.addEventListener('click', () => {
+        this.visibleCount += this.PAGE_SIZE;
+        this.renderTransactions();
+      });
+    }
+  },
+
+  /**
+   * Danh sách ví / danh mục cho ô lọc
+   */
+  renderFilterOptions() {
+    const walletSel = document.getElementById('filterWallet');
+    if (walletSel && typeof Features !== 'undefined') {
+      const current = walletSel.value;
+      walletSel.innerHTML = '<option value="">Tất cả ví</option>' +
+        Features.getWallets().map(w =>
+          `<option value="${Utils.escapeAttr(w.id)}">${Utils.escapeHtml(w.name)}</option>`).join('');
+      walletSel.value = current;
+    }
+    const catSel = document.getElementById('filterCategory');
+    if (catSel) {
+      const current = catSel.value;
+      const all = [...Categories.expense, ...Categories.income];
+      catSel.innerHTML = '<option value="">Tất cả danh mục</option>' +
+        all.map(c => `<option value="${Utils.escapeAttr(c.id)}">${Utils.escapeHtml(c.name)}</option>`).join('');
+      catSel.value = current;
+    }
   },
 
   /**
@@ -39,9 +105,26 @@ const TransactionManager = {
     if (this.currentFilter !== 'all') {
       transactions = transactions.filter(t => t.type === this.currentFilter);
     }
+    if (this.filterWallet) {
+      transactions = transactions.filter(t => t.wallet === this.filterWallet);
+    }
+    if (this.filterCategory) {
+      transactions = transactions.filter(t => t.category === this.filterCategory);
+    }
+    if (this.searchTerm) {
+      const term = this.searchTerm;
+      transactions = transactions.filter(t => {
+        const cat = Categories.getById(t.category);
+        const wallet = (typeof Features !== 'undefined' && Features.getWalletById(t.wallet)) || null;
+        return (t.name || '').toLowerCase().includes(term)
+          || (t.note || '').toLowerCase().includes(term)
+          || (cat ? cat.name.toLowerCase().includes(term) : false)
+          || (wallet ? wallet.name.toLowerCase().includes(term) : false);
+      });
+    }
 
     // Sắp xếp theo ngày mới nhất
-    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    transactions.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
     return transactions;
   },
@@ -54,18 +137,69 @@ const TransactionManager = {
     const transactions = this.getFilteredTransactions();
 
     if (transactions.length === 0) {
-      container.innerHTML = `
+      const hasFilter = this.searchTerm || this.filterWallet || this.filterCategory || this.currentFilter !== 'all';
+      container.innerHTML = hasFilter ? `
+        <div class="transaction-empty">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <p>Không tìm thấy giao dịch phù hợp</p>
+          <p>Thử đổi từ khoá hoặc bỏ bớt bộ lọc</p>
+          <button class="settings-btn" id="btnClearFilters" style="margin-top:var(--space-sm)">
+            <i class="fa-solid fa-filter-circle-xmark"></i> Xoá bộ lọc
+          </button>
+        </div>
+      ` : `
         <div class="transaction-empty">
           <i class="fa-regular fa-receipt"></i>
           <p>Chưa có giao dịch nào</p>
           <p>Nhấn nút <strong>+</strong> để thêm giao dịch đầu tiên</p>
         </div>
       `;
+      const clearBtn = document.getElementById('btnClearFilters');
+      if (clearBtn) clearBtn.addEventListener('click', () => this.clearFilters());
+      const btnMore = document.getElementById('btnLoadMore');
+      if (btnMore) btnMore.style.display = 'none';
+      const label = document.getElementById('txCountLabel');
+      if (label) label.textContent = '';
       return;
     }
 
-    container.innerHTML = transactions.map(t => this.renderTransactionItem(t)).join('');
+    // Chỉ render một phần danh sách để không nặng DOM khi có hàng nghìn giao dịch
+    const shown = transactions.slice(0, this.visibleCount);
+    container.innerHTML = shown.map(t => this.renderTransactionItem(t)).join('');
     this.bindTransactionEvents();
+
+    const btnMore = document.getElementById('btnLoadMore');
+    if (btnMore) {
+      btnMore.style.display = transactions.length > this.visibleCount ? '' : 'none';
+      btnMore.innerHTML = `<i class="fa-solid fa-chevron-down"></i> Xem thêm ${Math.min(this.PAGE_SIZE, transactions.length - this.visibleCount)} giao dịch`;
+    }
+
+    const label = document.getElementById('txCountLabel');
+    if (label) {
+      label.textContent = shown.length < transactions.length
+        ? `${shown.length}/${transactions.length}`
+        : `${transactions.length} giao dịch`;
+    }
+  },
+
+  /**
+   * Xoá toàn bộ bộ lọc / tìm kiếm
+   */
+  clearFilters() {
+    this.searchTerm = '';
+    this.filterWallet = '';
+    this.filterCategory = '';
+    this.currentFilter = 'all';
+    this.visibleCount = this.PAGE_SIZE;
+    const search = document.getElementById('searchInput');
+    if (search) search.value = '';
+    const walletSel = document.getElementById('filterWallet');
+    if (walletSel) walletSel.value = '';
+    const catSel = document.getElementById('filterCategory');
+    if (catSel) catSel.value = '';
+    document.querySelectorAll('.filter-tab').forEach(t =>
+      t.classList.toggle('active', t.dataset.filter === 'all'));
+    this.renderTransactions();
   },
 
   /**

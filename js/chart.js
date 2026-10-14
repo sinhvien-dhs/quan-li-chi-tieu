@@ -75,13 +75,11 @@ const ChartManager = {
    * Render thẻ thống kê tổng hợp cho trang Stats
    */
   renderSummaryStats(transactions) {
-    const expenses = transactions.filter(t => t.type === 'expense');
-    const incomes = transactions.filter(t => t.type === 'income');
-
-    const totalExpense = expenses.reduce((s, t) => s + t.amount, 0);
-    const totalIncome = incomes.reduce((s, t) => s + t.amount, 0);
-    const avgExpensePerDay = this.getAvgPerDay(expenses);
-    const topCategory = this.getTopCategory(expenses);
+    // Dùng lớp nghiệp vụ dùng chung để số liệu khớp với Trang chủ & Ngân sách
+    const totalExpense = Business.totalExpense(transactions);
+    const totalIncome = Business.totalIncome(transactions);
+    const avgExpensePerDay = this.getAvgPerDay(transactions);
+    const topCategory = this.getTopCategory(transactions);
 
     document.getElementById('statsTotalExpense').textContent = Utils.formatCurrency(totalExpense);
     document.getElementById('statsTotalIncome').textContent = Utils.formatCurrency(totalIncome);
@@ -93,9 +91,10 @@ const ChartManager = {
   /**
    * Tính trung bình chi tiêu mỗi ngày
    */
-  getAvgPerDay(expenses) {
-    if (expenses.length === 0) return 0;
-    const total = expenses.reduce((s, t) => s + t.amount, 0);
+  getAvgPerDay(transactions) {
+    const list = Array.isArray(transactions) ? transactions : [];
+    if (list.length === 0) return 0;
+    const total = Business.totalExpense(list);
     const now = new Date();
     let days;
 
@@ -109,17 +108,21 @@ const ChartManager = {
       default: days = now.getDate();
     }
 
-    return Math.round(total / days);
+    return days > 0 ? Math.round(total / days) : 0;
   },
 
   /**
    * Tìm danh mục chi nhiều nhất
    */
-  getTopCategory(expenses) {
+  getTopCategory(transactions) {
+    const list = Array.isArray(transactions) ? transactions : [];
+    const expenses = list.filter(t => t.type === 'expense');
     if (expenses.length === 0) return 'Chưa có';
+
+    // Gộp theo danh mục, chỉ tính số tiền nguyên đồng
     const map = {};
     expenses.forEach(t => {
-      map[t.category] = (map[t.category] || 0) + t.amount;
+      map[t.category] = (map[t.category] || 0) + Math.round(Number(t.amount) || 0);
     });
     const topId = Object.entries(map).sort((a, b) => b[1] - a[1])[0][0];
     const cat = Categories.getById(topId);

@@ -539,6 +539,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof SyncManager !== 'undefined') {
     SyncManager.init();
   }
+  if (typeof HomeWidgets !== 'undefined') {
+    HomeWidgets.init();
+  }
   if (typeof AuthManager !== 'undefined') {
     AuthManager.init();
   }

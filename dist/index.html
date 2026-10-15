@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=66">
+  <link rel="manifest" href="manifest.json?v=67">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -47,7 +47,7 @@
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.min.css?v=66">
+  <link rel="stylesheet" href="style.min.css?v=67">
 </head>
 <body>
   <div id="printReport"></div>
@@ -460,14 +460,14 @@
       </div>
 
       <!-- Mục tiêu tiết kiệm -->
-      <div class="section__header" style="padding: 0 var(--space-lg); margin: var(--space-lg) 0 var(--space-sm);">
-        <h2 class="section__title">🎯 Mục tiêu tiết kiệm</h2>
+      <div class="section__header section__header--spaced">
+        <h2 class="section__title"><i class="fa-solid fa-bullseye"></i> Mục tiêu tiết kiệm</h2>
       </div>
-      <div style="padding: 0 var(--space-lg); margin-bottom: var(--space-lg)">
-        <div class="settings-item" style="margin-bottom: var(--space-sm)">
-          <input type="text" class="form__input" id="inputGoalName" aria-label="Tên mục tiêu" placeholder="Tên mục tiêu (VD: Mua laptop)" style="flex:2">
-          <input type="text" class="form__input" id="inputGoalTarget" aria-label="Số tiền mục tiêu" placeholder="VD: 20000000 hoặc 20tr" inputmode="numeric" style="flex:1">
-          <button class="settings-btn settings-btn--primary" id="btnAddGoal">
+      <div class="goal-block">
+        <div class="goal-form">
+          <input type="text" class="form__input goal-form__name" id="inputGoalName" aria-label="Tên mục tiêu" placeholder="Tên mục tiêu (VD: Mua laptop)">
+          <input type="text" class="form__input goal-form__target" id="inputGoalTarget" aria-label="Số tiền mục tiêu" placeholder="Số tiền (VD: 20tr)" inputmode="numeric">
+          <button class="settings-btn settings-btn--primary goal-form__btn" id="btnAddGoal">
             <i class="fa-solid fa-plus"></i> Thêm
           </button>
         </div>
@@ -1112,7 +1112,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
-    <script src="app.min.js?v=66"></script>
+    <script src="app.min.js?v=67"></script>
   <!-- ===== JavaScript Modules ===== -->
   <!-- Firebase (Auth + Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>

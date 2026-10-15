@@ -400,3 +400,42 @@
 .settings-time-input:focus {
   border-color: var(--primary-text);
 }
+
+/* ===== Khối nhập mục tiêu tiết kiệm (trang Ngân sách) ===== */
+.section__header--spaced {
+  padding: 0 var(--space-lg);
+  margin: var(--space-lg) 0 var(--space-sm);
+}
+
+.section__title .fa-solid {
+  color: var(--primary);
+  margin-right: var(--space-xs);
+}
+
+.goal-block {
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.goal-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+/* Tên mục tiêu chiếm một hàng riêng để không bị bóp chữ */
+.goal-form__name {
+  flex: 1 1 100%;
+}
+
+.goal-form__target {
+  flex: 1 1 130px;
+  min-width: 0;
+}
+
+.goal-form__btn {
+  flex: 0 0 auto;
+  min-height: 44px;
+}

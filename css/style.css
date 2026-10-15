@@ -1132,7 +1132,8 @@ body {
   min-height: 40px;
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
+  /* Dùng cùng bo góc với nút trong thẻ cài đặt (VD: "Tải Excel") */
+  border-radius: var(--radius-sm);
   background: var(--bg-card);
   color: var(--text-secondary);
   font-family: var(--font-family);

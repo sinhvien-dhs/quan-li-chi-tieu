@@ -446,24 +446,27 @@ body {
 }
 
 /* ===== Tìm kiếm & Lọc nâng cao ===== */
+/* Dùng grid để 2 ô lọc luôn BẰNG NHAU nhau và đủ rộng cho chữ
+   ("Tất cả danh mục" dài hơn "Tất cả ví" — trước đây bị cắt mất chữ) */
 .search-bar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-sm);
   padding: 0 var(--space-lg);
   margin-bottom: var(--space-md);
 }
 
 .search-bar__box {
-  flex: 1 1 100%;
+  grid-column: 1 / -1;
   min-width: 0;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
+  padding: 0 var(--space-md);
   color: var(--text-muted);
 }
 
@@ -483,26 +486,34 @@ body {
 }
 
 .search-bar__select {
-  flex: 1 1 calc(50% - var(--space-sm));
+  width: 100%;
   min-width: 0;
-  max-width: 100%;
-  padding: var(--space-sm);
+  height: 44px;
+  /* Chừa chỗ bên phải cho mũi tên mặc định của trình duyệt,
+     tránh chữ bị tràn xuống dưới mũi tên */
+  padding: var(--space-sm) 26px var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
   color: var(--text-primary);
   font-family: var(--font-family);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  cursor: pointer;
 }
 
-/* Màn hình rộng hơn: ô tìm kiếm và 2 ô lọc nằm cùng một hàng */
-@media (min-width: 560px) {
-  .search-bar__box {
-    flex: 1 1 auto;
+/* Desktop: khung app rộng 1120px → 3 ô nằm cùng một hàng */
+@media (min-width: 900px) {
+  .search-bar {
+    grid-template-columns: minmax(240px, 1fr) 180px 200px;
+    align-items: center;
   }
 
-  .search-bar__select {
-    flex: 0 0 132px;
+  .search-bar__box {
+    grid-column: auto;
+    /* Cùng chiều cao với 2 ô lọc để hàng nhìn thẳng */
+    height: 44px;
   }
 }
 
@@ -1193,7 +1204,6 @@ body {
    ============================================================ */
 .filter-tab,
 .stats-period-btn,
-.search-bar__select,
 .settings-tab,
 .side-card__btn {
   min-height: 40px;
@@ -1208,8 +1218,10 @@ body {
   padding-bottom: var(--space-sm);
 }
 
+/* Ô lọc: giữ chiều cao 44px và khoảng trống cho mũi tên (không ghi đè
+   phần khai báo chính của .search-bar__select ở trên) */
 .search-bar__select {
-  padding: var(--space-sm) var(--space-md);
+  min-height: 44px;
 }
 
 /* Ô nhập nhanh AI + 2 nút mic / gửi */
@@ -1242,7 +1254,7 @@ body {
 /* Ô tìm kiếm phải phủ hết chiều cao khung, không chỉ dòng chữ */
 .search-bar__input {
   align-self: stretch;
-  padding: var(--space-sm) 0;
+  padding: 0;
   line-height: 1.4;
 }
 

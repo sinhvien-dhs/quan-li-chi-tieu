@@ -24,7 +24,7 @@ const HomeWidgets = {
         const added = DemoData.add();
         Storage.set('spendwise_demo_mode', true);
         Toast.success(added
-          ? `Đã thêm ${added} giao dịch mẫu. Xem thử thoải mái, dữ liệu mẫu không lên cloud!`
+          ? `Đã thêm ${added} giao dịch mẫu. Xem thử thỏa mái, dữ liệu mẫu không lên cloud!`
           : 'Dữ liệu mẫu đã có sẵn trên máy này.');
         this.refreshDemoCard();
         TransactionManager.renderTransactions();

@@ -236,7 +236,7 @@ const PWAManager = {
         const text = `💸 TIN NHẮN CHIA TIỀN: ${note}\n━━━━━━━━━━━━━━\n• Tổng tiền: ${Utils.formatCurrency(total)}\n• Số người: ${count} người\n👉 ${perPersonText}\n━━━━━━━━━━━━━━\n(Tính tự động bằng SpendWise 💰)`;
 
         navigator.clipboard.writeText(text).then(() => {
-          Toast.success('Đã copy tin nhắn chia tiền vào clipboard! Dán gửi Zalo/Messenger ngay nhé.');
+          Toast.success('Đã sao chép tin nhắn chia tiền — dán gửi Zalo/Messenger ngay nhé.');
         }).catch(() => {
           Toast.show('Không thể tự động copy, bạn vui lòng copy thủ công', 'warning');
         });
@@ -286,7 +286,7 @@ const PWAManager = {
         if (holder && !holder.querySelector('.vietqr__fallback')) {
           const p = document.createElement('p');
           p.className = 'vietqr__fallback';
-          p.textContent = 'Khong tai duoc anh QR (mat mang?). Van co the gui so tien & noi dung ben duoi.';
+          p.textContent = 'Không tải được ảnh QR (mất mạng?). Vẫn có thể gửi số tiền & nội dung bên dưới.';
           holder.appendChild(p);
         }
       };

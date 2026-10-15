@@ -144,7 +144,7 @@ const TransactionManager = {
           <p>Không tìm thấy giao dịch phù hợp</p>
           <p>Thử đổi từ khoá hoặc bỏ bớt bộ lọc</p>
           <button class="settings-btn" id="btnClearFilters" style="margin-top:var(--space-sm)">
-            <i class="fa-solid fa-filter-circle-xmark"></i> Xoá bộ lọc
+            <i class="fa-solid fa-filter-circle-xmark"></i> Xóa bộ lọc
           </button>
         </div>
       ` : `

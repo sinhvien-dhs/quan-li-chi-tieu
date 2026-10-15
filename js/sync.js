@@ -168,7 +168,7 @@ const SyncManager = {
     if (this.getQueue().length > 200) this.pushQueue(this.getQueue().slice(-1)[0]);
     if (!navigator.onLine) {
       badge.className = 'status-tag status-tag--danger';
-      badge.textContent = `Offline • chờ đồng bộ ${pending}`;
+      badge.textContent = `Ngoại tuyến • chờ đồng bộ ${pending}`;
     } else if (pending > 0) {
       badge.className = 'status-tag status-tag--warning';
       badge.textContent = `Chờ đồng bộ ${pending}`;

@@ -140,7 +140,7 @@ const ExportManager = {
     // 1) Giới hạn kích thước file (chống DoS & nhồi dữ liệu)
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
     if (file.size > MAX_FILE_SIZE) {
-      Toast.error('File quá lớn (tối đa 10MB)!');
+      Toast.error('File quá lớn (tối đa 10 MB)!');
       event.target.value = '';
       return;
     }

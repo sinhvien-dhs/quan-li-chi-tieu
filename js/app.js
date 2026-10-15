@@ -685,13 +685,13 @@ const SecuritySettings = {
     const paintAi = () => {
       const on = AIEntry.hasApiKey();
       if (aiTag) {
-        aiTag.textContent = on ? 'Gemini' : 'Offline';
+        aiTag.textContent = on ? 'Gemini' : 'Ngoại tuyến';
         aiTag.className = 'status-tag ' + (on ? 'status-tag--success' : 'status-tag--warning');
       }
       if (aiText) {
         aiText.textContent = on
-          ? 'Dang dung Gemini cho cau nhap phuc tap (van co bo doc trong may du phong)'
-          : 'Dang dung bo phan tich trong may';
+          ? 'Đang dùng Gemini cho câu nhập phức tạp (vẫn có bộ đọc trong máy dự phòng)'
+          : 'Đang dùng bộ phân tích trong máy';
       }
       if (keyInput && !keyInput.value) keyInput.value = AIEntry.getApiKey();
     };
@@ -699,7 +699,7 @@ const SecuritySettings = {
       keyInput.addEventListener('change', () => {
         AIEntry.setApiKey(keyInput.value);
         paintAi();
-        Toast.success(keyInput.value ? 'Đã lưu API key Gemini trên máy này.' : 'Đã xoá API key, dùng bộ đọc trong máy.');
+        Toast.success(keyInput.value ? 'Đã lưu API key Gemini trên máy này.' : 'Đã xóa API key, dùng bộ đọc trong máy.');
       });
     }
     // Nút thử kết nối Gemini
@@ -853,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Tắt demo: xoá đúng các giao dịch mẫu, giữ nguyên dữ liệu thật
         const removed = DemoData.remove();
         Storage.set('spendwise_demo_mode', false);
-        Toast.success(`Đã tắt dữ liệu mẫu${removed ? ` (xoá ${removed} giao dịch mẫu)` : ''}.`);
+        Toast.success(`Đã tắt dữ liệu mẫu${removed ? ` (xóa ${removed} giao dịch mẫu)` : ''}.`);
       } else {
         Storage.set('spendwise_demo_mode', true);
         const added = DemoData.add();

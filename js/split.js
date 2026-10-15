@@ -146,7 +146,7 @@ const SplitManager = {
               <strong>${Utils.escapeHtml(d.title)}</strong>
               <small>${Utils.formatDate(d.date)} • tổng ${Utils.formatCurrency(d.total)}</small>
             </div>
-            <button type="button" class="debt-card__del" data-debt-del="${Utils.escapeAttr(d.id)}" aria-label="Xoá phiếu nợ">
+            <button type="button" class="debt-card__del" data-debt-del="${Utils.escapeAttr(d.id)}" aria-label="Xóa phiếu nợ">
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>
@@ -165,11 +165,11 @@ const SplitManager = {
     box.querySelectorAll('[data-debt-del]').forEach(btn => {
       btn.addEventListener('click', () => {
         ConfirmDialog.show({
-          title: 'Xoá phiếu nợ?',
-          message: 'Phiếu nợ này sẽ bị xoá khỏi sổ nợ nhóm.',
+          title: 'Xóa phiếu nợ?',
+          message: 'Phiếu nợ này sẽ bị xóa khỏi sổ nợ nhóm.',
           onConfirm: () => {
             this.deleteDebt(btn.dataset.debtDel);
-            Toast.success('Đã xoá phiếu nợ.');
+            Toast.success('Đã xóa phiếu nợ.');
           }
         });
       });

@@ -28,22 +28,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=68">
+  <link rel="manifest" href="manifest.json?v=69">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css?v=68">
-  <link rel="stylesheet" href="css/style.css?v=68">
-  <link rel="stylesheet" href="css/stats.css?v=68">
-  <link rel="stylesheet" href="css/budget.css?v=68">
-  <link rel="stylesheet" href="css/pwa.css?v=68">
-  <link rel="stylesheet" href="css/home.css?v=68">
-  <link rel="stylesheet" href="css/debts.css?v=68">
-  <link rel="stylesheet" href="css/lock.css?v=68">
-  <link rel="stylesheet" href="css/responsive.css?v=68">
+  <link rel="stylesheet" href="css/variables.css?v=69">
+  <link rel="stylesheet" href="css/style.css?v=69">
+  <link rel="stylesheet" href="css/stats.css?v=69">
+  <link rel="stylesheet" href="css/budget.css?v=69">
+  <link rel="stylesheet" href="css/pwa.css?v=69">
+  <link rel="stylesheet" href="css/home.css?v=69">
+  <link rel="stylesheet" href="css/debts.css?v=69">
+  <link rel="stylesheet" href="css/lock.css?v=69">
+  <link rel="stylesheet" href="css/responsive.css?v=69">
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
@@ -71,7 +71,7 @@
 
   <!-- Thanh trạng thái: offline / đồng bộ -->
   <div id="connBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:1200;background:var(--warning);color:#fff;text-align:center;font-size:var(--font-size-sm);padding:6px 12px">
-    <i class="fa-solid fa-wifi"></i> Đang offline — giao dịch vẫn được lưu trên máy này và sẽ đồng bộ khi có mạng
+    <i class="fa-solid fa-wifi"></i> Đang ngoại tuyến — giao dịch vẫn được lưu trên máy này và sẽ đồng bộ khi có mạng
   </div>
 
   <!-- ===== Auth Overlay (Đăng nhập / Đăng ký) ===== -->
@@ -221,7 +221,7 @@
           <div class="search-bar">
             <div class="search-bar__box">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="search" id="searchInput" class="search-bar__input" placeholder="Tìm giao diịch..." aria-label="Tìm kiếm giao dịch">
+              <input type="search" id="searchInput" class="search-bar__input" placeholder="Tìm giao dịch..." aria-label="Tìm kiếm giao dịch">
             </div>
             <select id="filterWallet" class="search-bar__select" aria-label="Lọc theo ví">
               <option value="">Tất cả ví</option>
@@ -273,7 +273,7 @@
               </button>
             </div>
             <div id="aiPreview" class="ai-preview" hidden></div>
-            <div class="ai-entry__hint" id="aiHint">AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình Gemini</a> (tuỳ chọn) để hiểu câu phức tạp hơn.</div>
+            <div class="ai-entry__hint" id="aiHint">AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình Gemini</a> (tùy chọn) để hiểu câu phức tạp hơn.</div>
           </section>
 
           <!-- Ngan sach thang nay -->
@@ -289,7 +289,7 @@
             </div>
             <div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm)">
               <span>Đã chi <strong id="homeBudgetSpent">0đ</strong></span>
-              <span>Còn <strong id="homeBudgetLeft">0đ</strong></span>
+              <span>Còn lại <strong id="homeBudgetLeft">0đ</strong></span>
             </div>
             <div style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:4px">
               Hạn mức: <span id="homeBudgetLimit">0đ</span>
@@ -480,7 +480,7 @@
     <!-- ============================================== -->
     <div class="page page--settings" id="pageSettings">
       <!-- Tabs phu: chia trang Cai dat nganh gon -->
-      <div class="settings-tabs" role="group" aria-label="Nhom cai dat">
+      <div class="settings-tabs" role="group" aria-label="Nhóm cài đặt">
         <button type="button" class="settings-tab is-active" data-tab="chung" aria-pressed="true">
           <i class="fa-solid fa-sliders"></i> Tổng quan
         </button>
@@ -690,7 +690,7 @@
         <div class="settings-group">
           <div class="settings-item">
             <div class="settings-item__info">
-              <span class="settings-item__title">Kết nối Gemini API (tuỳ chọn)</span>
+              <span class="settings-item__title">Kết nối Gemini API (tùy chọn)</span>
               <span class="settings-item__desc">
                 Bộ đọc câu nhập nhanh đã chạy sẵn trong máy. Thêm API key để hiểu được câu phức tạp hơn.
                 Key chỉ lưu trên thiết bị này, không gửi lên máy chủ của SpendWise.
@@ -713,7 +713,7 @@
               <span class="settings-item__title">Trạng thái AI</span>
               <span class="settings-item__desc" id="aiStatusText">Đang dùng bộ phân tích trong máy</span>
             </div>
-            <span class="status-tag status-tag--success" id="aiStatusTag">Offline</span>
+            <span class="status-tag status-tag--success" id="aiStatusTag">Ngoại tuyến</span>
           </div>
         </div>
       </section>
@@ -820,7 +820,7 @@
               <option value="EUR">EUR</option>
             </select>
           </div>
-          <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:4px">Cả đô/euro đều được — hệ thống lưu bằng VNĐ theo tỉ giá đầu tháng.</p>
+          <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:4px">Cả USD và EUR đều được — hệ thống lưu bằng VNĐ theo tỉ giá đầu tháng.</p>
         </div>
 
         <!-- Chuyển tiền giữa các ví (chỉ hiện khi chọn loại "Chuyển ví") -->
@@ -969,7 +969,7 @@
         <span class="splitter-result__amount" id="splitterPerPerson">75.000đ</span>
       </div>
       <button type="button" class="splitter-copy-btn" id="splitterCopyBtn">
-        <i class="fa-solid fa-copy"></i> Copy tin nhắn gửi Zalo / Messenger
+        <i class="fa-solid fa-copy"></i> Sao chép tin nhắn gửi Zalo / Messenger
       </button>
 
       <!-- ===== VietQR + Sổ nợ nhóm ===== -->
@@ -1065,7 +1065,7 @@
           <i class="fa-solid fa-robot"></i>
         </div>
         <h3 class="onboarding-title">Nhập nhanh bằng AI</h3>
-        <p class="onboarding-text">Gõ hoặc nói một câu — ví dụ <em>"Ăn bún bò 40k tiền mặt"</em> — AI tự tách số tiền, danh mục và ví giúp bạn. Kết nối Gemini (tuỳ chọn) để hiểu câu nói tự nhiên hơn.</p>
+        <p class="onboarding-text">Gõ hoặc nói một câu — ví dụ <em>"Ăn bún bò 40k tiền mặt"</em> — AI tự tách số tiền, danh mục và ví giúp bạn. Kết nối Gemini (tùy chọn) để hiểu câu nói tự nhiên hơn.</p>
       </div>
       <div class="onboarding-step">
         <div class="onboarding-icon-circle" style="background: var(--success-light); color: var(--success)">
@@ -1118,26 +1118,26 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-  <script src="js/utils.js?v=68"></script>
-  <script src="js/business.js?v=68"></script>
-  <script src="js/storage.js?v=68"></script>
-  <script src="js/category.js?v=68"></script>
-  <script src="js/transaction.js?v=68"></script>
-  <script src="js/chart.js?v=68"></script>
-  <script src="js/budget.js?v=68"></script>
-  <script src="js/export.js?v=68"></script>
-  <script src="js/notification.js?v=68"></script>
-  <script src="js/pwa.js?v=68"></script>
-  <script src="js/features.js?v=68"></script>
-  <script src="js/sync.js?v=68"></script>
-  <script src="js/config.js?v=68"></script>
-  <script src="js/auth.js?v=68"></script>
-  <script src="js/lock.js?v=68"></script>
-  <script src="js/split.js?v=68"></script>
-  <script src="js/ai.js?v=68"></script>
-  <script src="js/home.js?v=68"></script>
-  <script src="js/demo.js?v=68"></script>
-  <script src="js/app.js?v=68"></script>
+  <script src="js/utils.js?v=69"></script>
+  <script src="js/business.js?v=69"></script>
+  <script src="js/storage.js?v=69"></script>
+  <script src="js/category.js?v=69"></script>
+  <script src="js/transaction.js?v=69"></script>
+  <script src="js/chart.js?v=69"></script>
+  <script src="js/budget.js?v=69"></script>
+  <script src="js/export.js?v=69"></script>
+  <script src="js/notification.js?v=69"></script>
+  <script src="js/pwa.js?v=69"></script>
+  <script src="js/features.js?v=69"></script>
+  <script src="js/sync.js?v=69"></script>
+  <script src="js/config.js?v=69"></script>
+  <script src="js/auth.js?v=69"></script>
+  <script src="js/lock.js?v=69"></script>
+  <script src="js/split.js?v=69"></script>
+  <script src="js/ai.js?v=69"></script>
+  <script src="js/home.js?v=69"></script>
+  <script src="js/demo.js?v=69"></script>
+  <script src="js/app.js?v=69"></script>
 </body>
 </html>
 

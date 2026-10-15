@@ -301,3 +301,60 @@
     height: 200px;
   }
 }
+
+/* ===== Trạng thái rỗng của trang Thống kê ===== */
+.page--stats[data-empty='true'] .stats-chart-section {
+  display: none;
+}
+
+.stats-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  margin: var(--space-md) var(--space-lg) 0;
+  padding: var(--space-xl) var(--space-lg);
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.stats-empty[hidden] {
+  display: none;
+}
+
+.stats-empty__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--primary-bg);
+  color: var(--primary-text);
+  font-size: var(--font-size-xl);
+}
+
+.stats-empty__title {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stats-empty__text {
+  margin: 0;
+  max-width: 34ch;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.stats-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}

@@ -288,3 +288,10 @@
     max-width: 1240px;
   }
 }
+
+/* ===== FAB khong che tieu de danh sach ===== */
+@media (max-width: 899px) {
+  .page--home .section__header {
+    padding-right: 68px;
+  }
+}

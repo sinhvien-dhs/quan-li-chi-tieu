@@ -621,6 +621,53 @@ const PageManager = {
   }
 };
 
+// ===== Tabs phu trong trang Cài đặt =====
+// Trang Cài đặt dài hơn 3000px nên chia thành 4 nhóm để người dùng
+// không phải cuộn quá nhiều mới tìm thấy mục cần dùng.
+const SettingsTabs = {
+  current: 'chung',
+
+  init() {
+    const bar = document.querySelector('.settings-tabs');
+    if (!bar) return;
+    bar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.settings-tab');
+      if (!btn) return;
+      this.switchTo(btn.dataset.tab);
+    });
+    this.switchTo(this.current);
+  },
+
+  switchTo(tab) {
+    const bar = document.querySelector('.settings-tabs');
+    if (!bar || !bar.querySelector('[data-tab="' + tab + '"]')) return;
+    this.current = tab;
+
+    bar.querySelectorAll('.settings-tab').forEach(btn => {
+      const on = btn.dataset.tab === tab;
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+
+    // Ẩn/hiện các section thuộc nhóm tương ứng
+    document.querySelectorAll('#pageSettings .settings-section').forEach(sec => {
+      const show = sec.dataset.tab === tab;
+      sec.hidden = !show;
+    });
+
+    // Bảo đảm tab đang chọn nhìn thấy trong thanh cuộn ngang
+    const active = bar.querySelector('.settings-tab.is-active');
+    if (active && bar.scrollWidth > bar.clientWidth) {
+      const target = active.offsetLeft - (bar.clientWidth - active.offsetWidth) / 2;
+      bar.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+    }
+
+    // Cuộn trang lên đầu nhóm vừa mở
+    const page = document.getElementById('pageSettings');
+    if (page) window.scrollTo(0, 0);
+  }
+};
+
 // ===== Cài đặt AI & Bảo mật =====
 const SecuritySettings = {
   /** Cài đặt: Gemini key, PIN khoá app, ẩn số dư */
@@ -727,6 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ExportManager.init();
   NotificationManager.init();
   PageManager.init();
+  SettingsTabs.init();
   if (typeof Features !== 'undefined') {
     Features.init();
   }

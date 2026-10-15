@@ -66,6 +66,8 @@ const HomeWidgets = {
       configLink.addEventListener('click', (e) => {
         e.preventDefault();
         PageManager.switchTo('pageSettings');
+        // Mở đúng nhóm "Tiện ích & AI" để không phải tìm trong 11 mục
+        if (typeof SettingsTabs !== 'undefined') SettingsTabs.switchTo('tienich');
         setTimeout(() => {
           const key = document.getElementById('inputGeminiKey');
           if (key) {

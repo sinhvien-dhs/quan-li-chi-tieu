@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=65">
+  <link rel="manifest" href="manifest.json?v=66">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -47,7 +47,7 @@
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.min.css?v=65">
+  <link rel="stylesheet" href="style.min.css?v=66">
 </head>
 <body>
   <div id="printReport"></div>
@@ -221,7 +221,7 @@
           <div class="search-bar">
             <div class="search-bar__box">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="search" id="searchInput" class="search-bar__input" placeholder="Tìm theo tên, ghi chú, danh mục..." aria-label="Tìm kiếm giao dịch">
+              <input type="search" id="searchInput" class="search-bar__input" placeholder="Tìm giao diịch..." aria-label="Tìm kiếm giao dịch">
             </div>
             <select id="filterWallet" class="search-bar__select" aria-label="Lọc theo ví">
               <option value="">Tất cả ví</option>
@@ -360,6 +360,23 @@
         <span>Chi nhiều nhất: <strong id="statsTopCategory">—</strong></span>
       </div>
 
+      <!-- Trạng thái rỗng: hiện khi khoảng thời gian đã chọn không có giao dịch -->
+      <div class="stats-empty" id="statsEmpty" hidden>
+        <div class="stats-empty__icon" aria-hidden="true">
+          <i class="fa-solid fa-chart-column"></i>
+        </div>
+        <h3 class="stats-empty__title">Chưa có dữ liệu để phân tích</h3>
+        <p class="stats-empty__text">Khoảng thời gian này bạn chưa có giao dịch nào. Thêm giao dịch hoặc bật dữ liệu mẫu để xem biểu đồ.</p>
+        <div class="stats-empty__actions">
+          <button type="button" class="btn btn--primary" id="statsEmptyAddBtn">
+            <i class="fa-solid fa-plus"></i> Thêm giao dịch
+          </button>
+          <button type="button" class="btn btn--ghost" id="statsEmptyDemoBtn">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Xem dữ liệu mẫu
+          </button>
+        </div>
+      </div>
+
       <!-- Pie Chart -->
       <section class="stats-chart-section">
         <div class="stats-chart-section__header">
@@ -462,8 +479,23 @@
     <!--  PAGE: Cài đặt (Phase 3)                       -->
     <!-- ============================================== -->
     <div class="page page--settings" id="pageSettings">
+      <!-- Tabs phu: chia trang Cai dat nganh gon -->
+      <div class="settings-tabs" role="group" aria-label="Nhom cai dat">
+        <button type="button" class="settings-tab is-active" data-tab="chung" aria-pressed="true">
+          <i class="fa-solid fa-sliders"></i> Tổng quan
+        </button>
+        <button type="button" class="settings-tab" data-tab="quanly" aria-pressed="false">
+          <i class="fa-solid fa-wallet"></i> Quản lý
+        </button>
+        <button type="button" class="settings-tab" data-tab="tienich" aria-pressed="false">
+          <i class="fa-solid fa-robot"></i> Tiện ích &amp; AI
+        </button>
+        <button type="button" class="settings-tab" data-tab="taikhoan" aria-pressed="false">
+          <i class="fa-solid fa-user-gear"></i> Tài khoản
+        </button>
+      </div>
       <!-- Section: Báo cáo & Xuất dữ liệu -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="chung">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-file-excel"></i> Xuất báo cáo & Dữ liệu
           <span class="status-tag status-tag--success" id="appVersionTag" style="float:right">v1.0.0</span>
@@ -491,7 +523,7 @@
       </section>
 
       <!-- Section: Đa tiền tệ -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="chung">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-coins"></i> Tiền tệ hiển thị
         </h3>
@@ -511,7 +543,7 @@
       </section>
 
       <!-- Section: Ví / Tài khoản -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="quanly">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-wallet"></i> Ví / Tài khoản
         </h3>
@@ -527,7 +559,7 @@
       </section>
 
       <!-- Section: Giao dịch định kỳ -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="quanly">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-repeat"></i> Giao dịch định kỳ
         </h3>
@@ -538,7 +570,7 @@
       </section>
 
       <!-- Section: Sao lưu & Khôi phục -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="quanly">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-cloud-arrow-down"></i> Sao lưu & Phục hồi
         </h3>
@@ -566,7 +598,7 @@
       </section>
 
       <!-- Section: Đồng bộ dữ liệu -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="chung">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-cloud-arrow-up"></i> Đồng bộ dữ liệu
         </h3>
@@ -582,7 +614,7 @@
       </section>
 
       <!-- Section: Tài khoản -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="taikhoan">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-user"></i> Tài khoản
         </h3>
@@ -602,10 +634,8 @@
               <i class="fa-solid fa-user-slash"></i> Xóa tài khoản
             </button>
           </div>
-        </div>
-      </section>
 
-      <div class="settings-item">
+          <div class="settings-item">
             <div class="settings-item__info">
               <span class="settings-item__title">Chế độ dùng thử</span>
               <span class="settings-item__desc">Bật dữ liệu mẫu để xem biểu đồ, ngân sách, mục tiêu khi trình diễn</span>
@@ -618,7 +648,7 @@
       </section>
 
       <!-- Section: Nhắc nhở thông báo -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="tienich">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-bell"></i> Nhắc nhở ghi chép
         </h3>
@@ -653,7 +683,7 @@
       </section>
 
       <!-- Section: AI & Bảo mật -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="tienich">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-robot"></i> Trợ lý AI
         </h3>
@@ -689,7 +719,7 @@
       </section>
 
       <!-- Section: Bảo mật -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="tienich">
         <h3 class="settings-section__title">
           <i class="fa-solid fa-shield-halved"></i> Bảo mật
         </h3>
@@ -721,7 +751,7 @@
 
       <!-- Section: Vùng nguy hiểm -->
       <!-- Section: Vùng nguy hiểm -->
-      <section class="settings-section">
+      <section class="settings-section" data-tab="taikhoan">
         <h3 class="settings-section__title" style="color: var(--danger-text)">
           <i class="fa-solid fa-triangle-exclamation"></i> Vùng nguy hiểm
         </h3>
@@ -1030,8 +1060,24 @@
         <h3 class="onboarding-title">Kiểm soát ngân sách</h3>
         <p class="onboarding-text">Đặt hạn mức cho ăn uống, mua sắm... Web sẽ tự động cảnh báo khi bạn sắp chi vượt hạn mức.</p>
       </div>
+      <div class="onboarding-step">
+        <div class="onboarding-icon-circle" style="background: var(--primary-bg); color: var(--primary)">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <h3 class="onboarding-title">Nhập nhanh bằng AI</h3>
+        <p class="onboarding-text">Gõ hoặc nói một câu — ví dụ <em>"Ăn bún bò 40k tiền mặt"</em> — AI tự tách số tiền, danh mục và ví giúp bạn. Kết nối Gemini (tuỳ chọn) để hiểu câu nói tự nhiên hơn.</p>
+      </div>
+      <div class="onboarding-step">
+        <div class="onboarding-icon-circle" style="background: var(--success-light); color: var(--success)">
+          <i class="fa-solid fa-qrcode"></i>
+        </div>
+        <h3 class="onboarding-title">Chia tiền &amp; sổ nợ</h3>
+        <p class="onboarding-text">Tạo mã QR VietQR để mọi người chuyển tiền vào đúng hạn mục, đồng thời ghi sổ nợ nhóm và nhắc bạn ai còn nợ ai.</p>
+      </div>
       <div class="onboarding-dots">
         <span class="onboarding-dot active"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
         <span class="onboarding-dot"></span>
         <span class="onboarding-dot"></span>
       </div>
@@ -1066,7 +1112,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
-    <script src="app.min.js?v=65"></script>
+    <script src="app.min.js?v=66"></script>
   <!-- ===== JavaScript Modules ===== -->
   <!-- Firebase (Auth + Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>

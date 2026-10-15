@@ -27,6 +27,23 @@ const ChartManager = {
         this.renderAllCharts();
       });
     });
+
+    // Nut trong the loi
+    const addBtn = document.getElementById('statsEmptyAddBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => TransactionManager.openAddModal());
+    }
+    const demoBtn = document.getElementById('statsEmptyDemoBtn');
+    if (demoBtn) {
+      demoBtn.addEventListener('click', () => {
+        const added = DemoData.add();
+        Storage.set('spendwise_demo_mode', true);
+        Toast.success(added
+          ? `Đã thêm ${added} giao dịch mẫu để xem biểu đồ.`
+          : 'Dữ liệu mẫu đã có sẵn trên máy này.');
+        this.renderAllCharts();
+      });
+    }
   },
 
   /**
@@ -36,6 +53,7 @@ const ChartManager = {
     const transactions = this.getTransactionsByPeriod();
     // Số liệu tổng quan vẫn hiển thị được dù không có thư viện biểu đồ
     this.renderSummaryStats(transactions);
+    this.renderEmptyState(transactions.length === 0);
 
     // Gỡ thông báo thiếu thư viện (nếu có từ lần render trước)
     document.querySelectorAll('.chart-unavailable').forEach((n) => n.remove());
@@ -134,6 +152,17 @@ const ChartManager = {
     document.getElementById('statsAvgPerDay').textContent = Utils.formatCurrency(avgExpensePerDay);
     document.getElementById('statsTopCategory').textContent = topCategory;
     document.getElementById('statsTxCount').textContent = transactions.length + ' giao dịch';
+  },
+
+  /**
+   * Khi khoang thoi gian da chon khong co giao dich:
+   * an 3 bieu do rong va hien thi the loi -> trang nhin khong bi "trong".
+   */
+  renderEmptyState(isEmpty) {
+    const page = document.getElementById('pageStats');
+    const box = document.getElementById('statsEmpty');
+    if (page) page.dataset.empty = isEmpty ? 'true' : 'false';
+    if (box) box.hidden = !isEmpty;
   },
 
   /**

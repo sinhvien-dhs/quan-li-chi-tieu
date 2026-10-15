@@ -424,13 +424,15 @@ body {
 /* ===== Tìm kiếm & Lọc nâng cao ===== */
 .search-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-sm);
   padding: 0 var(--space-lg);
   margin-bottom: var(--space-md);
 }
 
 .search-bar__box {
-  flex: 1;
+  flex: 1 1 100%;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
@@ -442,22 +444,24 @@ body {
 }
 
 .search-bar__box:focus-within {
-  border-color: var(--primary-text);
+  border-color: var(--primary);
 }
 
 .search-bar__input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   color: var(--text-primary);
-  min-width: 0;
 }
 
 .search-bar__select {
-  max-width: 130px;
+  flex: 1 1 calc(50% - var(--space-sm));
+  min-width: 0;
+  max-width: 100%;
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -465,6 +469,17 @@ body {
   color: var(--text-primary);
   font-family: var(--font-family);
   font-size: var(--font-size-xs);
+}
+
+/* Màn hình rộng hơn: ô tìm kiếm và 2 ô lọc nằm cùng một hàng */
+@media (min-width: 560px) {
+  .search-bar__box {
+    flex: 1 1 auto;
+  }
+
+  .search-bar__select {
+    flex: 0 0 132px;
+  }
 }
 
 .section__count {
@@ -1070,3 +1085,157 @@ body {
 /* ===== Utility ===== */
 .text-center { text-align: center; }
 .hidden { display: none !important; }
+
+/* ===== Tabs phu trong trang Cài đặt ===== */
+.settings-tabs {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x proximity;
+}
+
+.settings-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 40px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  scroll-snap-align: center;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.settings-tab:hover {
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+
+.settings-tab:active {
+  transform: scale(0.97);
+}
+
+.settings-tab.is-active {
+  background: var(--primary-btn-deep);
+  border-color: var(--primary-btn-deep);
+  color: #FFFFFF;
+}
+
+/* Section đang ẩn (không thuộc tab đang chọn) */
+.settings-section[hidden] {
+  display: none;
+}
+
+/* Cảnh báo nội dung bị ẩn khi người dùng cố chuyển sang tab khác */
+.settings-tabs-hint {
+  display: none;
+  margin: 0 var(--space-lg) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--warning-light);
+  color: var(--warning-text);
+  font-size: var(--font-size-xs);
+}
+
+.settings-tabs-hint.is-visible {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ============================================================
+   Vùng chạm tối thiểu 40px
+   Điện thoại: nút cao 33–38px dễ bấm trượt, chuẩn khuyến nghị là 44px.
+   Các nút bên dưới được nâng lên >= 40px mà không đổi bố cục trang.
+   ============================================================ */
+.filter-tab,
+.stats-period-btn,
+.search-bar__select,
+.settings-tab,
+.side-card__btn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-tab,
+.stats-period-btn {
+  padding-top: var(--space-sm);
+  padding-bottom: var(--space-sm);
+}
+
+.search-bar__select {
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Ô nhập nhanh AI + 2 nút mic / gửi */
+.ai-entry__input {
+  min-height: 44px;
+}
+
+.ai-entry__go,
+.ai-entry__mic {
+  width: 44px;
+  height: 44px;
+}
+
+/* Nút nhỏ trong thẻ phía bên (trang chủ desktop) */
+.side-card__btn {
+  min-height: 40px;
+}
+
+/* Nút sửa / xoá trên từng dòng giao dịch */
+.transaction-item__action-btn {
+  width: 40px;
+  height: 40px;
+}
+
+/* Bấm/phím Tab vào dòng giao dịch thì nút thao tác cũng phải hiện */
+.transaction-item:focus-within .transaction-item__actions {
+  opacity: 1;
+}
+
+/* Ô tìm kiếm phải phủ hết chiều cao khung, không chỉ dòng chữ */
+.search-bar__input {
+  align-self: stretch;
+  padding: var(--space-sm) 0;
+  line-height: 1.4;
+}
+
+/* Nút nhỏ trong thẻ Ngân sách */
+.budget-summary__btn,
+.budget-item__edit-btn {
+  min-height: 40px;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+/* Liên kết nhỏ trong thẻ phía bên (trang chủ) */
+.side-card__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-xs);
+}
+
+/* Nút hành động nhỏ trong thẻ cài đặt */
+.settings-btn {
+  min-height: 40px;
+}

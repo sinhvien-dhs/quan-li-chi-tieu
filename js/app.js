@@ -566,22 +566,28 @@ const PageManager = {
   },
 
   bindEvents() {
-    document.querySelectorAll('.bottom-nav__item').forEach(btn => {
+    document.querySelectorAll('.bottom-nav__item').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        const pageId = btn.dataset.page;
-        this.switchTo(pageId);
-
-        // Update active state
-        document.querySelectorAll('.bottom-nav__item').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        this.switchTo(btn.dataset.page);
       });
+    });
+  },
+
+  /** Đồng bộ trạng thái active của thanh điều hướng theo trang đang mở */
+  syncNav(pageId) {
+    document.querySelectorAll('.bottom-nav__item').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.page === pageId);
     });
   },
 
   switchTo(pageId) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+    // Thanh điều hướng luôn phải khớp với trang đang mở
+    // (kể cả khi chuyển trang bằng code chứ không phải do bấm nút)
+    this.syncNav(pageId);
 
     // FAB chỉ hiện ở Trang chủ
     const fab = document.getElementById('fabAdd');

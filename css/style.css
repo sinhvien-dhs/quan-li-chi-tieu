@@ -96,6 +96,29 @@ body {
   transform: scale(1.05);
 }
 
+/* Nút có nhãn chữ (nút "Chia tiền") để người dùng biết tính năng này tồn tại */
+.header__btn--pill {
+  width: auto;
+  padding: 0 var(--space-md);
+  gap: var(--space-xs);
+  border-radius: var(--radius-full);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+/* Màn hình quá hẹp thì chỉ giữ biểu tượng */
+@media (max-width: 380px) {
+  .header__btn--pill {
+    width: 40px;
+    padding: 0;
+  }
+
+  .header__btn--pill span {
+    display: none;
+  }
+}
+
 /* ===== Summary Cards ===== */
 .summary {
   padding: 0 var(--space-lg);

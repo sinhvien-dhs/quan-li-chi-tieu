@@ -1,4 +1,4 @@
-name: CI — Kiểm thử tự động
+name: CI - Kiem tra tu dong
 
 on:
   push:
@@ -16,18 +16,26 @@ jobs:
         with:
           node-version: '20'
 
-      # 1) Kiểm thử lớp nghiệp vụ (tiền, ngân sách, ngày, chia tiền)
-      - name: Unit test — lớp nghiệp vụ
+      # 1) Kiem thu lop nghiep vu chung (tien, ngan sach, ngay, chia tien)
+      - name: Unit test - lop nghiep vu
         run: node tests/business.test.js
 
-      # 2) Kiểm tra cú pháp các file JS trong js/
+      # 2) Kiem thu phan bo tien khi chia hoa don va so no nhom
+      - name: Unit test - chia tien & so no
+        run: node tests/split.test.js
+
+      # 3) Kiem thu luu du lieu, phan loai chuyen vi va khoa ngan hang
+      - name: Unit test - luu du lieu & bao cao
+        run: node tests/storage.test.js
+
+      # 4) Kiem tra cua phap cac file JS trong js/
       - name: Syntax check
         run: |
           for f in js/*.js; do node --check "$f" || exit 1; done
 
-      # 3) Kiểm tra Firestore Rules biên dịch được không
-      #    (bỏ qua nếu chưa cấu hình FIREBASE_PROJECT_ID)
-      - name: Rules test (nếu có FIREBASE_PROJECT_ID)
+      # 5) Kiem tra Firestore Rules bien dich duoc
+      #    (bo qua neu chua cau hinh FIREBASE_PROJECT_ID)
+      - name: Rules test (neu co FIREBASE_PROJECT_ID)
         if: ${{ secrets.FIREBASE_PROJECT_ID != '' }}
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}

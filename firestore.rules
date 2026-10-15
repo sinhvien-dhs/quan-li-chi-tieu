@@ -1,7 +1,7 @@
 rules_version = '2';
 
-// SPENDWISE-RULES v66 — 2026-10-15
-// Nếu bạn thấy dòng "SPENDWISE-RULES v66" ở trên cùng trong ô trình soạn
+// SPENDWISE-RULES v67 — 2026-10-15
+// Nếu bạn thấy dòng "SPENDWISE-RULES v67" ở trên cùng trong ô trình soạn
 // thì đã dán đúng phiên bản mới nhất. Nếu không, hãy dán lại từ file firestore.rules
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -193,14 +193,16 @@ service cloud.firestore {
         && d.perPerson is number && d.perPerson >= 0 && d.perPerson <= 1000000000000
         && d.myAmount is number && d.myAmount >= 0 && d.myAmount <= 1000000000000
         && d.myName is string && d.myName.size() <= 40
-        && d.memberCount is int && d.memberCount >= 0 && d.memberCount <= 30
+        // Dùng "is number" thay vì "is int": Firebase JS SDK có thể ghi số nguyên
+        // thành double, dùng "is int" sẽ khiến mọi phiếu nợ bị từ chối.
+        && d.memberCount is number && d.memberCount >= 0 && d.memberCount <= 30
         && validDate(d.date)
         && d.debts is list
         && d.debts.size() <= 30
         && d.debts.all(x, validDebtItem(x))
-        // Tổng các khoản nợ + phần chủ phiếu phải bằng đúng tổng hoá đơn.
-        // Đây là chốt chặn cuối: số liệu sổ nợ sai sẽ không lên được máy chủ.
-        && d.debts.map(x, x.amount).sum() + d.myAmount == d.total
+        // Tổng các khoản nợ + phần chủ phiếu phải bằng tổng hoá đơn.
+        // So sánh trong giá trị tuyệt đối để không phụ thuộc int/double.
+        && d.debts.map(x, x.amount).sum() == d.total - d.myAmount
         && validTs(d.createdAt);
     }
 

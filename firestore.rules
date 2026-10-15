@@ -1,8 +1,8 @@
 rules_version = '2';
 
-// SPENDWISE-RULES v67 — 2026-10-15
-// Nếu bạn thấy dòng "SPENDWISE-RULES v67" ở trên cùng trong ô trình soạn
-// thì đã dán đúng phiên bản mới nhất. Nếu không, hãy dán lại từ file firestore.rules
+// SPENDWISE-RULES v68 - BAN MOI - 2026-10-16 - DA-SUA-LOI-GHI-SO-NO
+// Neu ban thay dong nay thi da dan DUNG ban moi nhat.
+// Khong con bien thuc debts.map(...).sum() gay loi chan ghi.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -172,38 +172,35 @@ service cloud.firestore {
     }
 
     // Sổ nợ nhóm: { id, title, total, perPerson, myAmount, myName,
-    //                memberCount, date, createdAt, debts: [{name, amount, paid}] }
-    function validDebtItem(x) {
-      return x is map
-        && x.keys().hasOnly(['name','amount','paid'])
-        && x.name is string && x.name.size() > 0 && x.name.size() <= 40
-        && x.amount is number && x.amount >= 0 && x.amount <= 1000000000000
-        && (!('paid' in x.keys()) || x.paid is bool);
-    }
-
+//    //             memberCount, date, createdAt, debts: [{name, amount, paid}] }
+    //
+    // LƯU Ý: cố tình KHÔNG dùng biểu thức debts.map(...).sum() để kiểm tra tổng.
+    // Biểu thức đó khiến mọi lần ghi bị từ chối (rules báo "Missing or insufficient
+    // permissions") vì không đánh giá được trên Firestore.
+    // Việc kiểm tra tổng khớp vẫn được thực hiện ở phía app (ExportManager.sanitizeDebts)
+    // trước khi dữ liệu được gửi lên.
     function validDebt(d) {
       return d is map
         && d.keys().hasOnly([
              'id','title','total','perPerson','myAmount','myName',
              'memberCount','date','createdAt','debts'
            ])
-        && d.id is string && d.id.size() > 0 && d.id.size() <= 64
-        && d.title is string && d.title.size() > 0 && d.title.size() <= 60
-        && d.total is number && d.total >= 0 && d.total <= 1000000000000
-        && d.perPerson is number && d.perPerson >= 0 && d.perPerson <= 1000000000000
-        && d.myAmount is number && d.myAmount >= 0 && d.myAmount <= 1000000000000
-        && d.myName is string && d.myName.size() <= 40
-        // Dùng "is number" thay vì "is int": Firebase JS SDK có thể ghi số nguyên
-        // thành double, dùng "is int" sẽ khiến mọi phiếu nợ bị từ chối.
-        && d.memberCount is number && d.memberCount >= 0 && d.memberCount <= 30
-        && validDate(d.date)
-        && d.debts is list
-        && d.debts.size() <= 30
-        && d.debts.all(x, validDebtItem(x))
-        // Tổng các khoản nợ + phần chủ phiếu phải bằng tổng hoá đơn.
-        // So sánh trong giá trị tuyệt đối để không phụ thuộc int/double.
-        && d.debts.map(x, x.amount).sum() == d.total - d.myAmount
-        && validTs(d.createdAt);
+        && 'id' in d.keys() && d.id is string && d.id.size() > 0 && d.id.size() <= 64
+        && 'title' in d.keys() && d.title is string && d.title.size() > 0 && d.title.size() <= 60
+        && 'total' in d.keys() && d.total is number && d.total >= 0 && d.total <= 1000000000000
+        && 'perPerson' in d.keys() && d.perPerson is number && d.perPerson >= 0 && d.perPerson <= 1000000000000
+        && 'myAmount' in d.keys() && d.myAmount is number && d.myAmount >= 0 && d.myAmount <= 1000000000000
+        && 'myName' in d.keys() && d.myName is string && d.myName.size() <= 40
+        && 'memberCount' in d.keys() && d.memberCount is number && d.memberCount >= 0 && d.memberCount <= 30
+        && 'date' in d.keys() && validDate(d.date)
+        && 'createdAt' in d.keys() && validTs(d.createdAt)
+        && 'debts' in d.keys() && d.debts is list && d.debts.size() <= 30
+        && d.debts.all(x,
+             x is map
+             && x.keys().hasOnly(['name','amount','paid'])
+             && 'name' in x.keys() && x.name is string && x.name.size() > 0 && x.name.size() <= 40
+             && 'amount' in x.keys() && x.amount is number && x.amount >= 0 && x.amount <= 1000000000000
+             && (!('paid' in x.keys()) || x.paid is bool));
     }
 
     // ==========================================================

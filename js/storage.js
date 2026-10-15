@@ -77,7 +77,8 @@ const Storage = {
   /**
    * Thêm giao dịch mới
    * @param {Object} transaction
-   * @returns {Object} transaction đã thêm (có id)
+   * @returns {Object|null} giao dịch đã thêm, hoặc null nếu KHÔNG lưu được
+   *   (bộ nhớ đầy / bị chặn). Trả null để phía gọi KHÔNG báo "thành công" giả.
    */
   addTransaction(transaction) {
     const transactions = this.getTransactions();
@@ -89,7 +90,12 @@ const Storage = {
       createdAt: new Date().toISOString()
     };
     transactions.unshift(newTransaction);
-    this.saveTransactions(transactions);
+
+    if (!this.saveTransactions(transactions)) {
+      // Hoàn tác thay đổi trong bộ nhớ để không có "bóng ma" giao dịch
+      transactions.shift();
+      return null;
+    }
     return newTransaction;
   },
 
@@ -97,33 +103,38 @@ const Storage = {
    * Cập nhật giao dịch
    * @param {string} id
    * @param {Object} updates
-   * @returns {Object|null}
+   * @returns {Object|null} null nếu không tìm thấy hoặc lưu thất bại
    */
   updateTransaction(id, updates) {
     const transactions = this.getTransactions();
     const index = transactions.findIndex(t => t.id === id);
     if (index === -1) return null;
 
+    const backup = transactions[index];
     transactions[index] = {
       ...transactions[index],
       ...updates,
       syncState: 'pending',
       updatedAt: new Date().toISOString()
     };
-    this.saveTransactions(transactions);
+
+    if (!this.saveTransactions(transactions)) {
+      transactions[index] = backup;
+      return null;
+    }
     return transactions[index];
   },
 
   /**
    * Xóa giao dịch
    * @param {string} id
-   * @returns {boolean}
+   * @returns {boolean} true nếu đã xóa và lưu được; false nếu không tồn tại hoặc lưu hỏng
    */
   deleteTransaction(id) {
     const transactions = this.getTransactions();
     const filtered = transactions.filter(t => t.id !== id);
     if (filtered.length === transactions.length) return false;
-    this.saveTransactions(filtered);
+    if (!this.saveTransactions(filtered)) return false;
     return true;
   },
 

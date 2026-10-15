@@ -456,7 +456,7 @@ const PWAManager = {
         const wallets = (typeof Features !== 'undefined') ? Features.getWallets() : [];
         const wallet = wallets.length ? wallets[0].id : null;
 
-        Storage.addTransaction({
+        const saved = Storage.addTransaction({
           name: (noteInput && noteInput.value.trim()) || 'Bữa ăn',
           amount: myShare,
           type: 'expense',
@@ -465,6 +465,11 @@ const PWAManager = {
           date: Utils.getToday(),
           note: 'Phần của ' + (members[myIndex] || 'tôi') + ' trong phiếu chia ' + (members.length || split.amounts.length) + ' người'
         });
+
+        if (!saved) {
+          Toast.error('Không lưu được giao dịch — bộ nhớ trình duyệt có thể đã đầy.');
+          return;
+        }
 
         TransactionManager.renderTransactions();
         TransactionManager.updateSummary();

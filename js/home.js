@@ -209,8 +209,11 @@ const HomeWidgets = {
 
   saveAll() {
     if (!this.preview.length) return;
-    this.preview.forEach((item) => {
-      Storage.addTransaction({
+    // Đếm số giao dịch THỰC SỰ lưu được — không báo "thành công" nếu lưu hỏng
+    let savedCount = 0;
+    const failed = [];
+    this.preview.forEach((item, idx) => {
+      const r = Storage.addTransaction({
         name: item.name,
         amount: item.amount,
         type: item.type,
@@ -219,15 +222,30 @@ const HomeWidgets = {
         date: item.date || Utils.getToday(),
         note: item.note || ''
       });
+      if (r) savedCount++;
+      else failed.push(idx + 1);
     });
-    const count = this.preview.length;
-    TransactionManager.renderTransactions();
-    TransactionManager.updateSummary();
-    BudgetManager.updateBudgetSummary();
-    BudgetManager.renderBudgetList();
-    this.refreshDemoCard();
+
+    if (savedCount > 0) {
+      TransactionManager.renderTransactions();
+      TransactionManager.updateSummary();
+      BudgetManager.updateBudgetSummary();
+      BudgetManager.renderBudgetList();
+      this.refreshDemoCard();
+    }
+
+    if (savedCount === 0) {
+      // Giữ nguyên phần nhập để người dùng không mất dữ liệu
+      Toast.error('Không lưu được giao dịch — bộ nhớ trình duyệt có thể đã đầy. Hãy dọn ảnh hoá đơn cũ rồi thử lại.');
+      return;
+    }
+
     this.clear();
-    Toast.success(`Đã thêm ${count} giao dịch từ câu nhập nhanh!`);
+    if (failed.length) {
+      Toast.warning(`Đã thêm ${savedCount}/${this.preview.length} giao dịch. ${failed.length} giao dịch không lưu được.`);
+    } else {
+      Toast.success(`Đã thêm ${savedCount} giao dịch từ câu nhập nhanh!`);
+    }
   },
 
   clear() {

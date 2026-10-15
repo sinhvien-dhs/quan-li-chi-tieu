@@ -60,19 +60,73 @@ const Features = {
       return;
     }
     const wallet = this.getWalletById(id);
-    const used = (Storage.getTransactions() || []).filter(t => t.wallet === id);
+
+    /**
+     * Ví bị dùng ở BA trường: ví chính, ví gửi và ví nhận của giao dịch chuyển ví.
+     * Trước đây chỉ kiểm tra `wallet` nên giao dịch chuyển ví bị bỏ sót và
+     * còn trỏ tới ví đã xoá → số dư theo ví sai.
+     */
+    const usesWallet = (t) => t.wallet === id || t.fromWallet === id || t.toWallet === id;
+    const all = Storage.getTransactions() || [];
+    const used = all.filter(usesWallet);
+
+    // Sau khi đổi hướng, một giao dịch chuyển ví có thể thành "ví → chính nó".
+    // Trường hợp đó không có ý nghĩa và vi phạm quy tắc dữ liệu (from khác to),
+    // nên phải loại bỏ — và báo rõ cho người dùng.
+    const chuyenHuong = (t, moi) => {
+      const nt = Object.assign({}, t);
+      if (nt.wallet === id) nt.wallet = moi;
+      if (nt.fromWallet === id) nt.fromWallet = moi;
+      if (nt.toWallet === id) nt.toWallet = moi;
+      return nt;
+    };
+
+    const others = this.getWallets().filter(w => w.id !== id);
+    const danhSachMoi = others.map(w => w.id);
+
+    /**
+     * Chọn ví thay thế cho từng giao dịch: ưu tiên ví KHÔNG làm hai chiều
+     * chuyển ví trùng nhau, để không phải bỏ bất kỳ lịch sử nào.
+     * Ví dụ: chuyển Tiền mặt → Ngân hàng, xoá ví "Tiền mặt" và chuyển sang
+     * "Ngân hàng" sẽ thành Ngân hàng → Ngân hàng (vô nghĩa) → chọn MoMo thay thế.
+     */
+    const chonViThayThe = (t, macDinh) => {
+      if (!Business.isTransfer(t)) return macDinh;
+      const conLai = (t.fromWallet === id ? t.toWallet : t.fromWallet);
+      const hopLe = danhSachMoi.filter(w => w !== conLai);
+      return hopLe.length ? hopLe[0] : macDinh;
+    };
+
+    const doomed = [];
+    const keepable = [];
+    const keToChuyen = {};
+    used.forEach(t => {
+      const macDinh = danhSachMoi[0] || null;
+      const moi = chonViThayThe(t, macDinh);
+      const nt = chuyenHuong(t, moi);
+      if (Business.isTransfer(t) && nt.fromWallet === nt.toWallet) {
+        doomed.push(t);
+      } else {
+        keepable.push(t);
+        keToChuyen[t.id] = moi;
+      }
+    });
 
     const doDelete = (reassignTo) => {
-      if (used.length > 0 && reassignTo) {
-        const txs = Storage.getTransactions().map(t =>
-          t.wallet === id ? Object.assign({}, t, { wallet: reassignTo }) : t);
-        Storage.saveTransactions(txs);
+      let txs = Storage.getTransactions();
+      if (keepable.length > 0) {
+        txs = txs
+          .filter(t => !doomed.some(d => d.id === t.id))
+          .map(t => usesWallet(t) ? chuyenHuong(t, keToChuyen[t.id] || reassignTo) : t);
       }
+      Storage.saveTransactions(txs);
       this.saveWallets(this.getWallets().filter(w => w.id !== id));
       this.renderWalletList();
       this.renderWalletOptions();
       TransactionManager.renderTransactions();
+      TransactionManager.updateSummary();
       if (typeof TransactionManager !== 'undefined') TransactionManager.renderHomeBudget();
+      if (typeof BudgetManager !== 'undefined') BudgetManager.renderBudgetList();
     };
 
     if (used.length === 0) {
@@ -82,15 +136,23 @@ const Features = {
     }
 
     // Có giao dịch đang dùng ví này → hỏi cách xử lý
-    const others = this.getWallets().filter(w => w.id !== id);
+    const onlyTransfer = keepable.filter(t => t.wallet !== id);
+    let ghiChu = '';
+    if (onlyTransfer.length > 0) {
+      ghiChu += ` Trong đó ${onlyTransfer.length} giao dịch chuyển ví có ví này ở đầu hoặc cuối.`;
+    }
+    if (doomed.length > 0) {
+      ghiChu += ` ${doomed.length} giao dịch chuyển ví sẽ bị xoá vì sau khi chuyển hướng hai chiều ví trùng nhau; chúng không ảnh hưởng tổng thu/chi.`;
+    }
     ConfirmDialog.show({
       title: 'Xóa ví "' + (wallet ? wallet.name : '') + '"?',
-      message: used.length + ' giao dịch đang dùng ví này. ' +
-        'Giao dịch sẽ được chuyển sang ví "' + others[0].name + '".',
+      message: used.length + ' giao dịch đang dùng ví này.' + ghiChu +
+        ' Phần còn lại sẽ được chuyển sang ví "' + others[0].name + '".',
       confirmText: 'Xóa & chuyển ví',
       onConfirm: () => {
         doDelete(others[0].id);
-        Toast.success(`Đã xóa ví và chuyển ${used.length} giao dịch sang "${others[0].name}"!`);
+        Toast.success(`Đã xóa ví và chuyển ${keepable.length} giao dịch sang "${others[0].name}"` +
+          (doomed.length ? `, xoá ${doomed.length} giao dịch chuyển ví không còn hợp lệ` : '') + '!');
       }
     });
   },
@@ -326,6 +388,7 @@ const Features = {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     let totalCreated = 0;
+    let failedSaves = 0;
 
     const existingIds = new Set(Storage.getTransactions().map(t => t.id));
 
@@ -342,7 +405,7 @@ const Features = {
 
         // Bỏ qua nếu lần lặp này đã tồn tại (chống tạo trùng)
         if (!existingIds.has(key)) {
-          Storage.addTransaction({
+          const r = Storage.addTransaction({
             id: key,                      // ID ổn định theo rule + ngày
             name: rule.name,
             amount: rule.amount,           // luôn là VNĐ
@@ -352,11 +415,16 @@ const Features = {
             date: dateStr,
             note: 'Tự động (định kỳ)'
           });
-          existingIds.add(key);
-          created++;
+          // Chỉ đánh dấu đã chạy khi LƯU THÀNH CÔNG, nếu không sẽ mất giao dịch vĩnh viễn
+          if (r) {
+            existingIds.add(key);
+            created++;
+          } else {
+            failedSaves++;
+          }
         }
 
-        rule.lastRun = dateStr;
+        if (existingIds.has(key)) rule.lastRun = dateStr;
         cursor = this.getNextDate(cursor, rule.frequency);
       }
       totalCreated += created;
@@ -370,8 +438,11 @@ const Features = {
         TransactionManager.updateSummary();
       }
       if (typeof Toast !== 'undefined') {
-        Toast.success(`Đã tự động thêm ${totalCreated} giao dịch định kỳ!`);
+        Toast.success(`Đã tự động thêm ${totalCreated} giao dịch định kỳ!` +
+          (failedSaves > 0 ? ` (${failedSaves} giao dịch chưa lưu được, sẽ thử lại lần sau)` : ''));
       }
+    } else if (failedSaves > 0 && typeof Toast !== 'undefined') {
+      Toast.error(`Không lưu được ${failedSaves} giao dịch định kỳ — bộ nhớ có thể đã đầy.`);
     }
   },
 
@@ -528,15 +599,28 @@ const Features = {
     const printed = sorted.slice(0, MAX_ROWS);
     const omitted = sorted.length - printed.length;
 
-    const rows = printed.map(t => `
+    const rows = printed.map(t => {
+      const isTransfer = Business.isTransfer(t);
+      const loai = isTransfer ? 'Chuyển ví' : (t.type === 'income' ? 'Thu nhập' : 'Chi tiêu');
+      // Chuyển ví không làm tăng/giảm tổng, nên không gắn dấu +/− như thu chi
+      const dau = isTransfer ? '' : (t.type === 'income' ? '+' : '-');
+      const mau = isTransfer ? '#4A43C8' : (t.type === 'income' ? '#0B7D59' : '#C0392B');
+      let ghiChu = t.note ? `<br><small style="color:#888">${this.esc(t.note)}</small>` : '';
+      if (isTransfer) {
+        const from = (this.getWalletById(t.fromWallet) || {}).name || t.fromWallet || '?';
+        const to = (this.getWalletById(t.toWallet) || {}).name || t.toWallet || '?';
+        ghiChu += `<br><small style="color:#666">${this.esc(from)} → ${this.esc(to)}</small>`;
+      }
+      return `
       <tr>
         <td>${Utils.formatDate(t.date)}</td>
-        <td>${this.esc(t.name)}${t.note ? `<br><small style="color:#888">${this.esc(t.note)}</small>` : ''}</td>
-        <td>${t.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</td>
-        <td style="text-align:right;color:${t.type === 'income' ? '#0B7D59' : '#C0392B'}">
-          ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
+        <td>${this.esc(t.name)}${ghiChu}</td>
+        <td>${loai}</td>
+        <td style="text-align:right;color:${mau}">
+          ${dau}${Utils.formatCurrency(t.amount)}
         </td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
 
     document.getElementById('printReport').innerHTML = `
       <h1 style="margin-bottom:4px">💰 SpendWise — Báo cáo thu chi</h1>

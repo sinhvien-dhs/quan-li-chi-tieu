@@ -44,7 +44,11 @@ const ExportManager = {
     }
 
     if (typeof XLSX === 'undefined') {
-      Toast.error('Thư viện Excel đang tải, vui lòng thử lại sau vài giây!');
+      // Phân biệt 2 trường hợp để người dùng biết chính xác phải làm gì
+      const online = navigator.onLine !== false;
+      Toast.error(online
+        ? 'Thư viện Excel đang tải, vui lòng thử lại sau vài giây!'
+        : 'Chưa tải sẵn thư viện Excel. Hãy kết nối mạng và mở app một lần, hoặc xuất bằng file sao lưu JSON.');
       return;
     }
 
@@ -52,15 +56,30 @@ const ExportManager = {
     const sorted = transactions.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const rows = sorted.map((t, index) => {
       const cat = Categories.getById(t.category);
-      const wallet = (typeof Features !== 'undefined' && Features.getWalletById(t.wallet)) || null;
+      const isTransfer = Business.isTransfer(t);
+
+      // Giao dịch chuyển ví KHÔNG phải thu/chi — ghi rõ hai chiều ví cho đúng bản chất
+      const loai = isTransfer ? 'Chuyển ví' : (t.type === 'income' ? 'Thu nhập' : 'Chi tiêu');
+      const danhMuc = isTransfer ? 'Chuyển ví' : (cat ? cat.name : 'Khác');
+
+      let vi;
+      if (isTransfer) {
+        const from = (typeof Features !== 'undefined' && Features.getWalletById(t.fromWallet)) || null;
+        const to = (typeof Features !== 'undefined' && Features.getWalletById(t.toWallet)) || null;
+        vi = (from ? from.name : (t.fromWallet || '?')) + ' → ' + (to ? to.name : (t.toWallet || '?'));
+      } else {
+        const w = (typeof Features !== 'undefined' && Features.getWalletById(t.wallet)) || null;
+        vi = w ? w.name : '';
+      }
+
       return {
         'STT': index + 1,
         'Ngày': Utils.formatDate(t.date),
-        'Loại giao dịch': t.type === 'income' ? 'Thu nhập' : 'Chi tiêu',
-        'Danh mục': cat ? cat.name : 'Khác',
+        'Loại giao dịch': loai,
+        'Danh mục': danhMuc,
         'Tên giao dịch': t.name,
         'Số tiền (VNĐ)': t.amount,
-        'Ví': wallet ? wallet.name : '',
+        'Ví': vi,
         'Ghi chú': t.note || ''
       };
     });

@@ -101,7 +101,8 @@ body {
   width: auto;
   padding: 0 var(--space-md);
   gap: var(--space-xs);
-  border-radius: var(--radius-full);
+  /* Đồng bộ bo góc với các nút khác trong app (8px) */
+  border-radius: var(--radius-sm);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -1083,8 +1084,9 @@ body {
 
 .filter-tab {
   padding: var(--space-sm) var(--space-md);
-  border: none;
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  /* Đồng bộ bo góc với nút trong app (8px) */
+  border-radius: var(--radius-sm);
   background: var(--bg-card);
   color: var(--text-secondary);
   font-family: var(--font-family);
@@ -1101,8 +1103,9 @@ body {
 }
 
 .filter-tab.active {
-  background: var(--primary-dark);
-  color: white;
+  background: var(--primary-btn-deep);
+  border-color: var(--primary-btn-deep);
+  color: #FFFFFF;
 }
 
 /* ===== Utility ===== */

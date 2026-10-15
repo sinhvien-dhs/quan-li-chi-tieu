@@ -72,8 +72,9 @@
 .stats-period-btn {
   flex: 1;
   padding: var(--space-sm) var(--space-md);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  /* Đồng bộ bo góc với nút trong app (8px) */
+  border-radius: var(--radius-sm);
   background: var(--bg-card);
   color: var(--text-primary);
   font-family: var(--font-family);
@@ -90,9 +91,9 @@
 }
 
 .stats-period-btn.active {
-  background: var(--primary-dark);
-  border-color: var(--primary-text);
-  color: white;
+  background: var(--primary-btn-deep);
+  border-color: var(--primary-btn-deep);
+  color: #FFFFFF;
 }
 
 /* ===== Stats Summary Cards ===== */

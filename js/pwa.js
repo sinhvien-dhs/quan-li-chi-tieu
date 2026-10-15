@@ -398,7 +398,7 @@ const PWAManager = {
     if (!box) return;
     const s = SplitManager.summary();
     box.innerHTML =
-      '<div class="debt-summary__pending">Còn phải thu<b>' + Utils.formatCurrency(s.pending) + '</b></div>' +
-      '<div class="debt-summary__collected">Đã thu hồi<b>' + Utils.formatCurrency(s.collected) + '</b></div>';
+      '<div class="debt-summary__pending">Còn phải thu <b>' + Utils.formatCurrency(s.pending) + '</b></div>' +
+      '<div class="debt-summary__collected">Đã thu hồi <b>' + Utils.formatCurrency(s.collected) + '</b></div>';
   }
 };

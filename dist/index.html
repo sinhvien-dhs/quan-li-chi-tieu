@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=74">
+  <link rel="manifest" href="manifest.json?v=75">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -47,7 +47,7 @@
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.min.css?v=74">
+  <link rel="stylesheet" href="style.min.css?v=75">
 </head>
 <body>
   <div id="printReport"></div>
@@ -59,7 +59,7 @@
       <p><strong>Ứng dụng cần JavaScript để chạy.</strong> Nếu bạn đang đọc nội dung này, trình duyệt của bạn đang tắt JavaScript.</p>
       <ul>
         <li>Quản lý giao dịch thu/chi theo 14 danh mục, nhiều ví/tài khoản</li>
-        <li>Ngân sách theo danh mục, cảnh báo khi vượt hạn mức (≥85%, ≥100%)</li>
+        <li>Ngân sách theo danh mục, cảnh báo khi sắp chạm (≥80%) và vượt (≥100%)</li>
         <li>Mục tiêu tiết kiệm, giao dịch định kỳ, ảnh hóa đơn</li>
         <li>Biểu đồ thống kê (Chart.js), xuất Excel và báo cáo PDF</li>
         <li>Sao lưu/phục hồi JSON, đa tiền tệ (tỉ giá cố định)</li>
@@ -82,8 +82,8 @@
         <i class="fa-solid fa-user-circle" style="color:var(--primary)"></i> Tài khoản SpendWise
       </h3>
       <div class="form__group">
-        <label class="form__label" for="authEmail">Tài khoản</label>
-        <input type="text" class="form__input" id="authEmail" placeholder="VD: an123 (hoặc email)" style="width:100%">
+        <label class="form__label" for="authEmail">Email đăng nhập</label>
+        <input type="email" class="form__input" id="authEmail" placeholder="VD: an123@gmail.com" autocomplete="email" style="width:100%">
       </div>
       <div class="form__group" style="position:relative">
         <label class="form__label" for="authPassword">Mật khẩu</label><div style="position:relative"><input type="password" class="form__input" id="authPassword" placeholder="Tối thiểu 6 ký tự" style="padding-right:44px">
@@ -115,10 +115,11 @@
         <i class="fa-solid fa-user-plus" style="color:var(--danger)"></i> Tạo tài khoản mới
       </h3>
       <div class="form__group">
-        <label class="form__label" for="registerName">Tên đăng nhập</label>
-        <input type="text" class="form__input" id="registerName" placeholder="VD: an123 (không dấu, không cách)" maxlength="24" oninput="document.getElementById('registerNameError').style.display='none'">
+        <label class="form__label" for="registerName">Email đăng ký</label>
+        <input type="email" class="form__input" id="registerName" placeholder="VD: an123@gmail.com" autocomplete="email" maxlength="60" oninput="document.getElementById('registerNameError').style.display='none'">
+        <p class="form__hint">Dùng email thật để có thể khôi phục mật khẩu khi quên.</p>
         <p id="registerNameError" style="display:none;color:var(--danger);font-size:var(--font-size-xs);margin-top:var(--space-xs)">
-          <i class="fa-solid fa-circle-exclamation"></i> Tên đăng nhập này đã được đăng ký!
+          <i class="fa-solid fa-circle-exclamation"></i> Email này đã được đăng ký!
         </p>
       </div>
       <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-bottom:var(--space-sm)">
@@ -532,13 +533,30 @@
           <div class="settings-item">
             <div class="settings-item__info">
               <span class="settings-item__title">Đơn vị tiền tệ</span>
-              <span class="settings-item__desc">Dữ liệu lưu bằng VNĐ, chỉ đổi cách hiển thị</span>
+              <span class="settings-item__desc">Dữ liệu luôn lưu bằng VNĐ, chỉ đổi cách hiển thị</span>
             </div>
             <select class="form__input" id="inputCurrency" aria-label="Đơn vị tiền tệ hiển thị" style="width:auto;cursor:pointer">
               <option value="VND">VNĐ (đ)</option>
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
             </select>
+          </div>
+          <div class="settings-item" id="rateRow" hidden>
+            <div class="settings-item__info">
+              <span class="settings-item__title">Tỷ giá quy đổi (bạn tự đặt)</span>
+              <span class="settings-item__desc" id="rateInfo">1 USD = 26.000đ · 1 EUR = 29.000đ</span>
+            </div>
+            <div class="rate-inputs">
+              <label class="rate-input">
+                <span>1 USD</span>
+                <input type="number" inputmode="numeric" min="1" step="1" id="inputRateUsd" aria-label="Tỷ giá 1 USD bằng VNĐ">
+              </label>
+              <label class="rate-input">
+                <span>1 EUR</span>
+                <input type="number" inputmode="numeric" min="1" step="1" id="inputRateEur" aria-label="Tỷ giá 1 EUR bằng VNĐ">
+              </label>
+              <button type="button" class="settings-btn settings-btn--primary" id="btnSaveRates">Lưu</button>
+            </div>
           </div>
         </div>
       </section>
@@ -664,6 +682,13 @@
               <button class="settings-btn" id="btnEnableNotification">Cấp quyền</button>
             </div>
           </div>
+          <div class="settings-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Ứng dụng kiểm tra giờ nhắc khi bạn <strong>mở app</strong> hoặc quay lại từ nền.
+              Nếu bạn đã đóng hẹn trình duyệt, nhắc nhở sẽ <strong>không chạy đúng giờ</strong> —
+              đây là giới hạn của trình duyệt, không phải lỗi. Giao dịch định kỳ cũng được tạo theo
+              cách kiểm tra khi mở app và có cơ chế chống tạo trùng.</span>
+          </div>
           <div class="settings-item">
             <div class="settings-item__info">
               <span class="settings-item__title">Giờ nhắc nhở mỗi ngày</span>
@@ -747,10 +772,56 @@
             </div>
             <button class="settings-btn" id="btnToggleBalance">Bật/Tắt</button>
           </div>
+          <div class="settings-note">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Mã PIN chỉ ngăn người khác mở app trên <strong>chính máy này</strong> (PIN được băm bằng
+              PBKDF2 trước khi lưu). Nó <strong>không mã hoá</strong> dữ liệu trong trình duyệt —
+              người có quyền truy cập dữ liệu trình duyệt vẫn đọc được. Xem “Quyền riêng tư &amp; dữ liệu”
+              để biết chính xác dữ liệu nằm ở đâu.</span>
+          </div>
         </div>
       </section>
 
-      <!-- Section: Vùng nguy hiểm -->
+      <!-- Section: Quyền riêng tư & dữ liệu -->
+      <section class="settings-section" data-tab="tienich">
+        <h3 class="settings-section__title">
+          <i class="fa-solid fa-lock"></i> Quyền riêng tư &amp; dữ liệu
+        </h3>
+        <div class="settings-group">
+          <div class="privacy-list">
+            <div class="privacy-item">
+              <span class="privacy-item__badge privacy-item__badge--local">Trên máy</span>
+              <p>Giao dịch, ví, mục tiêu, ngân sách, giao dịch định kỳ và sổ nợ nhóm được lưu trong
+                <strong>localStorage</strong> của trình duyệt. Xoá dữ liệu trình duyệt là mất —
+                hãy tải file sao lưu JSON trước.</p>
+            </div>
+            <div class="privacy-item">
+              <span class="privacy-item__badge privacy-item__badge--cloud">Khi đăng nhập</span>
+              <p>Dữ liệu trên được đồng bộ lên <strong>Firebase Firestore</strong> trong tài khoản
+                <strong>riêng của bạn</strong>. Quy tắc bảo mật phía máy chủ chặn người khác đọc/ghi
+                dữ liệu của bạn; dữ liệu được mã hoá khi truyền qua HTTPS.</p>
+            </div>
+            <div class="privacy-item">
+              <span class="privacy-item__badge privacy-item__badge--ai">Nếu bật AI</span>
+              <p>Nội dung bạn nhập vào ô “Nhập nhanh bằng AI” sẽ được gửi tới
+                <strong>Google Gemini API</strong> để phân tích. API key chỉ lưu trên máy bạn, không
+                gửi lên máy chủ của SpendWise. Không nhập số tài khoản, CCCD hay dữ liệu nhạy cảm vào ô này.</p>
+            </div>
+            <div class="privacy-item">
+              <span class="privacy-item__badge privacy-item__badge--qr">Khi tạo QR</span>
+              <p>Số tài khoản người thu tiền được ghép vào đường dẫn ảnh
+                <strong>img.vietqr.io</strong> — dịch vụ này có thể đọc được số tài khoản đó.
+                Tránh dùng tài khoản nhạy cảm nếu bạn không muốn chia sẻ.</p>
+            </div>
+            <div class="privacy-item">
+              <span class="privacy-item__badge privacy-item__badge--local">Quyền của bạn</span>
+              <p>Bạn có thể tải toàn bộ dữ liệu (mục “Sao lưu”), khôi phục từ file, hoặc xoá vĩnh viễn
+                cả trên máy lẫn trên tài khoản tại mục “Vùng nguy hiểm”.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Section: Vùng nguy hiểm -->
       <section class="settings-section" data-tab="taikhoan">
         <h3 class="settings-section__title" style="color: var(--danger-text)">
@@ -983,18 +1054,22 @@
           chứa sẵn <strong>số tiền và nội dung</strong> để người khác chỉ cần quét.
         </p>
         <div class="vietqr__row">
-          <select class="form__input" id="vietqrBank" style="width:130px;min-width:130px;cursor:pointer" aria-label="Ngân hàng">
-            <option value="momo">MoMo</option>
-            <option value="zalo">ZaloPay</option>
-            <option value="vcb">Vietcombank</option>
+          <select class="form__input" id="vietqrBank" style="width:150px;min-width:150px;cursor:pointer" aria-label="Ngân hàng nhận tiền">
+            <!-- value luôn viết thường: đúng khoá tra cứu trong SplitManager.BANKS -->
+            <option value="vcb" selected>Vietcombank</option>
             <option value="techcombank">Techcombank</option>
             <option value="vietinbank">VietinBank</option>
             <option value="mb">MB Bank</option>
-            <option value="BIDV">BIDV</option>
+            <option value="bidv">BIDV</option>
             <option value="acb">ACB</option>
             <option value="agribank">Agribank</option>
             <option value="vpbank">VPBank</option>
             <option value="tpb">TPBank</option>
+            <option value="sacombank">Sacombank</option>
+            <option value="vib">VIB</option>
+            <option value="shb">SHB</option>
+            <option value="momo">MoMo</option>
+            <option value="zalopay">ZaloPay</option>
           </select>
           <input type="text" class="form__input" id="vietqrAccount" inputmode="numeric"
                  placeholder="Số tài khoản / số ví" aria-label="Số tài khoản nhận tiền">
@@ -1008,9 +1083,11 @@
             <img id="vietqrImg" alt="Mã QR VietQR nhận tiền" width="210" height="210">
           </div>
           <div class="vietqr__amount" id="vietqrAmount">75.000đ</div>
+          <div class="vietqr__bank" id="vietqrBankName">Ngân hàng nhận: —</div>
           <div class="vietqr__content" id="vietqrContent">chiatien 75000</div>
           <p style="font-size:0.7rem;color:var(--text-muted);margin-top:6px">
             Mã được tạo bởi dịch vụ VietQR — số tiền &amp; nội dung đã đóng sẵn trong mã.
+            Số tài khoản nằm trong đường dẫn ảnh nên dịch vụ này có thể đọc được — không nhập tài khoản nhạy cảm bạn không muốn chia sẻ.
           </p>
         </div>
 
@@ -1021,6 +1098,11 @@
           <input type="text" class="form__input" id="splitMemberNames"
                  placeholder="VD: An, Bình, Chi, tôi" aria-label="Danh sách người cùng chia">
           <div class="split-tags" id="splitMemberTags"></div>
+          <div class="vietqr__row split-me-row">
+            <label class="split-me-label" for="splitMyName">Tôi là ai</label>
+            <select class="form__input" id="splitMyName" aria-label="Chọn tên của bạn trong nhóm"></select>
+          </div>
+          <p class="split-members__hint" id="splitMyHint" hidden></p>
           <div class="vietqr__row">
             <button type="button" class="splitter-copy-btn" id="btnSaveDebt" style="flex:1">
               <i class="fa-solid fa-book"></i> Lưu sổ nợ
@@ -1113,7 +1195,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
-    <script src="app.min.js?v=74"></script>
+    <script src="app.min.js?v=75"></script>
   <!-- ===== JavaScript Modules ===== -->
   <!-- Firebase (Auth + Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>

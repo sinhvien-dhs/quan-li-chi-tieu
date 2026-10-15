@@ -406,17 +406,55 @@ const Features = {
   // CURRENCY (Đa tiền tệ — lưu gốc bằng VNĐ, hiển thị theo lựa chọn)
   // ============================================================
   async refreshRates() {
-    // Tỉ giá CỐ ĐỊNH do người dùng quy định — không gọi API nữa
-    this.CURRENCIES.USD.rate = 26000;
-    this.CURRENCIES.EUR.rate = 29000;
-    // Chỉ ghi lại khi thực sự khác, tránh mỗi lần mở app lại tạo thay đổi chờ đồng bộ
-    const month = new Date().toISOString().slice(0, 7);
-    const rates = { USD: 26000, EUR: 29000 };
+    /**
+     * Tỷ giá do NGƯỜI DÙNG tự đặt (mặc định gợi ý).
+     * Trước đây code ghi cứng 26.000/29.000 mà giao diện lại ghi "tỷ giá đầu tháng"
+     * → người dùng hiểu nhầm đây là tỷ giá thị trường. Giờ hiển thị rõ
+     * tỷ giá đang dùng + ngày cập nhật, và cho phép sửa trong Cài đặt.
+     */
     const current = Storage.get('spendwise_rates', null);
-    if (!current || current.month !== month ||
-        !current.rates || current.rates.USD !== rates.USD || current.rates.EUR !== rates.EUR) {
-      Storage.set('spendwise_rates', { month: month, rates: rates });
+    const defaultRates = { USD: 26000, EUR: 29000 };
+
+    if (!current || !current.rates) {
+      Storage.set('spendwise_rates', {
+        rates: defaultRates,
+        updatedAt: new Date().toISOString(),
+        source: 'default'
+      });
+      this.CURRENCIES.USD.rate = defaultRates.USD;
+      this.CURRENCIES.EUR.rate = defaultRates.EUR;
+      return;
     }
+
+    const usd = Math.max(1, Math.round(Number(current.rates.USD) || defaultRates.USD));
+    const eur = Math.max(1, Math.round(Number(current.rates.EUR) || defaultRates.EUR));
+    this.CURRENCIES.USD.rate = usd;
+    this.CURRENCIES.EUR.rate = eur;
+  },
+
+  /** Lưu tỷ giá do người dùng đặt (1 USD = bao nhiêu VNĐ) */
+  setRates(usd, eur) {
+    const u = Math.max(1, Math.round(Number(usd) || 26000));
+    const e = Math.max(1, Math.round(Number(eur) || 29000));
+    Storage.set('spendwise_rates', {
+      rates: { USD: u, EUR: e },
+      updatedAt: new Date().toISOString(),
+      source: 'user'
+    });
+    this.CURRENCIES.USD.rate = u;
+    this.CURRENCIES.EUR.rate = e;
+    return { USD: u, EUR: e };
+  },
+
+  /** Thông tin tỷ giá để hiển thị minh bạch trong Cài đặt */
+  getRateInfo() {
+    const r = Storage.get('spendwise_rates', null);
+    return {
+      USD: (r && r.rates && r.rates.USD) || 26000,
+      EUR: (r && r.rates && r.rates.EUR) || 29000,
+      updatedAt: (r && r.updatedAt) || '',
+      source: (r && r.source) || 'default'
+    };
   },
 
   getCurrency() {
@@ -555,10 +593,56 @@ const Features = {
 
     // Currency select
     const currencySelect = document.getElementById('inputCurrency');
+    const rateRow = document.getElementById('rateRow');
+    const rateInfo = document.getElementById('rateInfo');
+    const usdInput = document.getElementById('inputRateUsd');
+    const eurInput = document.getElementById('inputRateEur');
+
+    const paintRates = () => {
+      const info = this.getRateInfo();
+      if (rateRow) rateRow.hidden = this.getCurrency() === 'VND';
+      if (rateInfo) {
+        const ngay = info.updatedAt ? new Date(info.updatedAt).toLocaleDateString('vi-VN') : '';
+        // Luôn hiển thị tỷ giá bằng VNĐ, không dùng formatCurrency
+        // (nếu không sẽ bị đổi sang $ khi người dùng chọn USD)
+        const dinhDang = (n) => Number(n).toLocaleString('vi-VN') + 'đ';
+        rateInfo.textContent = `1 USD = ${dinhDang(info.USD)} · 1 EUR = ${dinhDang(info.EUR)}` +
+          (ngay ? ` · cập nhật ${ngay}` : '') +
+          (info.source === 'user' ? ' · do bạn đặt' : ' · giá trị mặc định');
+      }
+      if (usdInput && !usdInput.dataset.touched) usdInput.value = info.USD;
+      if (eurInput && !eurInput.dataset.touched) eurInput.value = info.EUR;
+    };
+
     if (currencySelect) {
       currencySelect.value = this.getCurrency();
-      currencySelect.addEventListener('change', e => this.setCurrency(e.target.value));
+      currencySelect.addEventListener('change', e => {
+        this.setCurrency(e.target.value);
+        paintRates();
+      });
     }
+    [usdInput, eurInput].forEach(el => {
+      if (el) el.addEventListener('input', () => { el.dataset.touched = '1'; });
+    });
+    const btnSaveRates = document.getElementById('btnSaveRates');
+    if (btnSaveRates) {
+      btnSaveRates.addEventListener('click', () => {
+        const u = Business.parseAmount(usdInput ? usdInput.value : '');
+        const e = Business.parseAmount(eurInput ? eurInput.value : '');
+        if (!u || u < 1 || !e || e < 1) {
+          Toast.error('Tỷ giá phải là số lớn hơn 0 (VD: 26000 cho 1 USD).');
+          return;
+        }
+        this.setRates(u, e);
+        if (usdInput) delete usdInput.dataset.touched;
+        if (eurInput) delete eurInput.dataset.touched;
+        paintRates();
+        TransactionManager.renderTransactions();
+        TransactionManager.updateSummary();
+        Toast.success('Đã lưu tỷ giá quy đổi.');
+      });
+    }
+    paintRates();
 
     // Receipt preview
     const receiptInput = document.getElementById('inputReceipt');

@@ -1,7 +1,7 @@
 rules_version = '2';
 
-// SPENDWISE-RULES v65 — 2026-10-15
-// Nếu bạn thấy dòng "SPENDWISE-RULES v64" ở trên cùng trong ô trình soạn
+// SPENDWISE-RULES v66 — 2026-10-15
+// Nếu bạn thấy dòng "SPENDWISE-RULES v66" ở trên cùng trong ô trình soạn
 // thì đã dán đúng phiên bản mới nhất. Nếu không, hãy dán lại từ file firestore.rules
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -160,6 +160,48 @@ service cloud.firestore {
       allow read: if isOwner(userId);
       allow create, update: if isOwner(userId) && validRecurring(request.resource.data);
       allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{uid}/debts/{debtId}  — sổ nợ nhóm
+    // ==========================================================
+    match /users/{userId}/debts/{debtId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validDebt(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // Sổ nợ nhóm: { id, title, total, perPerson, myAmount, myName,
+    //                memberCount, date, createdAt, debts: [{name, amount, paid}] }
+    function validDebtItem(x) {
+      return x is map
+        && x.keys().hasOnly(['name','amount','paid'])
+        && x.name is string && x.name.size() > 0 && x.name.size() <= 40
+        && x.amount is number && x.amount >= 0 && x.amount <= 1000000000000
+        && (!('paid' in x.keys()) || x.paid is bool);
+    }
+
+    function validDebt(d) {
+      return d is map
+        && d.keys().hasOnly([
+             'id','title','total','perPerson','myAmount','myName',
+             'memberCount','date','createdAt','debts'
+           ])
+        && d.id is string && d.id.size() > 0 && d.id.size() <= 64
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 60
+        && d.total is number && d.total >= 0 && d.total <= 1000000000000
+        && d.perPerson is number && d.perPerson >= 0 && d.perPerson <= 1000000000000
+        && d.myAmount is number && d.myAmount >= 0 && d.myAmount <= 1000000000000
+        && d.myName is string && d.myName.size() <= 40
+        && d.memberCount is int && d.memberCount >= 0 && d.memberCount <= 30
+        && validDate(d.date)
+        && d.debts is list
+        && d.debts.size() <= 30
+        && d.debts.all(x, validDebtItem(x))
+        // Tổng các khoản nợ + phần chủ phiếu phải bằng đúng tổng hoá đơn.
+        // Đây là chốt chặn cuối: số liệu sổ nợ sai sẽ không lên được máy chủ.
+        && d.debts.map(x, x.amount).sum() + d.myAmount == d.total
+        && validTs(d.createdAt);
     }
 
     // ==========================================================

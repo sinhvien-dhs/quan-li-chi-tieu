@@ -25,6 +25,7 @@ const AuthManager = {
     'spendwise_wallets',
     'spendwise_goals',
     'spendwise_recurring',
+    'spendwise_debts',
     'spendwise_currency',
     'spendwise_theme',
     'spendwise_reminder_time',
@@ -36,7 +37,9 @@ const AuthManager = {
     spendwise_transactions: 'transactions',
     spendwise_wallets: 'wallets',
     spendwise_goals: 'goals',
-    spendwise_recurring: 'recurring'
+    spendwise_recurring: 'recurring',
+    // Sổ nợ nhóm cũng đồng bộ lên tài khoản để không mất khi đổi máy
+    spendwise_debts: 'debts'
   },
 
   // Phiên bản build — hiển thị ở Cài đặt để xác nhận đang chạy bản mới nhất
@@ -159,16 +162,30 @@ const AuthManager = {
   //  ĐĂNG KÝ / ĐĂNG NHẬP
   // ==========================================================
   async signUp() {
-    const username = document.getElementById('registerName').value.trim();
-    const email = username.includes('@') ? username : username + '@spendwise.app';
+    const emailRaw = document.getElementById('registerName').value.trim();
+    const email = emailRaw.toLowerCase();
     const password = document.getElementById('registerPassword').value;
     const password2 = document.getElementById('registerPassword2').value;
 
-    if (!username) { Toast.error('Vui lòng nhập tên đăng nhập!'); return; }
-    if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
-      Toast.error('Tên đăng nhập không được có dấu hoặc khoảng trắng!');
+    if (!emailRaw) { Toast.error('Vui lòng nhập email để đăng ký!'); return; }
+
+    /**
+     * Bắt buộc EMAIL THẬT.
+     * Trước đây tự ghép "tên đăng nhập@spendwise.app" — địa chỉ giả lập này
+     * không có hộp thư nên "Quên mật khẩu" không bao giờ dùng được.
+     */
+    if (!/^[^@\\s]+@[^@\\s]+\\.[a-zA-Z]{2,}$/.test(email)) {
+      Toast.error('Email không hợp lệ. Cần địa chỉ email thật để khôi phục mật khẩu.');
       return;
     }
+    const domain = email.split('@')[1];
+    if (/spendwise\\.app$/i.test(domain)) {
+      Toast.error('Vui lòng dùng email của bạn (gmail, outlook...) thay vì email tự tạo.');
+      return;
+    }
+
+    const username = email.split('@')[0].replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 24) || 'nguoidung';
+
     if (!password || password.length < 8) { Toast.error('Mật khẩu tối thiểu 8 ký tự!'); return; }
     if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
       Toast.error('Mật khẩu cần có cả chữ và số!');
@@ -183,13 +200,14 @@ const AuthManager = {
     try {
       const cred = await this.auth.createUserWithEmailAndPassword(email, password);
       await cred.user.updateProfile({ displayName: username });
+      localStorage.setItem('spendwise_display_name', username);
       Toast.success(`Tạo tài khoản "${username}" thành công!`);
       document.getElementById('authRegisterOverlay').classList.remove('active');
     } catch (e) {
       if (e.code === 'auth/email-already-in-use') {
         const err = document.getElementById('registerNameError');
-        if (err) err.style.display = 'block';
-        Toast.error('Đăng ký thất bại: Tên đăng nhập đã được đăng ký!');
+        if (err) { err.style.display = 'block'; err.textContent = 'Email này đã được đăng ký!'; }
+        Toast.error('Đăng ký thất bại: Email đã được đăng ký!');
       } else {
         Toast.error('Đăng ký thất bại: ' + this.friendlyError(e));
       }
@@ -197,13 +215,22 @@ const AuthManager = {
   },
 
   async signIn() {
-    const rawId = document.getElementById('authEmail').value.trim();
-    const email = rawId.includes('@') ? rawId : rawId + '@spendwise.app';
+    const rawId = document.getElementById('authEmail').value.trim().toLowerCase();
     const password = document.getElementById('authPassword').value;
-    if (!rawId) { Toast.error('Vui lòng nhập tên tài khoản!'); return; }
+    if (!rawId) { Toast.error('Vui lòng nhập email tài khoản!'); return; }
     if (!password || password.length < 6) { Toast.error('Mật khẩu tối thiểu 6 ký tự!'); return; }
+
+    /**
+     * Chỉ nhận EMAIL thậT. Không còn tự ghép "tên@spendwise.app" vì
+     * địa chỉ giả lập không tồn tại trên hệ thống Firebase.
+     */
+    if (!/^[^@\\s]+@[^@\\s]+\\.[a-zA-Z]{2,}$/.test(rawId)) {
+      Toast.error('Hãy nhập email bạn đã đăng ký (VD: an123@gmail.com).');
+      return;
+    }
+
     try {
-      await this.auth.signInWithEmailAndPassword(email, password);
+      await this.auth.signInWithEmailAndPassword(rawId, password);
     } catch (e) {
       Toast.error('Đăng nhập thất bại: ' + this.friendlyError(e));
     }
@@ -423,6 +450,7 @@ const AuthManager = {
         cloud.spendwise_wallets.length > 0 ||
         cloud.spendwise_goals.length > 0 ||
         cloud.spendwise_recurring.length > 0 ||
+        cloud.spendwise_debts.length > 0 ||
         Object.keys(cloud.spendwise_budgets).length > 0;
 
       if (!hasCloudData) {
@@ -453,6 +481,13 @@ const AuthManager = {
         this.mergeById(local.spendwise_goals || [], cloud.spendwise_goals, tombs)));
       localStorage.setItem('spendwise_recurring', JSON.stringify(
         this.mergeById(local.spendwise_recurring || [], cloud.spendwise_recurring, tombs)));
+
+      // Sổ nợ nhóm: gộp như các danh sách khác rồi kiểm tra tổng khớp trước khi lưu
+      const mergedDebts = this.mergeById(local.spendwise_debts || [], cloud.spendwise_debts, tombs);
+      const safeDebts = (typeof ExportManager !== 'undefined')
+        ? ExportManager.sanitizeDebts(mergedDebts)
+        : mergedDebts;
+      localStorage.setItem('spendwise_debts', JSON.stringify(safeDebts));
 
       // Ngân sách: "thay đổi mới nhất thắng" (KHÔNG dùng "số lớn hơn thắng",
       // vì sẽ tự khôi phục hạn mức cũ khi người dùng chủ động giảm hạn mức)

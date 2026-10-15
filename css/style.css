@@ -1278,3 +1278,124 @@ body {
 .settings-btn {
   min-height: 40px;
 }
+
+/* ===== Ô nhập tỷ giá quy đổi (Cài đặt → Tiền tệ) ===== */
+.rate-inputs {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.rate-input {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rate-input span {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.rate-input input {
+  width: 96px;
+  height: 40px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+}
+
+.rate-input input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ===== Ghi chú trong Cài đặt + trang Quyền riêng tư ===== */
+.settings-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin: 0 var(--space-md) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  background: var(--primary-bg);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+}
+
+.settings-note i {
+  margin-top: 2px;
+  color: var(--primary-text);
+  flex: 0 0 auto;
+}
+
+.settings-note strong {
+  color: var(--text-primary);
+}
+
+.privacy-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.privacy-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+}
+
+.privacy-item p {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.privacy-item strong {
+  color: var(--text-primary);
+}
+
+.privacy-item__badge {
+  align-self: flex-start;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.privacy-item__badge--local {
+  background: var(--border-light);
+  color: var(--text-secondary);
+}
+
+.privacy-item__badge--cloud {
+  background: var(--success-light);
+  color: var(--success-text);
+}
+
+.privacy-item__badge--ai {
+  background: var(--primary-bg);
+  color: var(--primary-text);
+}
+
+.privacy-item__badge--qr {
+  background: var(--warning-light);
+  color: var(--warning-text);
+}
+
+.form__hint {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}

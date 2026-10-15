@@ -5,6 +5,15 @@
 const BudgetManager = {
   STORAGE_KEY: 'spendwise_budgets',
   UPDATED_AT_KEY: 'spendwise_budgets_updated_at',
+  ALERTED_KEY: 'spendwise_budget_alerted',
+
+  /**
+   * NGƯỠNG CẢNH BÁO — dùng chung một quy tắc cho cả hiển thị lẫn thông báo.
+   * Trước đây phần hiển thị dùng 80% còn phần Toast dùng 85% → người dùng
+   * thấy trạng thái "Sắp chạm hạn mức" nhưng không nhận được cảnh báo nào.
+   */
+  THRESHOLD_WARN: 80,   // từ 80% trở lên → "Sắp chạm hạn mức"
+  THRESHOLD_OVER: 100,  // từ 100% trở lên → "Vượt hạn mức"
 
   // Ngân sách mặc định mẫu (VNĐ)
   defaultBudgets: {
@@ -97,12 +106,27 @@ const BudgetManager = {
     const catName = cat ? cat.name : 'Danh mục';
 
     const pct = Math.round((spent / budget) * 100);
+    const level = pct >= this.THRESHOLD_OVER ? 'over' : (pct >= this.THRESHOLD_WARN ? 'warn' : null);
+    if (!level) return;
 
-    if (pct >= 100) {
+    // Chỉ báo MỘT lần cho mỗi mức trong mỗi kỳ tháng → không spam khi mở lại trang
+    const monthKey = Utils.getToday().slice(0, 7); // YYYY-MM
+    const alerted = Storage.get(this.ALERTED_KEY, {}) || {};
+    const key = categoryId + ':' + monthKey + ':' + level;
+    if (alerted[key]) return;
+    alerted[key] = true;
+    Storage.set(this.ALERTED_KEY, alerted);
+
+    if (level === 'over') {
       Toast.warning(`⚠️ Cảnh báo: Đã vượt ngân sách ${catName} (${pct}%)!`);
-    } else if (pct >= 85) {
-      Toast.warning(`⚠️ Chú ý: Đã dùng ${pct}% ngân sách ${catName}!`);
+    } else {
+      Toast.warning(`⚠️ Chú ý: Đã dùng ${pct}% ngân sách ${catName} — còn ${Utils.formatCurrency(Math.max(0, budget - spent))}.`);
     }
+  },
+
+  /** Xoá cờ "đã cảnh báo" khi hạn mức thay đổi (để tháng sau/đơn mới vẫn báo lại) */
+  resetAlerts() {
+    Storage.set(this.ALERTED_KEY, {});
   },
 
   /**
@@ -135,6 +159,7 @@ const BudgetManager = {
           return;
         }
         this.setBudget(catId, amount);
+        this.resetAlerts();   // đổi hạn mức thì cho phép cảnh báo lại
         this.closeModal();
         Toast.success('Đã cập nhật ngân sách thành công!');
       });
@@ -198,15 +223,16 @@ const BudgetManager = {
       const spent = this.getSpentThisMonth(cat.id);
       const remaining = budget - spent;
       const pct = budget > 0 ? Math.min(Math.round((spent / budget) * 100), 100) : 0;
+
+      // Màu sắc theo tỷ lệ chi tiêu — dùng CHUNG ngưỡng với cảnh báo
       const rawPct = budget > 0 ? ((spent / budget) * 100).toFixed(0) : 0;
 
-      // Màu sắc theo tỷ lệ chi tiêu
       let statusClass = 'safe'; // < 80%
       let statusText = 'Ổn định';
-      if (rawPct >= 100) {
+      if (rawPct >= this.THRESHOLD_OVER) {
         statusClass = 'danger'; // >= 100%
         statusText = 'Vượt hạn mức';
-      } else if (rawPct >= 80) {
+      } else if (rawPct >= this.THRESHOLD_WARN) {
         statusClass = 'warning'; // 80 - 99%
         statusText = 'Sắp chạm hạn mức';
       }

@@ -9,12 +9,28 @@
 
 const SplitManager = {
   KEY: 'spendwise_debts',
+
+  /**
+   * BIN VietQR của từng ngân hàng / ví điện tử.
+   * QUY TẮC: khoá phải viết thường toàn bộ, vì buildQrUrl() luôn tra cứu
+   * bằng khoá đã hạ chữ thường. Trước đây "BIDV" viết hoa khiến tra cứu
+   * 'bidv' không trúng và rơi về mã mặc định → tạo QR nhầm ngân hàng.
+   */
   BANKS: {
     vcb: '970436', techcombank: '970408', vietinbank: '971422',
-    mb: '970422',BIDV: '970437', acb: '970508', agribank: '970225',
+    mb: '970422', bidv: '970437', acb: '970508', agribank: '970225',
     vpbank: '970432', tpb: '970345', sacombank: '970403',
-    vib: '970406', mbbank: '970432', shb: '970443', tpbank: '970345',
-    momo: '970408', zalopay: '970403', default: '970436'
+    vib: '970406', mbbank: '970422', shb: '970443', tpbank: '970345',
+    momo: '970432', zalopay: '970422'
+  },
+
+  /** Tên hiển thị của từng mã ngân hàng (để người dùng tự kiểm tra trước khi quét) */
+  BANK_NAMES: {
+    vcb: 'Vietcombank', techcombank: 'Techcombank', vietinbank: 'VietinBank',
+    mb: 'MB Bank', bidv: 'BIDV', acb: 'ACB', agribank: 'Agribank',
+    vpbank: 'VPBank', tpb: 'TPBank', sacombank: 'Sacombank',
+    vib: 'VIB', mbbank: 'MB Bank', shb: 'SHB', tpbank: 'TPBank',
+    momo: 'MoMo (qua VPBank)', zalopay: 'ZaloPay (qua MB Bank)'
   },
 
   init() {
@@ -27,16 +43,32 @@ const SplitManager = {
   /**
    * Dựng ảnh mã VietQR chứa sẵn số tiền + nội dung
    * (dùng dịch vụ img.vietqr.io — không cần máy chủ riêng)
+   * @returns {{url:string, bin:string, bank:string, error:string}}
    */
-  buildQrUrl({ bank, account, amount, addInfo, accountName }) {
-    const bin = this.BANKS[String(bank || '').toLowerCase()] || this.BANKS.default;
+  buildQr({ bank, account, amount, addInfo, accountName }) {
+    const key = String(bank || '').trim().toLowerCase();
     const acc = String(account || '').replace(/\s/g, '');
-    if (!acc) return '';
+
+    if (!acc) return { url: '', bin: '', bank: '', error: 'Chưa nhập số tài khoản người thu tiền.' };
+    if (!/^\d{6,20}$/.test(acc)) {
+      return { url: '', bin: '', bank: '', error: 'Số tài khoản không hợp lệ (cần 6–20 chữ số, không có khoảng trắng).' };
+    }
+    if (!this.BANKS[key]) {
+      return { url: '', bin: '', bank: '', error: 'Chưa hỗ trợ mã ngân hàng này — vui lòng chọn từ danh sách.' };
+    }
+
+    const bin = this.BANKS[key];
     const params = new URLSearchParams();
     params.set('amount', String(Math.max(0, Math.round(Number(amount) || 0))));
     if (addInfo) params.set('addInfo', String(addInfo).slice(0, 50));
     if (accountName) params.set('accountName', String(accountName).slice(0, 50));
-    return `https://img.vietqr.io/image/${bin}-${acc}-compact2.jpg?${params.toString()}`;
+
+    return {
+      url: `https://img.vietqr.io/image/${bin}-${acc}-compact2.jpg?${params.toString()}`,
+      bin: bin,
+      bank: this.BANK_NAMES[key] || key,
+      error: ''
+    };
   },
 
   /** Chuẩn hoá nội dung chuyển khoản ngắn gọn, không dấu (chuẩn VietQR) */
@@ -62,31 +94,56 @@ const SplitManager = {
   },
 
   /**
-   * Tạo (hoặc cập nhật) phiếu nợ của một bữa ăn
-   * @param {Object} o {title, total, perPerson, members:[string], myName, date}
+   * Tạo (hoặc cập nhật) phiếu nợ của một bữa ăn.
+   *
+   * QUY TẮC TIỀN: mỗi người nợ đúng PHẦN CỦA MÌNH (amounts[i]),
+   * và tổng các khoản nợ + phần của tôi luôn bằng đúng tổng hoá đơn.
+   * Trước đây code chia nhỏ perPerson theo (số người - 1) nên mỗi người
+   * bị ghi nợ ít hơn thực tế.
+   *
+   * @param {Object} o {id, title, total, members:[string], myIndex:number, amounts:number[], date}
    */
   upsertDebt(o) {
-    const id = o.id || ('debt_' + Date.now().toString(36));
     const list = this.getDebts();
-    const total = Math.max(0, Math.round(Number(o.total) || 0));
     const members = (o.members || []).map(m => String(m).trim()).filter(Boolean).slice(0, 30);
+    const n = Math.max(1, members.length);
+    const total = Math.max(0, Math.round(Number(o.total) || 0));
+
+    // Chia chính xác theo danh sách tham gia (lấy từ Business.splitBill)
+    let amounts = Array.isArray(o.amounts) && o.amounts.length === n
+      ? o.amounts.map(a => Math.max(0, Math.round(Number(a) || 0)))
+      : Business.splitBill(total, n).amounts;
+
+    // Ép tổng khớp tổng hoá đơn (chống sai số do dữ liệu cũ)
+    const diff = total - amounts.reduce((s, a) => s + a, 0);
+    if (diff !== 0) {
+      amounts = Business.splitBill(total, n).amounts;
+    }
+
+    const myIndex = Math.min(n - 1, Math.max(0, Number(o.myIndex) || 0));
+    const myName = members[myIndex] || '';
+    const id = o.id || ('debt_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6));
     const existing = list.find(d => d.id === id);
 
     const debts = members
-      .filter(name => Utils.normalizeText(name) !== Utils.normalizeText(o.myName || ''))
-      .map(name => ({
-        name: name,
-        amount: Math.round((Number(o.perPerson) || 0) / Math.max(1, members.length - 1)) ||
-               Math.round(total / Math.max(1, members.length - 1)),
-        paid: existing ? ((existing.debts.find(x => x.name === name) || {}).paid || false) : false
+      .map((name, i) => ({ name: name, amount: amounts[i], index: i }))
+      .filter(x => x.index !== myIndex)   // của tôi thì không phải nợ tôi
+      .map(x => ({
+        name: x.name,
+        amount: x.amount,
+        paid: existing ? ((existing.debts.find(y => y.name === x.name) || {}).paid || false) : false
       }));
 
     const record = {
       id: id,
       title: String(o.title || 'Bữa ăn').slice(0, 60),
       total: total,
-      perPerson: Math.round(Number(o.perPerson) || 0),
-      myName: String(o.myName || '').slice(0, 30),
+      // Số tiền mỗi người trả (phần nguyên) — dùng để hiển thị
+      perPerson: amounts.length ? amounts[0] : 0,
+      // Phần của chủ phiếu (người đã trả trước)
+      myAmount: amounts[myIndex] || 0,
+      myName: myName,
+      memberCount: n,
       date: o.date || Utils.getToday(),
       createdAt: existing ? existing.createdAt : new Date().toISOString(),
       debts: debts
@@ -96,6 +153,17 @@ const SplitManager = {
     if (idx > -1) list[idx] = record; else list.unshift(record);
     this.saveDebts(list.slice(0, 100));
     return record;
+  },
+
+  /**
+   * Kiểm tra tính đúng đắn của một phiếu nợ:
+   * tổng các khoản nợ + phần của chủ phiếu có bằng tổng hoá đơn không.
+   */
+  verifyDebt(record) {
+    if (!record) return { ok: false, sum: 0, total: 0 };
+    const sum = (record.debts || []).reduce((s, x) => s + (Number(x.amount) || 0), 0)
+      + (Number(record.myAmount) || 0);
+    return { ok: sum === record.total, sum: sum, total: record.total };
   },
 
   togglePaid(debtId, memberName) {
@@ -139,22 +207,28 @@ const SplitManager = {
           <span class="debt-member__flag">${x.paid ? 'Đã trả' : 'Chưa trả'}</span>
         </button>`).join('');
       const totalOwed = d.debts.filter(x => !x.paid).reduce((s, x) => s + x.amount, 0);
+      const myAmount = Number(d.myAmount) || 0;
+      const perPerson = Number(d.perPerson) || 0;
+      const check = this.verifyDebt(d);
+
       return `
         <div class="debt-card">
           <div class="debt-card__head">
             <div>
               <strong>${Utils.escapeHtml(d.title)}</strong>
-              <small>${Utils.formatDate(d.date)} • tổng ${Utils.formatCurrency(d.total)}</small>
+              <small>${Utils.formatDate(d.date)} • tổng ${Utils.formatCurrency(d.total)} • ${d.memberCount || d.debts.length + 1} người • ${Utils.formatCurrency(perPerson)}/người</small>
             </div>
             <button type="button" class="debt-card__del" data-debt-del="${Utils.escapeAttr(d.id)}" aria-label="Xóa phiếu nợ">
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>
+          ${myAmount > 0 ? `<div class="debt-card__me"><i class="fa-solid fa-user-check"></i> ${Utils.escapeHtml(d.myName || 'Bạn')} đã trả trước ${Utils.formatCurrency(myAmount)}</div>` : ''}
           <div class="debt-card__members">${rows || '<small>Không có ai nợ bạn phiếu này.</small>'}</div>
           <div class="debt-card__foot">
             ${totalOwed > 0
               ? '<span class="debt-card__pending">Còn phải thu <strong>' + Utils.formatCurrency(totalOwed) + '</strong></span>'
               : '<span class="debt-card__done"><i class="fa-solid fa-circle-check"></i> Đã thu hồi đủ</span>'}
+            ${check.ok ? '' : '<span class="debt-card__warn" title="Tổng các khoản nợ chưa khớp tổng hóa đơn">Số liệu không khớp — hãy lập lại phiếu</span>'}
           </div>
         </div>`;
     }).join('');

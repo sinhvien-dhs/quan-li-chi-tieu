@@ -238,3 +238,61 @@
   font-size: 0.75rem;
   line-height: 1;
 }
+
+/* ===== Chia tiền: chọn "Tôi là ai", tên ngân hàng, gợi ý phần dư ===== */
+.split-me-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.split-me-label {
+  flex: 0 0 auto;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.split-me-row select {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: var(--space-sm) 26px var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.split-members__hint strong {
+  color: var(--text-primary);
+}
+
+.vietqr__bank {
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.vietqr__fallback--warn {
+  color: var(--danger-text);
+}
+
+.debt-card__me {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  background: var(--success-light);
+  color: var(--success-text);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.debt-card__warn {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  color: var(--danger-text);
+}

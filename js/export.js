@@ -109,13 +109,15 @@ const ExportManager = {
   backupJSON(silent = false) {
     const data = {
       app: 'SpendWise',
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       transactions: Storage.getTransactions(),
       budgets: BudgetManager.getBudgets(),
       wallets: Storage.get('spendwise_wallets', []),
       goals: Storage.get('spendwise_goals', []),
       recurring: Storage.get('spendwise_recurring', []),
+      // Sổ nợ nhóm cũng phải được sao lưu, nếu không mất khi đổi máy
+      debts: SplitManager ? SplitManager.getDebts() : [],
       currency: Storage.get('spendwise_currency', 'VND'),
       theme: Storage.getTheme(),
       reminderTime: localStorage.getItem('spendwise_reminder_time') || null
@@ -177,6 +179,7 @@ const ExportManager = {
         const cleanWallets = this.sanitizeSimpleList(data.wallets, ['name'], 100, 40);
         const cleanGoals = this.sanitizeGoals(data.goals);
         const cleanRecurring = this.sanitizeRecurring(data.recurring);
+        const cleanDebts = this.sanitizeDebts(data.debts);
 
         if (clean.length === 0 && cleanGoals.length === 0 &&
             Object.keys(data.budgets || {}).length === 0) {
@@ -209,7 +212,9 @@ const ExportManager = {
           title: 'Khôi phục dữ liệu?',
           message: `Trong file có: ${clean.length} giao dịch` +
                    (invalid > 0 ? ` (loại ${invalid} bản ghi lỗi)` : '') +
-                   `, ${cleanWallets.length} ví, ${cleanGoals.length} mục tiêu, ${cleanRecurring.length} quy tắc định kỳ.` +
+                   `, ${cleanWallets.length} ví, ${cleanGoals.length} mục tiêu, ${cleanRecurring.length} quy tắc định kỳ` +
+                   (cleanDebts.length ? `, ${cleanDebts.length} phiếu nợ nhóm` : '') +
+                   `.` +
                    `\nDữ liệu hiện tại của các mục này sẽ bị thay thế. Bản sao lưu tự động đã tải về máy.`,
           confirmText: 'Khôi phục ngay',
           onConfirm: () => {
@@ -220,6 +225,7 @@ const ExportManager = {
             if (cleanWallets.length) Storage.set('spendwise_wallets', cleanWallets);
             if (cleanGoals.length) Storage.set('spendwise_goals', cleanGoals);
             if (cleanRecurring.length) Storage.set('spendwise_recurring', cleanRecurring);
+            if (cleanDebts.length) SplitManager.saveDebts(cleanDebts);
             if (currency) Storage.set('spendwise_currency', currency);
             if (reminderTime) localStorage.setItem('spendwise_reminder_time', reminderTime);
             if (theme) {
@@ -291,6 +297,56 @@ const ExportManager = {
       if (seen.has(id)) continue;
       seen.add(id);
       out.push({ id: id, name: name, target: Math.round(target), saved: Math.round(saved) });
+    }
+    return out;
+  },
+
+  /**
+   * Lọc sổ nợ nhóm từ file sao lưu / từ cloud.
+   * Bắt buộc kiểm tra: tổng các khoản nợ + phần chủ phiếu phải bằng tổng hoá đơn,
+   * nếu lệch thì bỏ bản ghi thay vì đẩy số liệu sai vào sổ nợ.
+   */
+  sanitizeDebts(list) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const d of list.slice(0, 200)) {
+      if (!d || typeof d !== 'object') continue;
+      const title = typeof d.title === 'string' ? d.title.replace(/[<>]/g, '').slice(0, 60) : '';
+      const total = Math.round(Number(d.total));
+      const myAmount = Math.round(Number(d.myAmount) || 0);
+      if (!title || !isFinite(total) || total < 0 || !Array.isArray(d.debts)) continue;
+
+      const debts = [];
+      for (const x of d.debts.slice(0, 30)) {
+        if (!x || typeof x !== 'object') continue;
+        const name = typeof x.name === 'string' ? x.name.replace(/[<>]/g, '').slice(0, 40) : '';
+        const amt = Math.round(Number(x.amount));
+        if (!name || !isFinite(amt) || amt < 0) continue;
+        debts.push({ name: name, amount: amt, paid: x.paid === true });
+      }
+
+      // Kiểm tra tổng khớp — nếu sai thì bỏ phiếu này
+      const sum = debts.reduce((s, x) => s + x.amount, 0) + myAmount;
+      if (sum !== total) continue;
+
+      let id = typeof d.id === 'string' ? d.id.replace(/[<>]/g, '').slice(0, 64) : '';
+      if (!id) id = 'debt_' + Utils.generateId();
+      if (seen.has(id)) continue;
+      seen.add(id);
+
+      out.push({
+        id: id,
+        title: title,
+        total: total,
+        perPerson: Math.round(Number(d.perPerson) || 0),
+        myAmount: myAmount,
+        myName: typeof d.myName === 'string' ? d.myName.replace(/[<>]/g, '').slice(0, 40) : '',
+        memberCount: Math.round(Number(d.memberCount) || (debts.length + (myAmount > 0 ? 1 : 0))) || debts.length,
+        date: (typeof d.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.date)) ? d.date : Utils.getToday(),
+        createdAt: typeof d.createdAt === 'string' ? d.createdAt : new Date().toISOString(),
+        debts: debts
+      });
     }
     return out;
   },

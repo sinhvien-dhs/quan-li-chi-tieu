@@ -506,7 +506,7 @@ body {
 /* Desktop: khung app rộng 1120px → 3 ô nằm cùng một hàng */
 @media (min-width: 900px) {
   .search-bar {
-    grid-template-columns: minmax(240px, 1fr) 180px 200px;
+    grid-template-columns: minmax(240px, 1fr) 190px 190px;
     align-items: center;
   }
 

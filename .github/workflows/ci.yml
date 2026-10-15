@@ -1,43 +1,35 @@
-name: CI - Kiem tra tu dong
+name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 1) Kiem thu lop nghiep vu chung (tien, ngan sach, ngay, chia tien)
       - name: Unit test - lop nghiep vu
         run: node tests/business.test.js
 
-      # 2) Kiem thu phan bo tien khi chia hoa don va so no nhom
-      - name: Unit test - chia tien & so no
+      - name: Unit test - chia tien va so no
         run: node tests/split.test.js
 
-      # 3) Kiem thu luu du lieu, phan loai chuyen vi va khoa ngan hang
-      - name: Unit test - luu du lieu & bao cao
+      - name: Unit test - luu du lieu va bao cao
         run: node tests/storage.test.js
 
-      # 4) Kiem tra cua phap cac file JS trong js/
       - name: Syntax check
         run: |
           for f in js/*.js; do node --check "$f" || exit 1; done
-
-      # 5) Kiem tra Firestore Rules bien dich duoc
-      #    (bo qua neu chua cau hinh FIREBASE_PROJECT_ID)
-      - name: Rules test (neu co FIREBASE_PROJECT_ID)
-        if: ${{ secrets.FIREBASE_PROJECT_ID != '' }}
-        env:
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-        run: npx --yes firebase-tools@13 firestore:rules

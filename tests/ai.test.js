@@ -149,6 +149,21 @@ test('Tách nhiều giao dịch trong 1 câu', () => {
   eq(res.items[2].amount, 30000);
 });
 
+test('Tách câu thông minh khi người dùng không gõ dấu phẩy', () => {
+  const res = AIEntry.parseLocal('sáng nay ăn cơm hết 100k chiều uống nước 50k và cả ngày đi xe hết 200k');
+  eq(res.items.length, 3);
+  eq(res.items[0].name, 'Ăn cơm');
+  eq(res.items[0].amount, 100000);
+  eq(res.items[0].category, 'food');
+
+  eq(res.items[1].name, 'Uống nước');
+  eq(res.items[1].amount, 50000);
+  eq(res.items[1].category, 'food');
+
+  eq(res.items[2].amount, 200000);
+  eq(res.items[2].category, 'transport');
+});
+
 test('Lưu & đọc URL Cloudflare AI Proxy', () => {
   AIEntry.setProxyUrl('https://spendwise-ai.example.workers.dev');
   eq(AIEntry.getProxyUrl(), 'https://spendwise-ai.example.workers.dev');

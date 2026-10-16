@@ -37,10 +37,10 @@ const AIEntry = {
 
   // Từ khoá → mã danh mục (khớp với Categories trong category.js)
   CATEGORY_KEYWORDS: {
-    food: ['ăn', 'an ', 'cơm', 'phở', 'pho', 'bún', 'bun', 'bánh', 'banh', 'nước ăn', 'cà phê', 'ca phe', 'trà sữa', 'tra sua', 'quán', 'quan', 'ăn uống', 'an uong', 'đồ ăn', 'do an', 'bia', 'rượu', 'ruou', 'nhà hàng', 'nha hang'],
-    transport: ['xăng', 'xang', 'grab', 'taxi', 'xe', 'bus', 'tàu', 'tau', 'máy bay', 'may bay', 'di chuyển', 'di chuyen', 'gửi xe', 'gui xe', 'vô xe'],
+    food: ['ăn', 'an ', 'cơm', 'phở', 'pho', 'bún', 'bun', 'bánh', 'banh', 'uống', 'uong', 'uống nước', 'uong nuoc', 'nước mía', 'nuoc mia', 'sinh tố', 'sinh to', 'cà phê', 'ca phe', 'trà sữa', 'tra sua', 'trà', 'tra', 'quán', 'quan', 'ăn uống', 'an uong', 'đồ ăn', 'do an', 'bia', 'rượu', 'ruou', 'nhà hàng', 'nha hang'],
+    transport: ['xăng', 'xang', 'grab', 'taxi', 'xe', 'bus', 'tàu', 'tau', 'máy bay', 'may bay', 'di chuyển', 'di chuyen', 'gửi xe', 'gui xe', 'vô xe', 'đi xe', 'di xe'],
     shopping: ['mua', 'mua sắm', 'mua sam', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'mỹ phẩm', 'my pham', 'shop', 'shopee', 'lazada', 'tiki'],
-    bills: ['điện', 'dien', 'nước', 'nuoc', 'internet', 'wifi', 'điện thoại', 'dien thoai', 'hóa đơn', 'hoa don', 'bill', 'tiền mạng', 'tien mang'],
+    bills: ['điện', 'dien', 'tiền nước', 'tien nuoc', 'hóa đơn nước', 'hoa don nuoc', 'nước máy', 'nuoc may', 'tiền điện', 'tien dien', 'internet', 'wifi', 'điện thoại', 'dien thoai', 'hóa đơn', 'hoa don', 'bill', 'tiền mạng', 'tien mang'],
     education: ['học', 'hoc', 'sách', 'sach', 'khóa học', 'khoa hoc', 'học phí', 'hoc phi', 'tập vở'],
     health: ['thuốc', 'thuoc', 'khám', 'kham', 'bệnh', 'benh', 'viện phí', 'vien phi', 'y tế', 'y te', 'nha khoa'],
     entertainment: ['phim', 'xem phim', 'giải trí', 'giai tri', 'game', 'nhạc', 'nhac', 'youtube', 'netflix', 'vui chơi', 'vui choi'],
@@ -132,8 +132,14 @@ const AIEntry = {
   // ============================================================
   /** Tách câu thành các mệnh đề độc lập */
   splitClauses(text) {
-    return String(text)
-      .replace(/[;\n]+/g, ',')
+    let raw = String(text).replace(/[;\n]+/g, ',');
+
+    // Tự động ngắt mệnh đề sau số tiền nếu người dùng không gõ dấu phẩy:
+    // Ví dụ: "...hết 100k chiều uống nước 50k..." -> "...hết 100k, chiều uống nước 50k..."
+    const amountPattern = /(\d[\d.,]*\s*(?:k|nghìn|nghin|tr|triệu|trieu|tỷ|ty|cành|canh|lít|lit|loét|loet|củ|cu|xu))\s+(?=(?:sáng|sang|trưa|trua|chiều|chieu|tối|toi|đêm|dem|hôm|hom|ngày|ngay|ăn|an|uống|uong|mua|đổ|do|đi|di|trả|tra|nhận|nhan|lương|luong|nộp|nop|đóng|dong|thưởng|thuong|cả ngày|ca ngay)(?:[^\p{L}\p{N}]|$))/giu;
+    raw = raw.replace(amountPattern, '$1, ');
+
+    return raw
       .split(/\s*(?:,| và | rồi | sau đó | ngoài ra )+\s*/i)
       .map(s => s.trim())
       .filter(Boolean)
@@ -256,16 +262,17 @@ const AIEntry = {
     return null;
   },
 
-  /** Tên giao dịch: bỏ số tiền, từ nối và mốc thời gian */
+  /** Tên giao dịch: bỏ số tiền, từ nối, mốc thời gian và từ cảm thán thừa */
   cleanName(clause) {
     let name = String(clause)
       .replace(/(?:^|[^\p{L}\p{N}])n[uử]a\s+c[uủ](?=[^\p{L}\p{N}]|$)/giu, ' ')
       .replace(/(?:^|[^\p{L}\p{N}])n[uử]a\s+l[ií]t(?=[^\p{L}\p{N}]|$)/giu, ' ')
       .replace(/(\d[\d.,]*\s*(?:k|nghìn|nghin|tr|triệu|trieu|tỷ|ty|cành|canh|lít|lit|loét|loet|củ|cu|xu))(?=[^\p{L}\p{N}]|$)/giu, ' ')
       .replace(/\b\d[\d.,]*\b/g, ' ')
-      .replace(/(?:^|[^\p{L}\p{N}])(?:hôm qua|hom qua|hôm kia|hom kia|hôm nay|hom nay|sáng nay|sang nay|trưa nay|trua nay|chiều nay|chieu nay|tối nay|toi nay|tối qua|toi qua|chiều qua|chieu qua|hồi hôm|hoi hom)(?=[^\p{L}\p{N}]|$)/giu, ' ')
+      .replace(/(?:^|[^\p{L}\p{N}])(?:hôm qua|hom qua|hôm kia|hom kia|hôm nay|hom nay|(?:sáng|sang|trưa|trua|chiều|chieu|tối|toi|đêm|dem)(?:\s+(?:nay|qua|hom nay))?|tối qua|toi qua|chiều qua|chieu qua|hồi hôm|hoi hom|cả ngày|ca ngay)(?=[^\p{L}\p{N}]|$)/giu, ' ')
       .replace(/\b(?:ngày|ngay|hôm|hom)?\s*\d{1,2}[/-]\d{1,2}(?:[/-]\d{4})?\b/gi, ' ')
       .replace(/(?:bằng|ở|từ|voi|vo|với|using|qua)\s+(?:ví|vi|thẻ|the|tài khoản|tai khoan|momo|zalo|zalopay)?\s*\w*\s*$/iu, ' ')
+      .replace(/\s+(?:hết|het|mất|mat|tổng|tong|tổng cộng|tong cong|là|la)\s*$/iu, ' ')
       .replace(/\s+/g, ' ')
       .trim();
     if (!name) name = 'Giao dịch';
@@ -472,7 +479,12 @@ const AIEntry = {
       }
     );
 
-    if (!res.ok) throw new Error('Gemini lỗi ' + res.status);
+    if (!res.ok) {
+      if (res.status === 400 || res.status === 401) {
+        throw new Error('API key không đúng định dạng (mã ' + res.status + ' — key của Gemini phải bắt đầu bằng "AIzaSy...")');
+      }
+      throw new Error('Gemini lỗi ' + res.status);
+    }
     const data = await res.json();
     const raw = data.candidates && data.candidates[0] &&
       data.candidates[0].content && data.candidates[0].content.parts &&

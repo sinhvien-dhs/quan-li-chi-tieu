@@ -13,6 +13,12 @@
  */
 
 const AIEntry = {
+  ROUTER9_URL_STORAGE: 'spendwise_9router_url',
+  ROUTER9_KEY_STORAGE: 'spendwise_9router_key',
+  ROUTER9_MODEL_STORAGE: 'spendwise_9router_model',
+  DEFAULT_ROUTER9_URL: 'http://localhost:20128/v1',
+  DEFAULT_ROUTER9_MODEL: 'gemini-2.0-flash',
+
   GEMINI_KEY_STORAGE: 'spendwise_gemini_key',
   PROXY_URL_STORAGE: 'spendwise_ai_proxy_url',
   MAX_ITEMS: 10,
@@ -55,6 +61,34 @@ const AIEntry = {
   // ============================================================
   //  CẤU HÌNH & TRẠNG THÁI
   // ============================================================
+  has9Router() {
+    return !!this.get9RouterUrl();
+  },
+
+  get9RouterUrl() {
+    return Storage.get(this.ROUTER9_URL_STORAGE, '');
+  },
+
+  set9RouterUrl(url) {
+    Storage.set(this.ROUTER9_URL_STORAGE, String(url || '').trim());
+  },
+
+  get9RouterKey() {
+    return Storage.get(this.ROUTER9_KEY_STORAGE, '');
+  },
+
+  set9RouterKey(key) {
+    Storage.set(this.ROUTER9_KEY_STORAGE, String(key || '').trim());
+  },
+
+  get9RouterModel() {
+    return Storage.get(this.ROUTER9_MODEL_STORAGE, this.DEFAULT_ROUTER9_MODEL) || this.DEFAULT_ROUTER9_MODEL;
+  },
+
+  set9RouterModel(model) {
+    Storage.set(this.ROUTER9_MODEL_STORAGE, String(model || '').trim());
+  },
+
   hasApiKey() {
     return !!Storage.get(this.GEMINI_KEY_STORAGE, '');
   },
@@ -89,6 +123,7 @@ const AIEntry = {
    */
   getEngineMode() {
     const isOnline = (typeof navigator === 'undefined' || navigator.onLine !== false);
+    const has9R = this.has9Router();
     const hasProxy = this.hasProxyUrl();
     const hasKey = this.hasApiKey();
 
@@ -98,6 +133,16 @@ const AIEntry = {
         online: false,
         label: 'Ngoại tuyến',
         desc: 'Đang offline — AI chạy trực tiếp trong trình duyệt (0ms, không tốn dữ liệu).'
+      };
+    }
+
+    if (has9R) {
+      const model = this.get9RouterModel() || this.DEFAULT_ROUTER9_MODEL;
+      return {
+        engine: '9router',
+        online: true,
+        label: '9Router Gateway',
+        desc: `Trực tuyến — Phân tích qua 9Router AI Gateway (${model}). Tự động fallback về máy khi ngắt kết nối.`
       };
     }
 
@@ -285,17 +330,52 @@ const AIEntry = {
   //  KIỂM TRA KẾT NỐI
   // ============================================================
   async testConnection() {
+    const router9Url = this.get9RouterUrl();
     const proxyUrl = this.getProxyUrl();
     const directKey = this.getApiKey();
 
-    if (!proxyUrl && !directKey) {
+    if (!router9Url && !proxyUrl && !directKey) {
       return {
         ok: false,
-        message: 'Chưa cấu hình máy chủ Cloudflare AI hoặc Gemini API key.'
+        message: 'Chưa cấu hình máy chủ 9Router, Cloudflare AI hoặc Gemini API key.'
       };
     }
 
-    // Ưu tiên kiểm tra máy chủ proxy Cloudflare
+    // Ưu tiên 1: Kiểm tra 9Router AI Gateway
+    if (router9Url) {
+      try {
+        const base = router9Url.replace(/\/+$/, '');
+        const endpoint = base.endsWith('/v1') ? `${base}/chat/completions` : `${base}/v1/chat/completions`;
+        const headers = { 'Content-Type': 'application/json' };
+        const key = this.get9RouterKey();
+        if (key) headers['Authorization'] = `Bearer ${key}`;
+
+        const model = this.get9RouterModel() || this.DEFAULT_ROUTER9_MODEL;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: 'user', content: 'Trả lời đúng 2 chữ: OK' }],
+            max_tokens: 10,
+            temperature: 0
+          })
+        });
+
+        if (!res.ok) {
+          const detail = await res.text().catch(() => '');
+          return { ok: false, message: `9Router báo lỗi ${res.status}: ${detail.slice(0, 100)}` };
+        }
+        return {
+          ok: true,
+          message: `Kết nối thành công tới 9Router AI Gateway (${model})!`
+        };
+      } catch (err) {
+        return { ok: false, message: 'Không gọi được 9Router (kiểm tra 9Router đã khởi chạy chưa): ' + err.message };
+      }
+    }
+
+    // Ưu tiên 2: Kiểm tra máy chủ proxy Cloudflare
     if (proxyUrl) {
       try {
         const res = await fetch(proxyUrl, {
@@ -526,12 +606,122 @@ const AIEntry = {
   },
 
   // ============================================================
+  //  4. 9ROUTER AI GATEWAY (OpenAI-compatible)
+  // ============================================================
+  async parseWith9Router(text) {
+    const url = this.get9RouterUrl();
+    if (!url) throw new Error('Chưa cấu hình URL 9Router');
+
+    const base = url.replace(/\/+$/, '');
+    const endpoint = base.endsWith('/v1') ? `${base}/chat/completions` : `${base}/v1/chat/completions`;
+    const headers = { 'Content-Type': 'application/json' };
+    const key = this.get9RouterKey();
+    if (key) headers['Authorization'] = `Bearer ${key}`;
+
+    const categories = (typeof Categories !== 'undefined')
+      ? [...Categories.expense, ...Categories.income].map(c => `${c.id} (${c.name})`).join(', ')
+      : 'food (Ăn uống), transport (Di chuyển), shopping (Mua sắm), bills (Hóa đơn), education (Học tập), health (Sức khỏe), entertainment (Giải trí), freelance (Làm thêm), salary (Lương)';
+    const wallets = (typeof Features !== 'undefined')
+      ? Features.getWallets().map(w => w.name).join(', ')
+      : '';
+    const today = (typeof Utils !== 'undefined') ? Utils.getToday() : new Date().toISOString().split('T')[0];
+
+    const systemPrompt = [
+      'Bạn là trợ lý trích xuất giao dịch tài chính thông minh cho ứng dụng SpendWise (Việt Nam).',
+      `Ngày hiện tại: ${today} (định dạng YYYY-MM-DD).`,
+      `Danh mục hợp lệ: ${categories}.`,
+      `Ví hiện có: ${wallets || '(chưa có)'}.`,
+      '',
+      'Quy tắc nhận diện số tiền tiếng Việt:',
+      '- 40k = 40000, 1.5tr = 1500000, 2 triệu = 2000000',
+      '- Tiếng lóng: "50 cành" = 50000, "2 lít" / "2 loét" = 200000, "1 củ" = 1000000, "nửa củ" = 500000, "nửa lít" = 50000, "50 xu" = 50000',
+      '',
+      'Quy tắc ngày tháng:',
+      '- "hôm qua", "tối qua" = lùi 1 ngày so với ngày hiện tại',
+      '- "hôm kia" = lùi 2 ngày so với ngày hiện tại',
+      '- "sáng nay", "chiều nay", "hôm nay" = ngày hiện tại',
+      '- Nếu có ngày cụ thể như "12/10", gán đúng ngày theo YYYY-MM-DD.',
+      '',
+      'Phân loại loại giao dịch:',
+      '- Thu nhập: lương, thưởng, bán đồ, hoàn tiền, nhận chuyển khoản -> type="income"',
+      '- Chi tiêu: ăn uống, mua sắm, đổ xăng, đóng tiền, trả nợ -> type="expense"',
+      '',
+      'YÊU CẦU ĐẶC BIỆT:',
+      '- Chỉ trả về duy nhất chuỗi JSON hợp lệ theo định dạng:',
+      '{"items":[{"name":"tên ngắn gọn","amount":40000,"type":"expense","category":"food","wallet":"tên ví nếu có","date":"YYYY-MM-DD"}]}',
+      '- Không giải thích thêm, không kèm văn bản ngoài JSON.'
+    ].join('\n');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          model: this.get9RouterModel() || this.DEFAULT_ROUTER9_MODEL,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: text }
+          ],
+          temperature: 0.1,
+          response_format: { type: 'json_object' }
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`9Router báo lỗi ${res.status}: ${errText.slice(0, 100)}`);
+      }
+
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error('9Router không trả về nội dung');
+
+      let jsonStr = content.trim();
+      const matchFence = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (matchFence) jsonStr = matchFence[1].trim();
+
+      const parsed = JSON.parse(jsonStr);
+      const rawList = Array.isArray(parsed) ? parsed : (parsed.items || []);
+
+      const items = rawList.map((it) => {
+        const amount = (typeof Business !== 'undefined') ? Business.parseAmount(it.amount) : Number(it.amount);
+        const wallet = (typeof Features !== 'undefined' && it.wallet)
+          ? Features.getWallets().find(w => Utils.normalizeText(w.name) === Utils.normalizeText(it.wallet))
+          : null;
+        const validDate = (it.date && typeof Business !== 'undefined' && Business.isValidDate(it.date)) ? it.date : today;
+
+        return {
+          name: String(it.name || 'Giao dịch').slice(0, 50),
+          amount: amount === null ? 0 : amount,
+          type: it.type === 'income' ? 'income' : 'expense',
+          category: (typeof Categories !== 'undefined' && Categories.getById(it.category)) ? it.category : (it.type === 'income' ? 'salary' : 'food'),
+          wallet: wallet ? wallet.id : null,
+          date: validDate,
+          note: it.note ? String(it.note).slice(0, 100) : ''
+        };
+      }).filter((it) => it.amount > 0);
+
+      return { items: items, skipped: 0, engine: '9router' };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
+  },
+
+  // ============================================================
   //  ROUTER PHÂN TÍCH THÔNG MINH (HYBRID)
   // ============================================================
   /**
    * Phân tích câu nhập:
    * - Nếu offline: chạy ngay parser cục bộ trong máy (0ms).
-   * - Nếu online và có Cloudflare Worker Proxy: gọi proxy, tự động fallback cục bộ nếu lỗi/chậm.
+   * - Nếu online và có 9Router AI Gateway: gọi 9Router, tự động fallback cục bộ nếu lỗi/chậm (>8s).
+   * - Nếu online và có Cloudflare Worker Proxy: gọi proxy, tự động fallback cục bộ nếu lỗi/chậm (>6s).
    * - Nếu online và có direct Gemini API key: gọi Gemini direct, fallback cục bộ nếu lỗi.
    * - Mặc định: chạy parser cục bộ trong máy.
    * @param {string} text
@@ -542,6 +732,7 @@ const AIEntry = {
     if (!clean) return { items: [], engine: 'local', error: 'Bạn chưa nhập gì.' };
 
     const isOnline = (typeof navigator === 'undefined' || navigator.onLine !== false);
+    const router9Url = this.get9RouterUrl();
     const proxyUrl = this.getProxyUrl();
     const directKey = this.getApiKey();
 
@@ -552,7 +743,19 @@ const AIEntry = {
       return localResult;
     }
 
-    // 2. Khi trực tuyến: Ưu tiên Proxy Cloudflare (nếu đã cấu hình)
+    // 2. Khi trực tuyến: Ưu tiên 9Router AI Gateway (nếu đã cấu hình)
+    if (router9Url) {
+      try {
+        return await this.parseWith9Router(clean);
+      } catch (err) {
+        console.warn('9Router failed, falling back to local:', err);
+        const fallback = this.parseLocal(clean);
+        fallback.notice = '⚡ 9Router không phản hồi (' + (err.name === 'AbortError' ? 'Quá thời gian 8s' : err.message) + ') — đã tự động chuyển sang AI trong máy.';
+        return fallback;
+      }
+    }
+
+    // 3. Ưu tiên Proxy Cloudflare (nếu đã cấu hình)
     if (proxyUrl) {
       try {
         return await this.parseWithProxy(clean, proxyUrl);
@@ -564,7 +767,7 @@ const AIEntry = {
       }
     }
 
-    // 3. Nếu người dùng tự cấu hình direct Gemini API key
+    // 4. Nếu người dùng tự cấu hình direct Gemini API key
     if (directKey) {
       try {
         return await this.parseWithGemini(clean);
@@ -576,7 +779,7 @@ const AIEntry = {
       }
     }
 
-    // 4. Mặc định: dùng bộ phân tích cục bộ
+    // 5. Mặc định: dùng bộ phân tích cục bộ
     return this.parseLocal(clean);
   }
 };

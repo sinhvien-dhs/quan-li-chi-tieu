@@ -172,11 +172,38 @@ test('Lưu & đọc URL Cloudflare AI Proxy', () => {
   eq(AIEntry.hasProxyUrl(), false);
 });
 
+test('Lưu & đọc cấu hình 9Router (URL, Key, Model)', () => {
+  AIEntry.set9RouterUrl('http://localhost:20128/v1');
+  eq(AIEntry.get9RouterUrl(), 'http://localhost:20128/v1');
+  eq(AIEntry.has9Router(), true);
+
+  AIEntry.set9RouterKey('sk-9router-secret');
+  eq(AIEntry.get9RouterKey(), 'sk-9router-secret');
+
+  AIEntry.set9RouterModel('gemini-2.5-flash');
+  eq(AIEntry.get9RouterModel(), 'gemini-2.5-flash');
+
+  // Khôi phục
+  AIEntry.set9RouterUrl('');
+  AIEntry.set9RouterKey('');
+  AIEntry.set9RouterModel('');
+  eq(AIEntry.has9Router(), false);
+  eq(AIEntry.get9RouterModel(), 'gemini-2.0-flash'); // Default fallback
+});
+
 test('Trạng thái chế độ AI (Engine Mode)', () => {
-  // Khi không có proxy và không có key
+  // Khi không có 9router, proxy và key
   const m1 = AIEntry.getEngineMode();
   eq(m1.engine, 'local');
   eq(m1.label, 'Cục bộ (Sẵn sàng)');
+
+  // Khi có 9Router
+  AIEntry.set9RouterUrl('http://localhost:20128/v1');
+  AIEntry.set9RouterModel('gemini-2.0-flash');
+  const m9r = AIEntry.getEngineMode();
+  eq(m9r.engine, '9router');
+  eq(m9r.label, '9Router Gateway');
+  AIEntry.set9RouterUrl('');
 
   // Khi có proxy
   AIEntry.setProxyUrl('https://spendwise-ai.example.workers.dev');

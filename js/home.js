@@ -86,6 +86,10 @@ const HomeWidgets = {
     const mode = (typeof AIEntry !== 'undefined' && AIEntry.getEngineMode) ? AIEntry.getEngineMode() : { online: true, engine: 'local' };
     if (!mode.online) {
       hint.innerHTML = '⚡ <strong>Chế độ Ngoại tuyến:</strong> AI chạy ngay trong máy — 0ms, không cần mạng.';
+    } else if (mode.engine === '9router') {
+      const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-2.0-flash';
+      hint.innerHTML = `✨ <strong>9Router AI:</strong> Đang kết nối Gateway (${model}). <a href="#" id="aiConfigLink">Cài đặt</a>`;
+      this.bindConfigLink();
     } else if (mode.engine === 'proxy') {
       hint.innerHTML = '✨ <strong>Cloudflare AI:</strong> Đang kết nối Gemini 2.0 Flash. <a href="#" id="aiConfigLink">Cài đặt</a>';
       this.bindConfigLink();
@@ -93,7 +97,7 @@ const HomeWidgets = {
       hint.innerHTML = '✨ <strong>Gemini Cá nhân:</strong> Đã kết nối API key. <a href="#" id="aiConfigLink">Cài đặt</a>';
       this.bindConfigLink();
     } else {
-      hint.innerHTML = 'AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (Cloudflare / Gemini) để phân tích câu phức tạp.';
+      hint.innerHTML = 'AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (9Router / Cloudflare) để phân tích câu phức tạp.';
       this.bindConfigLink();
     }
   },
@@ -107,11 +111,11 @@ const HomeWidgets = {
         PageManager.switchTo('pageSettings');
         if (typeof SettingsTabs !== 'undefined') SettingsTabs.switchTo('tienich');
         setTimeout(() => {
-          const target = document.getElementById('inputAiProxyUrl') || document.getElementById('inputGeminiKey');
+          const target = document.getElementById('input9RouterUrl') || document.getElementById('inputAiProxyUrl') || document.getElementById('inputGeminiKey');
           if (target) {
             target.scrollIntoView({ block: 'center' });
             target.focus();
-            Toast.show('Cấu hình máy chủ Cloudflare AI Proxy hoặc Gemini API key.', 'info');
+            Toast.show('Cấu hình máy chủ 9Router AI Gateway hoặc Cloudflare.', 'info');
           }
         }, 350);
       });

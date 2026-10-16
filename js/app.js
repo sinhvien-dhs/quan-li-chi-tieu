@@ -678,7 +678,10 @@ const SettingsTabs = {
 const SecuritySettings = {
   /** Cài đặt: Gemini key, PIN khoá app, ẩn số dư */
   bindSecuritySettings() {
-    // Cloudflare Proxy & Gemini API key
+    // 9Router Gateway, Cloudflare Proxy & Gemini API key
+    const router9UrlInput = document.getElementById('input9RouterUrl');
+    const router9KeyInput = document.getElementById('input9RouterKey');
+    const router9ModelInput = document.getElementById('input9RouterModel');
     const proxyInput = document.getElementById('inputAiProxyUrl');
     const keyInput = document.getElementById('inputGeminiKey');
     const aiTag = document.getElementById('aiStatusTag');
@@ -692,9 +695,36 @@ const SecuritySettings = {
       if (aiText) {
         aiText.textContent = mode.desc;
       }
+      if (router9UrlInput && !router9UrlInput.value) router9UrlInput.value = AIEntry.get9RouterUrl();
+      if (router9KeyInput && !router9KeyInput.value) router9KeyInput.value = AIEntry.get9RouterKey();
+      if (router9ModelInput && !router9ModelInput.value) router9ModelInput.value = AIEntry.get9RouterModel();
       if (proxyInput && !proxyInput.value) proxyInput.value = AIEntry.getProxyUrl();
       if (keyInput && !keyInput.value) keyInput.value = AIEntry.getApiKey();
     };
+
+    if (router9UrlInput) {
+      router9UrlInput.addEventListener('change', () => {
+        AIEntry.set9RouterUrl(router9UrlInput.value);
+        paintAi();
+        Toast.success(router9UrlInput.value ? 'Đã lưu URL máy chủ 9Router.' : 'Đã xóa URL 9Router.');
+      });
+    }
+
+    if (router9KeyInput) {
+      router9KeyInput.addEventListener('change', () => {
+        AIEntry.set9RouterKey(router9KeyInput.value);
+        paintAi();
+        Toast.success(router9KeyInput.value ? 'Đã lưu API key 9Router.' : 'Đã xóa API key 9Router.');
+      });
+    }
+
+    if (router9ModelInput) {
+      router9ModelInput.addEventListener('change', () => {
+        AIEntry.set9RouterModel(router9ModelInput.value);
+        paintAi();
+        Toast.success('Đã cập nhật mô hình 9Router: ' + (router9ModelInput.value || 'gemini-2.0-flash'));
+      });
+    }
 
     if (proxyInput) {
       proxyInput.addEventListener('change', () => {
@@ -717,6 +747,9 @@ const SecuritySettings = {
     const geminiTestText = document.getElementById('geminiTestText');
     if (btnTestGemini) {
       btnTestGemini.addEventListener('click', async () => {
+        if (router9UrlInput) AIEntry.set9RouterUrl(router9UrlInput.value);
+        if (router9KeyInput) AIEntry.set9RouterKey(router9KeyInput.value);
+        if (router9ModelInput) AIEntry.set9RouterModel(router9ModelInput.value);
         if (proxyInput) AIEntry.setProxyUrl(proxyInput.value);
         if (keyInput) AIEntry.setApiKey(keyInput.value);
 

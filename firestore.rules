@@ -172,13 +172,10 @@ service cloud.firestore {
     }
 
     // Sổ nợ nhóm: { id, title, total, perPerson, myAmount, myName,
-//    //             memberCount, date, createdAt, debts: [{name, amount, paid}] }
-    //
-    // LƯU Ý: cố tình KHÔNG dùng biểu thức debts.map(...).sum() để kiểm tra tổng.
-    // Biểu thức đó khiến mọi lần ghi bị từ chối (rules báo "Missing or insufficient
-    // permissions") vì không đánh giá được trên Firestore.
-    // Việc kiểm tra tổng khớp vẫn được thực hiện ở phía app (ExportManager.sanitizeDebts)
-    // trước khi dữ liệu được gửi lên.
+    //                memberCount, date, createdAt, debts: [{name, amount, paid}] }
+    // Ghi chú: Firestore Rules không hỗ trợ lambda map() hay all() trên kiểu list;
+    // việc kiểm tra chi tiết từng phần tử và bảo toàn tổng được thực hiện
+    // chặt chẽ ở phía app (ExportManager.sanitizeDebts) trước khi gửi lên.
     function validDebt(d) {
       return d is map
         && d.keys().hasOnly([
@@ -194,13 +191,7 @@ service cloud.firestore {
         && 'memberCount' in d.keys() && d.memberCount is number && d.memberCount >= 0 && d.memberCount <= 30
         && 'date' in d.keys() && validDate(d.date)
         && 'createdAt' in d.keys() && validTs(d.createdAt)
-        && 'debts' in d.keys() && d.debts is list && d.debts.size() <= 30
-        && d.debts.all(x,
-             x is map
-             && x.keys().hasOnly(['name','amount','paid'])
-             && 'name' in x.keys() && x.name is string && x.name.size() > 0 && x.name.size() <= 40
-             && 'amount' in x.keys() && x.amount is number && x.amount >= 0 && x.amount <= 1000000000000
-             && (!('paid' in x.keys()) || x.paid is bool));
+        && 'debts' in d.keys() && d.debts is list && d.debts.size() <= 30;
     }
 
     // ==========================================================

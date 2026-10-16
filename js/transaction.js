@@ -315,20 +315,23 @@ const TransactionManager = {
     const expense = Business.totalExpense(transactions);
     const balance = Business.balance(transactions);
 
-    document.getElementById('totalBalance').textContent = (balance < 0 ? '-' : '') + Utils.formatCurrency(balance);
+    const balanceEl = document.getElementById('totalBalance');
+    const formattedBalance = (balance < 0 ? '-' : '') + Utils.formatCurrency(balance);
+    if (balanceEl) {
+      balanceEl.dataset.realValue = formattedBalance;
+      const isHidden = typeof AppLock !== 'undefined' && AppLock.isBalanceHidden();
+      balanceEl.textContent = isHidden ? '••••••' : formattedBalance;
+      if (balance < 0) {
+        balanceEl.style.color = 'var(--danger-text)';
+      } else {
+        balanceEl.style.color = '';
+      }
+    }
     document.getElementById('totalIncome').textContent = Utils.formatCurrency(income);
     document.getElementById('totalExpense').textContent = Utils.formatCurrency(expense);
 
     // Cập nhật ô "Ngân sách tháng" trên Trang chủ
     this.renderHomeBudget();
-
-    // Thêm class nếu số dư âm
-    const balanceEl = document.getElementById('totalBalance');
-    if (balance < 0) {
-      balanceEl.style.color = 'var(--danger-text)';
-    } else {
-      balanceEl.style.color = '';
-    }
   },
 
   /**

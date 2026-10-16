@@ -88,8 +88,14 @@ const AppLock = {
   applyBalanceMask() {
     const el = document.getElementById('totalBalance');
     if (!el) return;
-    el.dataset.realValue = el.dataset.realValue || el.textContent;
-    el.textContent = this.isBalanceHidden() ? '••••••' : el.dataset.realValue;
+    if (this.isBalanceHidden()) {
+      if (el.textContent !== '••••••') el.dataset.realValue = el.textContent;
+      el.textContent = '••••••';
+    } else {
+      if (el.dataset.realValue && el.dataset.realValue !== '••••••') {
+        el.textContent = el.dataset.realValue;
+      }
+    }
   },
 
   // ============================================================

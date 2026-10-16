@@ -86,3 +86,34 @@
     font-size: var(--font-size-xs);
   }
 }
+
+/* Mobile Header — icon-only buttons to avoid overflow */
+@media (max-width: 520px) {
+  .header__actions {
+    gap: 6px;
+  }
+
+  .header__user-email {
+    display: none !important;
+  }
+
+  .header__btn--user {
+    padding: 0 !important;
+    width: 38px !important;
+    height: 38px !important;
+    justify-content: center !important;
+    border-radius: var(--radius-full) !important;
+  }
+
+  .header__btn--pill span {
+    display: none !important;
+  }
+
+  .header__btn--pill {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border-radius: var(--radius-full) !important;
+  }
+}

@@ -424,14 +424,18 @@ const AuthManager = {
    * Gửi email đặt lại mật khẩu (luồng quên mật khẩu)
    */
   async sendPasswordReset() {
-    const email = document.getElementById('authEmail').value.trim();
-    if (!email.includes('@')) {
-      Toast.error('Vui lòng nhập email đã đăng ký để đặt lại mật khẩu!');
+    const email = document.getElementById('authEmail').value.trim().toLowerCase();
+    if (!email) {
+      Toast.error('Vui lòng nhập email tài khoản của bạn vào ô bên trên!');
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/.test(email)) {
+      Toast.error('Vui lòng nhập đúng định dạng email (VD: an123@gmail.com)!');
       return;
     }
     try {
       await this.auth.sendPasswordResetEmail(email);
-      Toast.success('Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư!');
+      Toast.success('Đã gửi link đặt lại mật khẩu tới email. Vui lòng kiểm tra Hộp thư đến hoặc thư rác (Spam)!');
     } catch (e) {
       Toast.error('Không gửi được email: ' + this.friendlyError(e));
     }
@@ -513,8 +517,23 @@ const AuthManager = {
           await root.delete().catch(() => {});
 
           this.clearLocalUserData();
-          await this.currentUser.delete().catch(() => {});
-          await this.auth.signOut();
+          localStorage.removeItem('spendwise_uid');
+
+          try {
+            await this.currentUser.delete();
+          } catch (delErr) {
+            if (delErr && delErr.code === 'auth/requires-recent-login') {
+              Toast.warning('Vì lý do an toàn của Firebase, vui lòng đăng nhập lại ngay trước khi thực hiện xóa tài khoản!');
+              return;
+            }
+          }
+
+          if (this.auth) {
+            await this.auth.signOut().catch(() => {});
+          }
+          this.currentUser = null;
+          this.updateAccountUI(null);
+
           if (typeof PageManager !== 'undefined') {
             PageManager.switchTo('pageHome');
           }

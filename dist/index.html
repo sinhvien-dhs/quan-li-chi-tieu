@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=80">
+  <link rel="manifest" href="manifest.json?v=81">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,7 +40,14 @@
   <!-- Stylesheets -->
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.min.css?v=80">
+
+  <script>
+    // Kiểm tra nhanh phiên đăng nhập để kích hoạt Auth Wall ngay từ đầu, tránh nháy giao diện
+    if (!localStorage.getItem('spendwise_uid')) {
+      document.documentElement.classList.add('auth-pending');
+    }
+  </script>
+  <link rel="stylesheet" href="style.min.css?v=81">
 </head>
 <body>
   <div id="printReport"></div>
@@ -68,30 +75,45 @@
     <i class="fa-solid fa-wifi"></i> Đang ngoại tuyến — giao dịch vẫn được lưu trên máy này và sẽ đồng bộ khi có mạng
   </div>
 
-  <!-- ===== Auth Overlay (Đăng nhập / Đăng ký) ===== -->
-  <div class="modal-overlay" id="authOverlay" style="z-index:400" role="dialog" aria-modal="true" aria-label="Tài khoản SpendWise">
-    <div class="modal" style="border-radius:var(--radius-xl) var(--radius-xl) 0 0">
-      <h3 class="modal__title" style="margin-bottom:var(--space-md)">
-        <i class="fa-solid fa-user-circle" style="color:var(--primary)"></i> Tài khoản SpendWise
-      </h3>
+  <!-- ===== Auth Overlay (Đăng nhập / Đăng ký - Màn hình khóa bắt buộc) ===== -->
+  <div class="modal-overlay" id="authOverlay" role="dialog" aria-modal="true" aria-label="Đăng nhập SpendWise">
+    <div class="modal auth-gate-modal">
+      <div class="auth-gate-header">
+        <div class="auth-gate-logo">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <h2 class="auth-gate-title">SpendWise</h2>
+        <p class="auth-gate-subtitle">Quản lý chi tiêu thông minh &amp; đồng bộ đám mây</p>
+        <div class="auth-gate-badge">
+          <i class="fa-solid fa-lock"></i> Đăng nhập để sử dụng
+        </div>
+      </div>
+
       <div class="form__group">
-        <label class="form__label" for="authEmail">Email đăng nhập</label>
+        <label class="form__label" for="authEmail"><i class="fa-solid fa-envelope"></i> Email đăng nhập</label>
         <input type="email" class="form__input" id="authEmail" placeholder="VD: an123@gmail.com" autocomplete="email" style="width:100%">
       </div>
       <div class="form__group" style="position:relative">
-        <label class="form__label" for="authPassword">Mật khẩu</label><div style="position:relative"><input type="password" class="form__input" id="authPassword" placeholder="Tối thiểu 6 ký tự" style="padding-right:44px">
-        <button type="button" class="pw-eye" data-target="authPassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
-          <i class="fa-solid fa-eye"></i>
-        </button></div>
+        <label class="form__label" for="authPassword"><i class="fa-solid fa-key"></i> Mật khẩu</label>
+        <div style="position:relative">
+          <input type="password" class="form__input" id="authPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="current-password" style="padding-right:44px">
+          <button type="button" class="pw-eye" data-target="authPassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
       </div>
       <div style="display:flex;gap:var(--space-sm)">
-        <button type="button" class="form__submit" id="authLoginBtn" style="flex:1">Đăng nhập</button>
-        <button type="button" class="form__submit" id="authRegisterBtn" style="flex:1;background:var(--danger);box-shadow:0 4px 16px rgba(255,107,107,0.35)">Đăng ký</button>
+        <button type="button" class="form__submit" id="authLoginBtn" style="flex:1">
+          <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+        </button>
+        <button type="button" class="form__submit" id="authRegisterBtn" style="flex:1;background:var(--danger);box-shadow:0 4px 16px rgba(255,107,107,0.35)">
+          <i class="fa-solid fa-user-plus"></i> Đăng ký
+        </button>
       </div>
       <div style="text-align:center;margin:var(--space-md) 0;color:var(--text-muted);font-size:var(--font-size-sm)">— Hoặc —</div>
       <button type="button" class="settings-btn" id="btnForgotPassword" style="width:100%;justify-content:center;margin-top:var(--space-sm);display:none">
-          <i class="fa-solid fa-key"></i> Quên mật khẩu? Nhận link đặt lại qua email
-        </button>
+        <i class="fa-solid fa-key"></i> Quên mật khẩu? Nhận link đặt lại qua email
+      </button>
       <button type="button" id="authGoogleBtn" style="width:100%;padding:var(--space-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:9999px;font-weight:600;font-family:var(--font-family);font-size:var(--font-size-base);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--space-sm);box-shadow:var(--shadow-sm);transition:all var(--transition-fast)" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow-sm)'">
         <i class="fa-brands fa-google" style="color:#EA4335"></i> Tiếp tục với Google
       </button>
@@ -99,16 +121,20 @@
   </div>
 
   <!-- ===== Register Overlay (Đăng ký tài khoản mới) ===== -->
-  <div class="modal-overlay" id="authRegisterOverlay" style="z-index:401" role="dialog" aria-modal="true" aria-label="Tạo tài khoản mới">
-    <div class="modal" style="border-radius:var(--radius-xl) var(--radius-xl) 0 0;position:relative">
-      <button class="modal__close" id="registerCloseBtn" style="position:absolute;top:var(--space-md);right:var(--space-md)">
+  <div class="modal-overlay" id="authRegisterOverlay" role="dialog" aria-modal="true" aria-label="Tạo tài khoản mới">
+    <div class="modal auth-gate-modal" style="position:relative">
+      <button class="modal__close" id="registerCloseBtn" style="position:absolute;top:var(--space-md);right:var(--space-md)" aria-label="Đóng form đăng ký">
         <i class="fa-solid fa-xmark"></i>
       </button>
-      <h3 class="modal__title" style="margin-bottom:var(--space-md)">
-        <i class="fa-solid fa-user-plus" style="color:var(--danger)"></i> Tạo tài khoản mới
-      </h3>
+      <div class="auth-gate-header">
+        <div class="auth-gate-logo auth-gate-logo--register">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <h2 class="auth-gate-title">Tạo tài khoản SpendWise</h2>
+        <p class="auth-gate-subtitle">Tài khoản an toàn &amp; đồng bộ dữ liệu trên mọi thiết bị</p>
+      </div>
       <div class="form__group">
-        <label class="form__label" for="registerName">Email đăng ký</label>
+        <label class="form__label" for="registerName"><i class="fa-solid fa-envelope"></i> Email đăng ký</label>
         <input type="email" class="form__input" id="registerName" placeholder="VD: an123@gmail.com" autocomplete="email" maxlength="60" oninput="document.getElementById('registerNameError').style.display='none'">
         <p class="form__hint">Dùng email thật để có thể khôi phục mật khẩu khi quên.</p>
         <p id="registerNameError" style="display:none;color:var(--danger);font-size:var(--font-size-xs);margin-top:var(--space-xs)">
@@ -116,27 +142,29 @@
         </p>
       </div>
       <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-bottom:var(--space-sm)">
-        <i class="fa-solid fa-circle-info"></i> Dùng tên này để đăng nhập lần sau. Không có dấu, không khoảng trắng.
+        <i class="fa-solid fa-shield-halved"></i> Mật khẩu tối thiểu 8 ký tự, bao gồm cả chữ và số.
       </p>
       <div class="form__group" style="position:relative">
-        <label class="form__label" for="registerPassword">Mật khẩu</label>
+        <label class="form__label" for="registerPassword"><i class="fa-solid fa-lock"></i> Mật khẩu</label>
         <div style="position:relative">
-          <input type="password" class="form__input" id="registerPassword" placeholder="Tối thiểu 8 ký tự, có chữ và số" style="padding-right:44px">
+          <input type="password" class="form__input" id="registerPassword" placeholder="Tối thiểu 8 ký tự, có chữ và số" autocomplete="new-password" style="padding-right:44px">
           <button type="button" class="pw-eye" data-target="registerPassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
             <i class="fa-solid fa-eye"></i>
           </button>
         </div>
       </div>
       <div class="form__group" style="position:relative">
-        <label class="form__label" for="registerPassword2">Nhập lại mật khẩu</label>
+        <label class="form__label" for="registerPassword2"><i class="fa-solid fa-lock"></i> Nhập lại mật khẩu</label>
         <div style="position:relative">
-          <input type="password" class="form__input" id="registerPassword2" placeholder="Nhập lại mật khẩu" style="padding-right:44px">
+          <input type="password" class="form__input" id="registerPassword2" placeholder="Nhập lại mật khẩu" autocomplete="new-password" style="padding-right:44px">
           <button type="button" class="pw-eye" data-target="registerPassword2" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
             <i class="fa-solid fa-eye"></i>
           </button>
         </div>
       </div>
-      <button type="button" class="form__submit" id="registerSubmitBtn" style="background:var(--danger);box-shadow:0 4px 16px rgba(255,107,107,0.35)">Tạo tài khoản</button>
+      <button type="button" class="form__submit" id="registerSubmitBtn" style="background:var(--danger);box-shadow:0 4px 16px rgba(255,107,107,0.35)">
+        <i class="fa-solid fa-user-plus"></i> Tạo tài khoản
+      </button>
       <button type="button" class="settings-btn" id="registerBackBtn" style="width:100%;justify-content:center;margin-top:var(--space-sm)">
         <i class="fa-solid fa-arrow-left"></i> Quay lại đăng nhập
       </button>
@@ -1233,14 +1261,13 @@
   <!-- ===== External Libraries ===== -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-
-    <script src="app.min.js?v=80"></script>
-  <!-- ===== JavaScript Modules ===== -->
   <!-- Firebase (Auth + Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
+    <script src="app.min.js?v=81"></script>
+  <!-- ===== JavaScript Modules ===== -->
   </body>
 </html>
 

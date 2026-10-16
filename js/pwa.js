@@ -140,13 +140,24 @@ const PWAManager = {
 
     if (!overlay || !btn) return;
 
+    // Chỉ hiển thị hướng dẫn khi người dùng đã đăng nhập vào hệ thống
+    if (typeof AuthManager !== 'undefined' && AuthManager.isConfigured() && !AuthManager.currentUser) {
+      return;
+    }
+
     // Kiểm tra xem đã từng xem tour chưa
     const seen = Storage.get('spendwise_onboarded', false);
     if (!seen) {
       setTimeout(() => {
+        if (typeof AuthManager !== 'undefined' && AuthManager.isConfigured() && !AuthManager.currentUser) {
+          return;
+        }
         overlay.classList.add('active');
       }, 500);
     }
+
+    if (this._onboardingBound) return;
+    this._onboardingBound = true;
 
     let currentStep = 0;
     const totalSteps = steps.length;

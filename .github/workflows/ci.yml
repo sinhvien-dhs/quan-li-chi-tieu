@@ -55,6 +55,9 @@ jobs:
       - name: Unit test - luu du lieu va bao cao
         run: node tests/storage.test.js
 
+      - name: Unit test - xac thuc va auth wall
+        run: node tests/auth.test.js
+
       - name: Lint Firestore security rules
         run: node tests/rules.lint.js
 

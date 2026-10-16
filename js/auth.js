@@ -52,12 +52,39 @@ const AuthManager = {
       !FIREBASE_CONFIG.apiKey.startsWith('YOUR_');
   },
 
-  init() {
+  /**
+   * Hiển thị màn hình khóa đăng nhập (Auth Wall) — chặn toàn bộ tương tác cho đến khi đăng nhập
+   */
+  showAuthGate() {
     const overlay = document.getElementById('authOverlay');
+    if (overlay) overlay.classList.add('active');
+    document.documentElement.classList.add('auth-pending');
+    document.body.classList.add('auth-locked');
+    document.body.style.overflow = 'hidden';
+  },
 
+  /**
+   * Mở khóa ứng dụng sau khi đăng nhập thành công
+   */
+  hideAuthGate() {
+    const overlay = document.getElementById('authOverlay');
+    const regOverlay = document.getElementById('authRegisterOverlay');
+    if (overlay) overlay.classList.remove('active');
+    if (regOverlay) regOverlay.classList.remove('active');
+    document.documentElement.classList.remove('auth-pending');
+    document.body.classList.remove('auth-locked');
+    document.body.style.overflow = '';
+  },
+
+  init() {
     if (!this.isConfigured() || typeof firebase === 'undefined') {
-      if (overlay) overlay.classList.remove('active');
+      this.hideAuthGate();
       return;
+    }
+
+    // Nếu trên máy chưa có phiên đăng nhập, lập tức khóa ứng dụng bằng màn hình đăng nhập
+    if (!localStorage.getItem('spendwise_uid')) {
+      this.showAuthGate();
     }
 
     firebase.initializeApp(FIREBASE_CONFIG);
@@ -79,7 +106,7 @@ const AuthManager = {
     this.auth.onAuthStateChanged(async user => {
       this.currentUser = user;
       if (user) {
-        if (overlay) overlay.classList.remove('active');
+        this.hideAuthGate();
         this.updateAccountUI(user);
 
         // Đổi tài khoản trên cùng thiết bị → xóa dữ liệu của tài khoản trước
@@ -90,8 +117,15 @@ const AuthManager = {
         localStorage.setItem('spendwise_uid', user.uid);
 
         await this.pullFromCloud();
+
+        // Chạy hướng dẫn người dùng mới nếu chưa từng xem
+        if (typeof PWAManager !== 'undefined' && typeof PWAManager.initOnboarding === 'function') {
+          PWAManager.initOnboarding();
+        }
       } else {
+        localStorage.removeItem('spendwise_uid');
         this.updateAccountUI(null);
+        this.showAuthGate();
       }
     });
 
@@ -112,9 +146,11 @@ const AuthManager = {
     on('registerSubmitBtn', () => this.signUp());
     on('registerBackBtn', () => {
       document.getElementById('authRegisterOverlay').classList.remove('active');
+      document.getElementById('authOverlay').classList.add('active');
     });
     on('registerCloseBtn', () => {
       document.getElementById('authRegisterOverlay').classList.remove('active');
+      document.getElementById('authOverlay').classList.add('active');
     });
     on('authGoogleBtn', () => this.signInWithGoogle());
     on('btnLogout', () => this.signOut());
@@ -158,11 +194,14 @@ const AuthManager = {
       });
     });
 
-    // Bấm nền xám để đóng form đăng ký
+    // Bấm nền xám để quay lại màn hình đăng nhập chính
     const regOverlay = document.getElementById('authRegisterOverlay');
     if (regOverlay) {
       regOverlay.addEventListener('click', (e) => {
-        if (e.target === regOverlay) regOverlay.classList.remove('active');
+        if (e.target === regOverlay) {
+          regOverlay.classList.remove('active');
+          document.getElementById('authOverlay').classList.add('active');
+        }
       });
     }
   },
@@ -291,7 +330,11 @@ const AuthManager = {
       }
       this.clearLocalUserData();
       await this.auth.signOut();
-      Toast.success('Đã đăng xuất và xóa dữ liệu cục bộ!');
+      if (typeof PageManager !== 'undefined') {
+        PageManager.switchTo('pageHome');
+      }
+      this.showAuthGate();
+      Toast.success('Đã đăng xuất!');
     };
 
     // Cảnh báo nếu còn thay đổi chưa đồng bộ
@@ -334,6 +377,10 @@ const AuthManager = {
           this.clearLocalUserData();
           await this.currentUser.delete().catch(() => {});
           await this.auth.signOut();
+          if (typeof PageManager !== 'undefined') {
+            PageManager.switchTo('pageHome');
+          }
+          this.showAuthGate();
           Toast.success('Đã xóa tài khoản và toàn bộ dữ liệu.');
         } catch (e) {
           console.error(e);
@@ -356,12 +403,11 @@ const AuthManager = {
       Storage.invalidateTxCache();
     }
 
-    ['authOverlay', 'authRegisterOverlay', 'modalOverlay', 'budgetModal', 'confirmOverlay']
+    ['modalOverlay', 'budgetModal', 'confirmOverlay', 'splitterModal', 'authRegisterOverlay']
       .forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('active');
       });
-    document.body.style.overflow = '';
 
     if (typeof TransactionManager !== 'undefined') {
       TransactionManager.renderTransactions();
@@ -396,10 +442,16 @@ const AuthManager = {
 
   updateAccountUI(user) {
     const emailEl = document.getElementById('accountEmail');
+    const descEl = emailEl && emailEl.parentElement ? emailEl.parentElement.querySelector('.settings-item__desc') : null;
     if (emailEl) {
       emailEl.textContent = user
         ? (user.displayName ? `${user.displayName} — ${user.email}` : user.email)
-        : 'Chưa đăng nhập — dữ liệu chỉ lưu trên máy này';
+        : 'Chưa đăng nhập';
+    }
+    if (descEl) {
+      descEl.textContent = user
+        ? 'Dữ liệu được đồng bộ đám mây và bảo vệ theo tài khoản của bạn.'
+        : 'Vui lòng đăng nhập để sử dụng SpendWise và đồng bộ đám mây.';
     }
     const logoutBtn = document.getElementById('btnLogout');
     if (logoutBtn) logoutBtn.style.display = user ? '' : 'none';
@@ -410,8 +462,7 @@ const AuthManager = {
   },
 
   openAuthOverlay() {
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) overlay.classList.add('active');
+    this.showAuthGate();
   },
 
   // ==========================================================

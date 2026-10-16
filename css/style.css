@@ -1399,3 +1399,112 @@ body {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
+
+/* ===== Auth Wall / Login Gate ===== */
+html.auth-pending body,
+body.auth-locked {
+  overflow: hidden !important;
+}
+
+html.auth-pending .app,
+html.auth-pending .bottom-nav,
+html.auth-pending #fabAdd,
+body.auth-locked .app,
+body.auth-locked .bottom-nav,
+body.auth-locked #fabAdd {
+  filter: blur(8px);
+  opacity: 0.35;
+  pointer-events: none !important;
+  user-select: none !important;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+#authOverlay.modal-overlay,
+#authRegisterOverlay.modal-overlay {
+  z-index: 1500;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+#authRegisterOverlay.modal-overlay {
+  z-index: 1501;
+}
+
+html.auth-pending #authOverlay {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+html.auth-pending #authOverlay .modal {
+  transform: translateY(0) !important;
+}
+
+.auth-gate-modal {
+  padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+}
+
+@media (min-width: 481px) {
+  #authOverlay,
+  #authRegisterOverlay {
+    align-items: center;
+  }
+
+  .auth-gate-modal {
+    border-radius: var(--radius-xl) !important;
+    max-width: 440px;
+    margin: auto;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.32);
+  }
+}
+
+.auth-gate-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.auth-gate-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--primary), #8e7cf7);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 6px 20px rgba(108, 99, 255, 0.35);
+  margin-bottom: var(--space-sm);
+}
+
+.auth-gate-logo--register {
+  background: linear-gradient(135deg, var(--danger), #ff8787);
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.35);
+}
+
+.auth-gate-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.auth-gate-subtitle {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin: 0 0 var(--space-sm);
+}
+
+.auth-gate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(108, 99, 255, 0.12);
+  color: var(--primary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+

@@ -68,6 +68,22 @@ const ModalHelper = {
         if (el && el.classList.contains('active')) {
           // Modal xác nhận xóa cần bấm chọn, không đóng bằng Esc để tránh mất dữ liệu
           if (el.id === 'confirmOverlay') return;
+
+          // Khi chưa đăng nhập, KHÔNG đóng authOverlay bằng phím Esc (bắt buộc đăng nhập để dùng)
+          if (el.id === 'authOverlay' && (typeof AuthManager === 'undefined' || !AuthManager.currentUser)) {
+            return;
+          }
+
+          // Khi đóng form đăng ký mà chưa đăng nhập: quay lại màn hình đăng nhập chính
+          if (el.id === 'authRegisterOverlay') {
+            el.classList.remove('active');
+            if (typeof AuthManager !== 'undefined' && !AuthManager.currentUser) {
+              const authOverlay = document.getElementById('authOverlay');
+              if (authOverlay) authOverlay.classList.add('active');
+              return;
+            }
+          }
+
           el.classList.remove('active');
           document.body.style.overflow = '';
           return;

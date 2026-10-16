@@ -240,14 +240,24 @@ const Business = {
     let raw = String(input).trim().toLowerCase();
     if (raw === '') return null;
 
-    // Hệ số rút gọn: k / nghìn / tr / triệu / tỷ
+    // Tiếng lóng đặc biệt: "nửa củ" = 500k, "nửa lít" = 50k
+    if (/^n[uử]a\s+c[uủ]$/i.test(raw)) return 500000;
+    if (/^n[uử]a\s+l[ií]t$/i.test(raw)) return 50000;
+
+    // Hệ số rút gọn: k / nghìn / tr / triệu / tỷ / cành / lít / loét / củ / xu
     let multiplier = 1;
-    const suffixMatch = raw.match(/^([0-9][0-9.,\s]*?)\s*(nghìn|nghin|triệu|trieu|tỷ|ty|tr|k|b)$/);
+    const suffixMatch = raw.match(/^([0-9][0-9.,\s]*?)\s*(nghìn|nghin|triệu|trieu|tỷ|ty|tr|k|b|cành|canh|lít|lit|loét|loet|củ|cu|xu)$/);
     if (suffixMatch) {
       const unit = suffixMatch[2];
-      if (unit === 'k' || unit === 'nghìn' || unit === 'nghin') multiplier = 1e3;
-      else if (unit === 'tỷ' || unit === 'ty' || unit === 'b') multiplier = 1e9;
-      else multiplier = 1e6; // tr / triệu
+      if (unit === 'k' || unit === 'nghìn' || unit === 'nghin' || unit === 'cành' || unit === 'canh' || unit === 'xu') {
+        multiplier = 1e3;
+      } else if (unit === 'lít' || unit === 'lit' || unit === 'loét' || unit === 'loet') {
+        multiplier = 1e5; // 1 lít / 1 loét = 100.000đ
+      } else if (unit === 'củ' || unit === 'cu' || unit === 'tr' || unit === 'triệu' || unit === 'trieu') {
+        multiplier = 1e6; // 1 củ / 1 triệu = 1.000.000đ
+      } else if (unit === 'tỷ' || unit === 'ty' || unit === 'b') {
+        multiplier = 1e9;
+      }
       raw = suffixMatch[1];
     }
 

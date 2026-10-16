@@ -172,6 +172,12 @@ test('parseAmount hiểu cách gõ tiền kiểu Việt Nam', () => {
   eq(Business.parseAmount('2 triệu'), 2000000);
   eq(Business.parseAmount('1.5tr'), 1500000);
   eq(Business.parseAmount('20k'), 20000);              // nghìn
+  eq(Business.parseAmount('50 cành'), 50000);          // cành = nghìn
+  eq(Business.parseAmount('2 lít'), 200000);           // lít = 100k
+  eq(Business.parseAmount('1 củ'), 1000000);           // củ = triệu
+  eq(Business.parseAmount('nửa củ'), 500000);          // nửa củ = 500k
+  eq(Business.parseAmount('nửa lít'), 50000);          // nửa lít = 50k
+  eq(Business.parseAmount('50 xu'), 50000);            // xu = nghìn
   eq(Business.parseAmount('1.2 tỷ'), 1200000000);      // tỷ
   eq(Business.parseAmount('12.5'), 13);                // thập phân → làm tròn
 });

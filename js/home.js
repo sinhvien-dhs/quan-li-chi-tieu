@@ -60,24 +60,10 @@ const HomeWidgets = {
     const btnMic = document.getElementById('btnAiMic');
     if (!input || !btnGo) return;
 
-    // Lối tắt: nhảy tới Cài đặt để dán API key Gemini
-    const configLink = document.getElementById('aiConfigLink');
-    if (configLink) {
-      configLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        PageManager.switchTo('pageSettings');
-        // Mở đúng nhóm "Tiện ích & AI" để không phải tìm trong 11 mục
-        if (typeof SettingsTabs !== 'undefined') SettingsTabs.switchTo('tienich');
-        setTimeout(() => {
-          const key = document.getElementById('inputGeminiKey');
-          if (key) {
-            key.scrollIntoView({ block: 'center' });
-            key.focus();
-            Toast.show('Dán API key Gemini vào ô trên rồi bấm Thử kết nối.', 'info');
-          }
-        }, 350);
-      });
-    }
+    this.bindConfigLink();
+    this.updateHint();
+    window.addEventListener('online', () => this.updateHint());
+    window.addEventListener('offline', () => this.updateHint());
 
     btnGo.addEventListener('click', () => this.run());
     input.addEventListener('keydown', (e) => {
@@ -91,6 +77,44 @@ const HomeWidgets = {
       } else {
         btnMic.addEventListener('click', () => this.toggleMic(btnMic));
       }
+    }
+  },
+
+  updateHint() {
+    const hint = document.getElementById('aiHint');
+    if (!hint) return;
+    const mode = (typeof AIEntry !== 'undefined' && AIEntry.getEngineMode) ? AIEntry.getEngineMode() : { online: true, engine: 'local' };
+    if (!mode.online) {
+      hint.innerHTML = '⚡ <strong>Chế độ Ngoại tuyến:</strong> AI chạy ngay trong máy — 0ms, không cần mạng.';
+    } else if (mode.engine === 'proxy') {
+      hint.innerHTML = '✨ <strong>Cloudflare AI:</strong> Đang kết nối Gemini 2.0 Flash. <a href="#" id="aiConfigLink">Cài đặt</a>';
+      this.bindConfigLink();
+    } else if (mode.engine === 'gemini') {
+      hint.innerHTML = '✨ <strong>Gemini Cá nhân:</strong> Đã kết nối API key. <a href="#" id="aiConfigLink">Cài đặt</a>';
+      this.bindConfigLink();
+    } else {
+      hint.innerHTML = 'AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (Cloudflare / Gemini) để phân tích câu phức tạp.';
+      this.bindConfigLink();
+    }
+  },
+
+  bindConfigLink() {
+    const configLink = document.getElementById('aiConfigLink');
+    if (configLink && !configLink._bound) {
+      configLink._bound = true;
+      configLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        PageManager.switchTo('pageSettings');
+        if (typeof SettingsTabs !== 'undefined') SettingsTabs.switchTo('tienich');
+        setTimeout(() => {
+          const target = document.getElementById('inputAiProxyUrl') || document.getElementById('inputGeminiKey');
+          if (target) {
+            target.scrollIntoView({ block: 'center' });
+            target.focus();
+            Toast.show('Cấu hình máy chủ Cloudflare AI Proxy hoặc Gemini API key.', 'info');
+          }
+        }, 350);
+      });
     }
   },
 
@@ -162,9 +186,15 @@ const HomeWidgets = {
     this.renderPreview(result);
 
     if (hint) {
-      hint.textContent = result.engine === 'gemini'
-        ? 'Đã phân tích bằng Gemini.'
-        : 'Phân tích bằng bộ đọc trong máy — không cần mạng.';
+      if (result.notice) {
+        hint.textContent = result.notice;
+      } else if (result.engine === 'proxy') {
+        hint.textContent = '✨ Phân tích qua Cloudflare (Gemini 2.0 Flash).';
+      } else if (result.engine === 'gemini') {
+        hint.textContent = '✨ Phân tích qua Google Gemini Direct.';
+      } else {
+        hint.textContent = '⚡ Phân tích bằng AI nội bộ trong máy — 0ms.';
+      }
     }
   },
 
@@ -182,15 +212,17 @@ const HomeWidgets = {
       const wallet = (typeof Features !== 'undefined' && Features.getWalletById(it.wallet)) || null;
       const cat = (typeof Categories !== 'undefined' && Categories.getById(it.category)) || null;
       const sign = it.type === 'income' ? '+' : '-';
+      const dateText = (it.date && it.date !== Utils.getToday()) ? ` · ${Utils.formatDateFriendly(it.date)}` : '';
       return `
         <div class="ai-preview__item">
           <i class="fa-solid ${cat ? cat.icon : 'fa-circle'}" style="color:${cat ? cat.color : '#94A3B8'}"></i>
-          <span class="ai-preview__name">${it.name}${wallet ? ' · ' + Utils.escapeHtml(wallet.name) : ''}</span>
+          <span class="ai-preview__name">${it.name}${wallet ? ' · ' + Utils.escapeHtml(wallet.name) : ''}${dateText}</span>
           <span class="ai-preview__amount ${it.type === 'income' ? 'ai-preview__amount--income' : ''}">${sign}${Utils.formatCurrency(it.amount)}</span>
         </div>`;
     }).join('');
 
-    const warn = result.error ? `<p class="ai-entry__hint" style="color:var(--warning-text)">${Utils.escapeHtml(result.error)}</p>` : '';
+    const noticeMsg = result.error || result.notice;
+    const warn = noticeMsg ? `<p class="ai-entry__hint" style="color:var(--text-muted)">${Utils.escapeHtml(noticeMsg)}</p>` : '';
 
     box.hidden = false;
     box.innerHTML = rows + `

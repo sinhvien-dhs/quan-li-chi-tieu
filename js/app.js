@@ -678,40 +678,52 @@ const SettingsTabs = {
 const SecuritySettings = {
   /** Cài đặt: Gemini key, PIN khoá app, ẩn số dư */
   bindSecuritySettings() {
-    // Gemini API key
+    // Cloudflare Proxy & Gemini API key
+    const proxyInput = document.getElementById('inputAiProxyUrl');
     const keyInput = document.getElementById('inputGeminiKey');
     const aiTag = document.getElementById('aiStatusTag');
     const aiText = document.getElementById('aiStatusText');
     const paintAi = () => {
-      const on = AIEntry.hasApiKey();
+      const mode = AIEntry.getEngineMode();
       if (aiTag) {
-        aiTag.textContent = on ? 'Gemini' : 'Ngoại tuyến';
-        aiTag.className = 'status-tag ' + (on ? 'status-tag--success' : 'status-tag--warning');
+        aiTag.textContent = mode.label;
+        aiTag.className = 'status-tag ' + (mode.online && mode.engine !== 'local' ? 'status-tag--success' : (mode.online ? 'status-tag--info' : 'status-tag--warning'));
       }
       if (aiText) {
-        aiText.textContent = on
-          ? 'Đang dùng Gemini cho câu nhập phức tạp (vẫn có bộ đọc trong máy dự phòng)'
-          : 'Đang dùng bộ phân tích trong máy';
+        aiText.textContent = mode.desc;
       }
+      if (proxyInput && !proxyInput.value) proxyInput.value = AIEntry.getProxyUrl();
       if (keyInput && !keyInput.value) keyInput.value = AIEntry.getApiKey();
     };
+
+    if (proxyInput) {
+      proxyInput.addEventListener('change', () => {
+        AIEntry.setProxyUrl(proxyInput.value);
+        paintAi();
+        Toast.success(proxyInput.value ? 'Đã lưu máy chủ AI Cloudflare.' : 'Đã xóa URL máy chủ AI.');
+      });
+    }
+
     if (keyInput) {
       keyInput.addEventListener('change', () => {
         AIEntry.setApiKey(keyInput.value);
         paintAi();
-        Toast.success(keyInput.value ? 'Đã lưu API key Gemini trên máy này.' : 'Đã xóa API key, dùng bộ đọc trong máy.');
+        Toast.success(keyInput.value ? 'Đã lưu API key Gemini trên máy này.' : 'Đã xóa API key Gemini.');
       });
     }
-    // Nút thử kết nối Gemini
+
+    // Nút thử kết nối AI
     const btnTestGemini = document.getElementById('btnTestGemini');
     const geminiTestText = document.getElementById('geminiTestText');
-    if (btnTestGemini && keyInput) {
+    if (btnTestGemini) {
       btnTestGemini.addEventListener('click', async () => {
-        AIEntry.setApiKey(keyInput.value);
+        if (proxyInput) AIEntry.setProxyUrl(proxyInput.value);
+        if (keyInput) AIEntry.setApiKey(keyInput.value);
+
         btnTestGemini.disabled = true;
         const original = btnTestGemini.innerHTML;
         btnTestGemini.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang thử...';
-        if (geminiTestText) geminiTestText.textContent = 'Đang gửi câu thử nghiệm tới Gemini...';
+        if (geminiTestText) geminiTestText.textContent = 'Đang kiểm tra kết nối AI...';
 
         const result = await AIEntry.testConnection();
 
@@ -726,6 +738,9 @@ const SecuritySettings = {
         }
       });
     }
+
+    window.addEventListener('online', paintAi);
+    window.addEventListener('offline', paintAi);
     paintAi();
     const pinInput = document.getElementById('inputPin');
     const btnSavePin = document.getElementById('btnSavePin');

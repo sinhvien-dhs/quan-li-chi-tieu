@@ -12,7 +12,7 @@
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
     font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
     img-src 'self' data: blob: https://img.vietqr.io;
-    connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://cdn.sheetjs.com;
+    connect-src 'self' https://*.workers.dev https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://cdn.sheetjs.com;
     worker-src 'self' blob:;
     object-src 'none';
     base-uri 'self';
@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=77">
+  <link rel="manifest" href="manifest.json?v=78">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -37,7 +37,7 @@
   <!-- Stylesheets -->
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.min.css?v=69">
+  <link rel="stylesheet" href="style.min.css?v=78">
 </head>
 <body>
   <div id="printReport"></div>
@@ -265,7 +265,7 @@
               </button>
             </div>
             <div id="aiPreview" class="ai-preview" hidden></div>
-            <div class="ai-entry__hint" id="aiHint">AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình Gemini</a> (tùy chọn) để hiểu câu phức tạp hơn.</div>
+            <div class="ai-entry__hint" id="aiHint">AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (Cloudflare / Gemini) để phân tích câu phức tạp.</div>
           </section>
 
           <!-- Ngan sach thang nay -->
@@ -701,24 +701,33 @@
       <!-- Section: AI & Bảo mật -->
       <section class="settings-section" data-tab="tienich">
         <h3 class="settings-section__title">
-          <i class="fa-solid fa-robot"></i> Trợ lý AI
+          <i class="fa-solid fa-robot"></i> Trợ lý AI (Hybrid Online/Offline)
         </h3>
         <div class="settings-group">
           <div class="settings-item">
             <div class="settings-item__info">
-              <span class="settings-item__title">Kết nối Gemini API (tùy chọn)</span>
+              <span class="settings-item__title">Máy chủ Cloudflare AI Proxy (Khuyên dùng)</span>
               <span class="settings-item__desc">
-                Bộ đọc câu nhập nhanh đã chạy sẵn trong máy. Thêm API key để hiểu được câu phức tạp hơn.
-                Key chỉ lưu trên thiết bị này, không gửi lên máy chủ của SpendWise.
+                Cổng serverless bảo vệ Gemini 2.0 Flash không làm lộ API key trên web. Khi online sẽ phân tích qua máy chủ này; khi offline hoặc mạng chậm, tự động chuyển về AI trong máy (0ms).
               </span>
             </div>
-            <input type="password" class="form__input" id="inputGeminiKey"
-                   placeholder="AIza..." aria-label="Gemini API key" style="max-width:220px">
+            <input type="url" class="form__input" id="inputAiProxyUrl"
+                   placeholder="https://...workers.dev" aria-label="Cloudflare AI Proxy URL" style="max-width:240px">
           </div>
           <div class="settings-item">
             <div class="settings-item__info">
-              <span class="settings-item__title">Kiểm tra kết nối Gemini</span>
-              <span class="settings-item__desc" id="geminiTestText">Gửi một câu thử nghiệm nhỏ để chắc chắn key hoạt động (tiêu tốn 1 lượt gọi).</span>
+              <span class="settings-item__title">Google Gemini API key cá nhân (Tùy chọn)</span>
+              <span class="settings-item__desc">
+                Dán key từ Google AI Studio nếu bạn muốn gọi trực tiếp không qua Cloudflare Proxy. Key chỉ lưu trên thiết bị này.
+              </span>
+            </div>
+            <input type="password" class="form__input" id="inputGeminiKey"
+                   placeholder="AIza..." aria-label="Gemini API key" style="max-width:240px">
+          </div>
+          <div class="settings-item">
+            <div class="settings-item__info">
+              <span class="settings-item__title">Kiểm tra kết nối AI</span>
+              <span class="settings-item__desc" id="geminiTestText">Thử gửi câu kiểm tra tới máy chủ Cloudflare hoặc Google Gemini.</span>
             </div>
             <button class="settings-btn" id="btnTestGemini">
               <i class="fa-solid fa-plug"></i> Thử kết nối
@@ -726,10 +735,10 @@
           </div>
           <div class="settings-item">
             <div class="settings-item__info">
-              <span class="settings-item__title">Trạng thái AI</span>
+              <span class="settings-item__title">Chế độ AI hiện tại</span>
               <span class="settings-item__desc" id="aiStatusText">Đang dùng bộ phân tích trong máy</span>
             </div>
-            <span class="status-tag status-tag--success" id="aiStatusTag">Ngoại tuyến</span>
+            <span class="status-tag status-tag--success" id="aiStatusTag">Cục bộ</span>
           </div>
         </div>
       </section>
@@ -1184,7 +1193,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
-    <script src="app.min.js?v=69"></script>
+    <script src="app.min.js?v=78"></script>
   <!-- ===== JavaScript Modules ===== -->
   <!-- Firebase (Auth + Firestore) -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>

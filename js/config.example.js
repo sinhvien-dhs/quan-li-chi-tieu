@@ -16,3 +16,8 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "000000000000",
   appId: "1:000000000000:web:abcdef1234567890"
 };
+
+// URL Cloudflare Worker proxy cho AI (tùy chọn — xem hướng dẫn trong worker/README.md)
+// eslint-disable-next-line no-var
+var AI_PROXY_URL = "";
+

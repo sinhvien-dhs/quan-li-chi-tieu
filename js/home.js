@@ -90,14 +90,11 @@ const HomeWidgets = {
       const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-2.0-flash';
       hint.innerHTML = `✨ <strong>9Router AI:</strong> Đang kết nối Gateway (${model}). <a href="#" id="aiConfigLink">Cài đặt</a>`;
       this.bindConfigLink();
-    } else if (mode.engine === 'proxy') {
-      hint.innerHTML = '✨ <strong>Cloudflare AI:</strong> Đang kết nối Gemini 2.0 Flash. <a href="#" id="aiConfigLink">Cài đặt</a>';
-      this.bindConfigLink();
     } else if (mode.engine === 'gemini') {
       hint.innerHTML = '✨ <strong>Gemini Cá nhân:</strong> Đã kết nối API key. <a href="#" id="aiConfigLink">Cài đặt</a>';
       this.bindConfigLink();
     } else {
-      hint.innerHTML = 'AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (9Router / Cloudflare) để phân tích câu phức tạp.';
+      hint.innerHTML = 'AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (9Router / Gemini) để phân tích câu phức tạp.';
       this.bindConfigLink();
     }
   },
@@ -111,11 +108,11 @@ const HomeWidgets = {
         PageManager.switchTo('pageSettings');
         if (typeof SettingsTabs !== 'undefined') SettingsTabs.switchTo('tienich');
         setTimeout(() => {
-          const target = document.getElementById('input9RouterUrl') || document.getElementById('inputAiProxyUrl') || document.getElementById('inputGeminiKey');
+          const target = document.getElementById('input9RouterUrl') || document.getElementById('inputGeminiKey');
           if (target) {
             target.scrollIntoView({ block: 'center' });
             target.focus();
-            Toast.show('Cấu hình máy chủ 9Router AI Gateway hoặc Cloudflare.', 'info');
+            Toast.show('Cấu hình máy chủ 9Router AI Gateway hoặc Gemini API key.', 'info');
           }
         }, 350);
       });
@@ -192,8 +189,9 @@ const HomeWidgets = {
     if (hint) {
       if (result.notice) {
         hint.textContent = result.notice;
-      } else if (result.engine === 'proxy') {
-        hint.textContent = '✨ Phân tích qua Cloudflare (Gemini 2.0 Flash).';
+      } else if (result.engine === '9router') {
+        const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-2.0-flash';
+        hint.textContent = `✨ Phân tích qua 9Router AI Gateway (${model}).`;
       } else if (result.engine === 'gemini') {
         hint.textContent = '✨ Phân tích qua Google Gemini Direct.';
       } else {

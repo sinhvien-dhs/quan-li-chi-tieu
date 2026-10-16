@@ -58,16 +58,12 @@ D:\web số 1\
 │   ├── features.js           # Đa tiền tệ, nén ảnh hóa đơn, quản lý ví, giao dịch định kỳ
 │   ├── sync.js               # Quản lý hàng đợi đồng bộ và xóa an toàn (Tombstones)
 │   ├── auth.js               # Xác thực Firebase Auth & đồng bộ Firestore phân tán
-│   ├── ai.js                 # Bộ bóc tách ngôn ngữ tự nhiên hybrid (Offline parser + Cloudflare Gemini Proxy)
+│   ├── ai.js                 # Bộ bóc tách ngôn ngữ tự nhiên hybrid (Offline parser + 9Router AI Gateway)
 │   ├── lock.js               # Cơ chế khoá bảo vệ PIN PBKDF2 và ẩn số dư
 │   ├── split.js              # Nghiệp vụ chia tiền nhóm, mã VietQR và quản lý nợ
 │   ├── home.js               # Quản lý widget trang chủ, phân tích ngân sách nhanh
 │   ├── demo.js               # Quản lý dữ liệu mẫu cô lập (không đồng bộ lên cloud)
 │   └── app.js                # Entry point: điều hướng SPA, Toast, quản lý Theme
-├── worker/
-│   ├── worker.js             # Cloudflare Worker serverless proxy cho Google Gemini 2.0 Flash (ẩn API key)
-│   ├── wrangler.toml         # Cấu hình triển khai Cloudflare Worker
-│   └── README.md             # Hướng dẫn triển khai Worker miễn phí trong 2 phút
 ├── tests/
 │   ├── business.test.js      # Unit test lớp nghiệp vụ tài chính
 │   ├── ai.test.js            # Unit test bộ phân tích AI, tiếng lóng và nhận diện ngày
@@ -80,7 +76,7 @@ D:\web số 1\
 │   └── serve.js              # Server HTTP phục vụ kiểm thử cục bộ
 ├── index.html                # Cấu trúc HTML5 ngữ nghĩa của toàn bộ ứng dụng SPA
 ├── manifest.json             # Manifest cấu hình ứng dụng web tiến bộ (PWA)
-├── sw.js                     # Service Worker lưu cache offline (v78)
+├── sw.js                     # Service Worker lưu cache offline (v79)
 ├── firestore.rules           # Quy tắc bảo mật Firestore Rules chi tiết
 ├── README.md                 # Hướng dẫn cài đặt và sử dụng dự án
 └── .gitignore                # Danh sách loại trừ tệp nhạy cảm (API key, dist, node_modules)
@@ -98,7 +94,7 @@ D:\web số 1\
 | **Icon & Typography** | Font Awesome 6.5.0, Google Fonts (Inter) | Giao diện hiện đại, chuẩn nhận diện tài chính |
 | **Backend & Cloud** | Firebase Authentication + Cloud Firestore | Đăng nhập Email/Password, Google OAuth, lưu trữ thời gian thực |
 | **Offline & PWA** | Service Worker (`sw.js`), Web App Manifest | Chạy ngoại tuyến, lưu cache tài nguyên, cài đặt như Native App |
-| **AI Assistant (Hybrid)** | Web Speech API + Regex Engine (Offline 0ms) + Cloudflare Worker Proxy (Gemini 2.0 Flash) | Người dùng không cần tự nhập key, AI online qua proxy bảo mật, tự động chuyển về máy khi mất mạng |
+| **AI Assistant (Hybrid)** | Web Speech API + Regex Engine (Offline 0ms) + 9Router AI Gateway (Gemini / GPT) | Phân tích tiếng Việt thông minh qua 9Router Gateway, tự động fallback 0ms khi ngoại tuyến |
 | **Banking QR** | VietQR Open API (`img.vietqr.io`) | Sinh mã QR chuẩn NAPAS chuyển khoản nhanh chính xác số tiền |
 | **Security** | Web Crypto API (SubtleCrypto: PBKDF2-SHA256) | Băm mật mã PIN 150.000 vòng bảo vệ thiết bị cá nhân |
 

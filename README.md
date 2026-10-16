@@ -14,8 +14,8 @@
 - Gõ/nói tự nhiên: **"Ăn bún bò 40k, đổ xăng 50 cành bằng ví MoMo, hôm qua mua áo 2 lít"** → tự động bóc tách thành các giao dịch chuẩn xác.
 - **Hệ thống AI Đa tầng (Hybrid AI Router):**
   - **Ngoại tuyến (Offline):** Bộ phân tích tích hợp chạy ngay trong trình duyệt (0ms, không tốn data, hiểu tiếng lóng `cành`, `lít`, `loét`, `củ`, `xu`, `nửa củ`, `nửa lít` và mốc thời gian `hôm qua`, `hôm kia`, `sáng nay`, `15/10`).
-  - **Trực tuyến (Online):** Tự động kết nối qua **Cloudflare Worker Proxy** đến **Google Gemini 2.0 Flash** — **người dùng không cần tự nhập API key**, key được lưu an toàn trong secret của Cloudflare (xem chi tiết trong [`worker/README.md`](worker/README.md)).
-  - **Dự phòng thông minh:** Tự động chuyển mượt về AI cục bộ nếu mất mạng hoặc máy chủ bận (>6s).
+  - **Trực tuyến (Online):** Kết nối qua **9Router AI Gateway** (OpenAI-compatible) đến **Google Gemini / GPT** — tự động tối ưu token, fallback linh hoạt.
+  - **Dự phòng thông minh:** Tự động chuyển mượt về AI cục bộ nếu mất mạng hoặc máy chủ không phản hồi (>8s).
 - Nhập bằng **giọng nói** (Web Speech API, hỗ trợ tiếng Việt).
 - Xem trước kết quả trước khi lưu — không ghi nhầm vào sổ.
 

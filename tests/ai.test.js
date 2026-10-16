@@ -164,14 +164,6 @@ test('Tách câu thông minh khi người dùng không gõ dấu phẩy', () => 
   eq(res.items[2].category, 'transport');
 });
 
-test('Lưu & đọc URL Cloudflare AI Proxy', () => {
-  AIEntry.setProxyUrl('https://spendwise-ai.example.workers.dev');
-  eq(AIEntry.getProxyUrl(), 'https://spendwise-ai.example.workers.dev');
-  eq(AIEntry.hasProxyUrl(), true);
-  AIEntry.setProxyUrl('');
-  eq(AIEntry.hasProxyUrl(), false);
-});
-
 test('Lưu & đọc cấu hình 9Router (URL, Key, Model)', () => {
   AIEntry.set9RouterUrl('http://localhost:20128/v1');
   eq(AIEntry.get9RouterUrl(), 'http://localhost:20128/v1');
@@ -192,7 +184,7 @@ test('Lưu & đọc cấu hình 9Router (URL, Key, Model)', () => {
 });
 
 test('Trạng thái chế độ AI (Engine Mode)', () => {
-  // Khi không có 9router, proxy và key
+  // Khi không có 9router và không có key
   const m1 = AIEntry.getEngineMode();
   eq(m1.engine, 'local');
   eq(m1.label, 'Cục bộ (Sẵn sàng)');
@@ -205,11 +197,12 @@ test('Trạng thái chế độ AI (Engine Mode)', () => {
   eq(m9r.label, '9Router Gateway');
   AIEntry.set9RouterUrl('');
 
-  // Khi có proxy
-  AIEntry.setProxyUrl('https://spendwise-ai.example.workers.dev');
-  const m2 = AIEntry.getEngineMode();
-  eq(m2.engine, 'proxy');
-  eq(m2.label, 'Cloudflare AI');
+  // Khi có direct key
+  AIEntry.setApiKey('test-key');
+  const mKey = AIEntry.getEngineMode();
+  eq(mKey.engine, 'gemini');
+  eq(mKey.label, 'Gemini Direct');
+  AIEntry.setApiKey('');
 
   // Khi offline
   sandbox.navigator.onLine = false;
@@ -219,7 +212,6 @@ test('Trạng thái chế độ AI (Engine Mode)', () => {
 
   // Khôi phục
   sandbox.navigator.onLine = true;
-  AIEntry.setProxyUrl('');
 });
 
 console.log(`\nKết quả: ${passed} đạt, ${failed} không đạt\n`);

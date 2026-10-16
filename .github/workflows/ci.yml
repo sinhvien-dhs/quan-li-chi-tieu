@@ -40,7 +40,6 @@ jobs:
           sed -i "s|__FIREBASE_STORAGE_BUCKET__|${FIREBASE_STORAGE_BUCKET}|g" js/config.js
           sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|${FIREBASE_MESSAGING_SENDER_ID}|g" js/config.js
           sed -i "s|__FIREBASE_APP_ID__|${FIREBASE_APP_ID}|g" js/config.js
-          sed -i "s|__AI_PROXY_URL__|${{ secrets.AI_PROXY_URL }}|g" js/config.js
           echo "✅ Config injected (key redacted):"
           grep -c "apiKey" js/config.js
 

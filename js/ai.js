@@ -5,10 +5,9 @@
  *  1. Ngoại tuyến / Cục bộ (luôn chạy, không cần mạng, 0ms, bảo mật tối đa):
  *     - Nhận diện mệnh đề, danh mục, ví, số tiền kèm tiếng lóng (cành, lít, loét, củ, xu, nửa củ, nửa lít)
  *     - Nhận diện thời gian tương đối (hôm qua, hôm kia, sáng nay, ngày cụ thể)
- *  2. Trực tuyến qua Cloudflare Worker Proxy (Tự động & Miễn phí):
- *     - Serverless proxy kết nối Google Gemini 2.0 Flash
- *     - Bảo vệ API key an toàn trên server, người dùng vào web là dùng được ngay
- *     - Tự động chuyển mượt (fallback) về AI cục bộ khi mất mạng hoặc đường truyền chậm (>6s)
+ *  2. Trực tuyến qua 9Router AI Gateway (Cục bộ/Mạng nội bộ thông minh):
+ *     - Cổng OpenAI-compatible kết nối Gemini / GPT / Claude an toàn
+ *     - Tự động chuyển mượt (fallback) về AI cục bộ khi ngắt kết nối (>8s)
  *  3. Gemini Direct (Tuỳ chọn cho người dùng nâng cao có API key riêng)
  */
 
@@ -20,7 +19,6 @@ const AIEntry = {
   DEFAULT_ROUTER9_MODEL: 'gemini-2.0-flash',
 
   GEMINI_KEY_STORAGE: 'spendwise_gemini_key',
-  PROXY_URL_STORAGE: 'spendwise_ai_proxy_url',
   MAX_ITEMS: 10,
 
   // ============================================================
@@ -101,30 +99,12 @@ const AIEntry = {
     Storage.set(this.GEMINI_KEY_STORAGE, String(key || '').trim());
   },
 
-  hasProxyUrl() {
-    return !!this.getProxyUrl();
-  },
-
-  getProxyUrl() {
-    const custom = Storage.get(this.PROXY_URL_STORAGE, '');
-    if (custom) return custom;
-    if (typeof AI_PROXY_URL !== 'undefined' && AI_PROXY_URL && !AI_PROXY_URL.startsWith('__')) {
-      return AI_PROXY_URL;
-    }
-    return '';
-  },
-
-  setProxyUrl(url) {
-    Storage.set(this.PROXY_URL_STORAGE, String(url || '').trim());
-  },
-
   /**
    * Xác định chế độ AI hiện tại cho giao diện (Settings & Home)
    */
   getEngineMode() {
     const isOnline = (typeof navigator === 'undefined' || navigator.onLine !== false);
     const has9R = this.has9Router();
-    const hasProxy = this.hasProxyUrl();
     const hasKey = this.hasApiKey();
 
     if (!isOnline) {
@@ -143,15 +123,6 @@ const AIEntry = {
         online: true,
         label: '9Router Gateway',
         desc: `Trực tuyến — Phân tích qua 9Router AI Gateway (${model}). Tự động fallback về máy khi ngắt kết nối.`
-      };
-    }
-
-    if (hasProxy) {
-      return {
-        engine: 'proxy',
-        online: true,
-        label: 'Cloudflare AI',
-        desc: 'Trực tuyến — Phân tích nâng cao bằng Gemini 2.0 Flash qua Cloudflare Worker (tự động chuyển về máy khi mất mạng).'
       };
     }
 
@@ -331,13 +302,12 @@ const AIEntry = {
   // ============================================================
   async testConnection() {
     const router9Url = this.get9RouterUrl();
-    const proxyUrl = this.getProxyUrl();
     const directKey = this.getApiKey();
 
-    if (!router9Url && !proxyUrl && !directKey) {
+    if (!router9Url && !directKey) {
       return {
         ok: false,
-        message: 'Chưa cấu hình máy chủ 9Router, Cloudflare AI hoặc Gemini API key.'
+        message: 'Chưa cấu hình máy chủ 9Router hoặc Gemini API key.'
       };
     }
 
@@ -372,28 +342,6 @@ const AIEntry = {
         };
       } catch (err) {
         return { ok: false, message: 'Không gọi được 9Router (kiểm tra 9Router đã khởi chạy chưa): ' + err.message };
-      }
-    }
-
-    // Ưu tiên 2: Kiểm tra máy chủ proxy Cloudflare
-    if (proxyUrl) {
-      try {
-        const res = await fetch(proxyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'test' })
-        });
-        if (!res.ok) {
-          const detail = await res.text().catch(() => '');
-          return { ok: false, message: `Máy chủ Proxy báo lỗi ${res.status}: ${detail.slice(0, 100)}` };
-        }
-        const data = await res.json().catch(() => ({}));
-        return {
-          ok: true,
-          message: data.message || 'Kết nối thành công tới máy chủ Cloudflare AI!'
-        };
-      } catch (err) {
-        return { ok: false, message: 'Không gọi được máy chủ proxy: ' + err.message };
       }
     }
 
@@ -461,71 +409,7 @@ const AIEntry = {
   },
 
   // ============================================================
-  //  2. PROXY CLOUDFLARE WORKER (Serverless an toàn cho Gemini 2.0)
-  // ============================================================
-  async parseWithProxy(text, proxyUrl) {
-    const categories = (typeof Categories !== 'undefined')
-      ? [...Categories.expense, ...Categories.income].map(c => `${c.id} (${c.name})`).join(', ')
-      : 'food (Ăn uống), transport (Di chuyển), shopping (Mua sắm), bills (Hóa đơn), education (Học tập), health (Sức khỏe), entertainment (Giải trí), freelance (Làm thêm), salary (Lương)';
-    const wallets = (typeof Features !== 'undefined')
-      ? Features.getWallets().map(w => w.name).join(', ')
-      : '';
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
-
-    try {
-      const res = await fetch(proxyUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: text,
-          today: Utils.getToday(),
-          categories: categories,
-          wallets: wallets
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        throw new Error(`Máy chủ proxy báo lỗi ${res.status}: ${errText.slice(0, 100)}`);
-      }
-
-      const data = await res.json();
-      if (!data || !Array.isArray(data.items)) {
-        throw new Error('Dữ liệu từ máy chủ proxy không đúng định dạng');
-      }
-
-      const items = data.items.map((it) => {
-        const amount = Business.parseAmount(it.amount);
-        const wallet = (typeof Features !== 'undefined' && it.wallet)
-          ? Features.getWallets().find(w => Utils.normalizeText(w.name) === Utils.normalizeText(it.wallet))
-          : null;
-        const validDate = (it.date && Business.isValidDate(it.date)) ? it.date : Utils.getToday();
-
-        return {
-          name: String(it.name || 'Giao dịch').slice(0, 50),
-          amount: amount === null ? 0 : amount,
-          type: it.type === 'income' ? 'income' : 'expense',
-          category: (typeof Categories !== 'undefined' && Categories.getById(it.category)) ? it.category : (it.type === 'income' ? 'salary' : 'food'),
-          wallet: wallet ? wallet.id : null,
-          date: validDate,
-          note: it.note ? String(it.note).slice(0, 100) : ''
-        };
-      }).filter((it) => it.amount > 0);
-
-      return { items: items, skipped: 0, engine: 'proxy' };
-    } catch (err) {
-      clearTimeout(timeoutId);
-      throw err;
-    }
-  },
-
-  // ============================================================
-  //  3. GOOGLE GEMINI DIRECT (Tuỳ chọn người dùng nâng cao)
+  //  2. GOOGLE GEMINI DIRECT (Tuỳ chọn người dùng nâng cao)
   // ============================================================
   async parseWithGemini(text) {
     const key = this.getApiKey();
@@ -721,7 +605,6 @@ const AIEntry = {
    * Phân tích câu nhập:
    * - Nếu offline: chạy ngay parser cục bộ trong máy (0ms).
    * - Nếu online và có 9Router AI Gateway: gọi 9Router, tự động fallback cục bộ nếu lỗi/chậm (>8s).
-   * - Nếu online và có Cloudflare Worker Proxy: gọi proxy, tự động fallback cục bộ nếu lỗi/chậm (>6s).
    * - Nếu online và có direct Gemini API key: gọi Gemini direct, fallback cục bộ nếu lỗi.
    * - Mặc định: chạy parser cục bộ trong máy.
    * @param {string} text
@@ -733,7 +616,6 @@ const AIEntry = {
 
     const isOnline = (typeof navigator === 'undefined' || navigator.onLine !== false);
     const router9Url = this.get9RouterUrl();
-    const proxyUrl = this.getProxyUrl();
     const directKey = this.getApiKey();
 
     // 1. Khi ngoại tuyến: ưu tiên chạy local 0ms, không đợi network timeout
@@ -755,19 +637,7 @@ const AIEntry = {
       }
     }
 
-    // 3. Ưu tiên Proxy Cloudflare (nếu đã cấu hình)
-    if (proxyUrl) {
-      try {
-        return await this.parseWithProxy(clean, proxyUrl);
-      } catch (err) {
-        console.warn('Proxy AI failed, falling back to local:', err);
-        const fallback = this.parseLocal(clean);
-        fallback.notice = '⚡ Máy chủ AI bận (' + (err.name === 'AbortError' ? 'Quá thời gian 6s' : 'Lỗi kết nối') + ') — đã tự động chuyển sang AI trong máy.';
-        return fallback;
-      }
-    }
-
-    // 4. Nếu người dùng tự cấu hình direct Gemini API key
+    // 3. Nếu người dùng tự cấu hình direct Gemini API key
     if (directKey) {
       try {
         return await this.parseWithGemini(clean);
@@ -779,7 +649,7 @@ const AIEntry = {
       }
     }
 
-    // 5. Mặc định: dùng bộ phân tích cục bộ
+    // 4. Mặc định: dùng bộ phân tích cục bộ
     return this.parseLocal(clean);
   }
 };

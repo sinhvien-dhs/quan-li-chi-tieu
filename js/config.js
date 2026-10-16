@@ -30,9 +30,3 @@ if (typeof FIREBASE_CONFIG === 'undefined') {
   };
 }
 
-// Placeholder cho Cloudflare Worker AI Proxy — sẽ được CI thay thế nếu có secret
-if (typeof AI_PROXY_URL === 'undefined') {
-  // eslint-disable-next-line no-var
-  var AI_PROXY_URL = "__AI_PROXY_URL__";
-}
-

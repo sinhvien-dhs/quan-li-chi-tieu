@@ -64,8 +64,14 @@ const AuthManager = {
     this.auth = firebase.auth();
     this.db = firebase.firestore();
 
+    // Bật cache cục bộ để dùng offline.
+    // Khi mở bằng file://, trình duyệt chặn IndexedDB nên promise bị từ chối —
+    // bắt lỗi riêng để không làm app ngừng chạy.
     try {
-      this.db.enablePersistence({ synchronizeTabs: true });
+      const p = this.db.enablePersistence({ synchronizeTabs: true });
+      if (p && typeof p.catch === 'function') {
+        p.catch(e => console.warn('Firestore cache cục bộ không bật được:', e && e.code));
+      }
     } catch (e) {
       console.warn('Firestore persistence:', e.code);
     }

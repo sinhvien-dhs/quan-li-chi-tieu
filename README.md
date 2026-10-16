@@ -67,15 +67,23 @@
 
 ## 🚀 Chạy ứng dụng
 
-**Cách 1 — mở trực tiếp:** Nhấp đúp `index.html` để mở bằng trình duyệt.
+**Cách 1 — nhấp đúp, không cần cài gì (Windows):** Nhấp đúp `Mo SpendWise.cmd`.
+File này tự bật máy chủ bằng PowerShell (có sẵn trong mọi máy Windows) rồi mở trình duyệt.
+Không cần Node.js, không cần Python, không cần mạng để tải gói.
 
-**Cách 2 — chạy bằng local server** (khuyến nghị, để PWA hoạt động đầy đủ):
+**Cách 2 — mở trực tiếp:** Nhấp đúp `index.html`.
+Đủ tính năng, nhưng **không có** chế độ offline/PWA (trình duyệt chặn Service Worker với `file://`).
+
+**Cách 3 — chạy máy chủ thủ công:**
 
 ```bash
-# Dùng Node.js
+# PowerShell (có sẵn trên Windows) — KHÔNG cần cài thêm gì
+powershell -ExecutionPolicy Bypass -File tools\serve.ps1 -Port 8000
+
+# Node.js
 npx serve .
 
-# hoặc Python
+# Python
 python -m http.server 8000
 ```
 

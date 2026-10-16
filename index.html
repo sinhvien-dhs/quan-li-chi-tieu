@@ -5,15 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SpendWise - Ứng dụng quản lý chi tiêu cá nhân thông minh">
 
-  <!-- Content Security Policy: chặn tải/nhúng mã độc từ nguồn lạ -->
+  <!-- Content Security Policy: chặn tải/nhúng mã độc từ nguồn lạ
+       Nguồn "file:" cho phép mở index.html bằng cách nhấp đôi (không cần máy chủ).
+       Khi deploy lên https/web, nguồn file: không có tác dụng nên không hở cửa bảo mật. -->
   <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
-    img-src 'self' data: blob: https://img.vietqr.io;
-    connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://cdn.sheetjs.com;
-    worker-src 'self' blob:;
+    default-src 'self' file:;
+    script-src 'self' 'unsafe-inline' file: https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com;
+    style-src 'self' 'unsafe-inline' file: https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+    font-src 'self' file: https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
+    img-src 'self' file: data: blob: https://img.vietqr.io;
+    manifest-src 'self' file:;
+    connect-src 'self' file: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://cdn.sheetjs.com;
+    worker-src 'self' file: blob:;
     object-src 'none';
     base-uri 'self';
     form-action 'self'">
@@ -28,22 +31,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=78">
+  <link rel="manifest" href="manifest.json?v=80">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css?v=78">
-  <link rel="stylesheet" href="css/style.css?v=78">
-  <link rel="stylesheet" href="css/stats.css?v=78">
-  <link rel="stylesheet" href="css/budget.css?v=78">
-  <link rel="stylesheet" href="css/pwa.css?v=78">
-  <link rel="stylesheet" href="css/home.css?v=78">
-  <link rel="stylesheet" href="css/debts.css?v=78">
-  <link rel="stylesheet" href="css/lock.css?v=78">
-  <link rel="stylesheet" href="css/responsive.css?v=78">
+  <link rel="stylesheet" href="css/variables.css?v=80">
+  <link rel="stylesheet" href="css/style.css?v=80">
+  <link rel="stylesheet" href="css/stats.css?v=80">
+  <link rel="stylesheet" href="css/budget.css?v=80">
+  <link rel="stylesheet" href="css/pwa.css?v=80">
+  <link rel="stylesheet" href="css/home.css?v=80">
+  <link rel="stylesheet" href="css/debts.css?v=80">
+  <link rel="stylesheet" href="css/lock.css?v=80">
+  <link rel="stylesheet" href="css/responsive.css?v=80">
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
@@ -1233,27 +1236,27 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-  <script src="js/utils.js?v=78"></script>
-  <script src="js/business.js?v=78"></script>
-  <script src="js/storage.js?v=78"></script>
-  <script src="js/category.js?v=78"></script>
-  <script src="js/transaction.js?v=78"></script>
-  <script src="js/chart.js?v=78"></script>
-  <script src="js/budget.js?v=78"></script>
-  <script src="js/export.js?v=78"></script>
-  <script src="js/notification.js?v=78"></script>
-  <script src="js/pwa.js?v=78"></script>
-  <script src="js/features.js?v=78"></script>
-  <script src="js/sync.js?v=78"></script>
-  <script src="js/config.local.js?v=78" onerror="/* Không có file config.local.js — dùng config.js (CI inject) */"></script>
-  <script src="js/config.js?v=78"></script>
-  <script src="js/auth.js?v=78"></script>
-  <script src="js/lock.js?v=78"></script>
-  <script src="js/split.js?v=78"></script>
-  <script src="js/ai.js?v=78"></script>
-  <script src="js/home.js?v=78"></script>
-  <script src="js/demo.js?v=78"></script>
-  <script src="js/app.js?v=78"></script>
+  <script src="js/utils.js?v=80"></script>
+  <script src="js/business.js?v=80"></script>
+  <script src="js/storage.js?v=80"></script>
+  <script src="js/category.js?v=80"></script>
+  <script src="js/transaction.js?v=80"></script>
+  <script src="js/chart.js?v=80"></script>
+  <script src="js/budget.js?v=80"></script>
+  <script src="js/export.js?v=80"></script>
+  <script src="js/notification.js?v=80"></script>
+  <script src="js/pwa.js?v=80"></script>
+  <script src="js/features.js?v=80"></script>
+  <script src="js/sync.js?v=80"></script>
+  <script src="js/config.local.js?v=80" onerror="/* Không có file config.local.js — dùng config.js (CI inject) */"></script>
+  <script src="js/config.js?v=80"></script>
+  <script src="js/auth.js?v=80"></script>
+  <script src="js/lock.js?v=80"></script>
+  <script src="js/split.js?v=80"></script>
+  <script src="js/ai.js?v=80"></script>
+  <script src="js/home.js?v=80"></script>
+  <script src="js/demo.js?v=80"></script>
+  <script src="js/app.js?v=80"></script>
 </body>
 </html>
 

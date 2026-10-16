@@ -122,6 +122,8 @@ test('AuthManager.friendlyError dịch đúng các mã lỗi Firebase', () => {
   eq(AuthManager.friendlyError({ code: 'auth/email-already-in-use' }), 'Tên đăng nhập đã được đăng ký!');
   eq(AuthManager.friendlyError({ code: 'auth/invalid-email' }), 'Email không hợp lệ!');
   eq(AuthManager.friendlyError({ code: 'auth/weak-password' }), 'Mật khẩu quá yếu (tối thiểu 8 ký tự, có chữ và số)!');
+  eq(AuthManager.friendlyError({ code: 'auth/popup-blocked' }), 'Cửa sổ đăng nhập Google bị trình duyệt chặn. Hãy cho phép popup hoặc thử lại.');
+  eq(AuthManager.friendlyError({ code: 'auth/operation-not-supported-in-this-environment' }), 'Không hỗ trợ đăng nhập Google khi mở trực tiếp file://. Vui lòng chạy qua localhost hoặc đưa lên web.');
 });
 
 test('showAuthGate khóa toàn bộ ứng dụng và bật lớp phủ đăng nhập kèm force-show', () => {

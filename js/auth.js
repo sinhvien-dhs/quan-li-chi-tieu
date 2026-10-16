@@ -96,9 +96,27 @@ const AuthManager = {
       return;
     }
 
-    firebase.initializeApp(FIREBASE_CONFIG);
+    if (!firebase.apps || !firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
     this.auth = firebase.auth();
     this.db = firebase.firestore();
+
+    // Xử lý kết quả đăng nhập nếu chuyển hướng (Redirect) từ Google
+    if (this.auth && typeof this.auth.getRedirectResult === 'function') {
+      this.auth.getRedirectResult().then(result => {
+        if (result && result.user) {
+          Toast.success(`Đăng nhập Google thành công! Chào ${result.user.displayName || result.user.email}`);
+        }
+      }).catch(err => {
+        if (err && err.code) {
+          console.warn('Lỗi Redirect Google Auth:', err);
+          Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(err));
+        }
+      });
+    }
+
+    this.checkEnvironment();
 
     // Bật cache cục bộ để dùng offline.
     // Khi mở bằng file://, trình duyệt chặn IndexedDB nên promise bị từ chối —
@@ -304,15 +322,101 @@ const AuthManager = {
     }
   },
 
+  checkEnvironment() {
+    if (typeof window === 'undefined' || !window.location) return;
+    const hint = document.getElementById('authEnvironmentHint');
+    if (!hint) return;
+
+    if (window.location.protocol === 'file:') {
+      hint.style.display = 'block';
+      hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> Đang mở file:// trực tiếp. Hãy đăng nhập Email/Mật khẩu hoặc chạy qua máy chủ (localhost) để dùng Google.';
+    } else if (window.location.hostname === '127.0.0.1') {
+      hint.style.display = 'block';
+      const targetUrl = window.location.href.replace('127.0.0.1', 'localhost');
+      hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i> Đang mở bằng 127.0.0.1. Hãy <a href="' + targetUrl + '" style="color:var(--primary);font-weight:600;text-decoration:underline">chuyển sang localhost</a> để đăng nhập Google.';
+    }
+  },
+
   async signInWithGoogle() {
+    const btn = document.getElementById('authGoogleBtn');
+    const originalHtml = btn ? btn.innerHTML : '';
+
+    // 1. Kiểm tra môi trường file://
+    if (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') {
+      Toast.error('Google không hỗ trợ đăng nhập qua file:// trực tiếp. Hãy chạy localhost hoặc truy cập qua web (GitHub Pages).');
+      return;
+    }
+
+    // 2. Tự động cảnh báo & hỗ trợ chuyển sang localhost nếu đang mở 127.0.0.1
+    if (typeof window !== 'undefined' && window.location && window.location.hostname === '127.0.0.1') {
+      const targetUrl = window.location.href.replace('127.0.0.1', 'localhost');
+      Toast.warning('Firebase chỉ cho phép "localhost" thay vì "127.0.0.1". Đang chuyển sang localhost...');
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 1200);
+      return;
+    }
+
+    if (!this.auth) {
+      Toast.error('Hệ thống xác thực chưa sẵn sàng. Vui lòng tải lại trang.');
+      return;
+    }
+
+    const setBtnLoading = (loading) => {
+      if (!btn) return;
+      if (loading) {
+        btn.disabled = true;
+        btn.style.opacity = '0.75';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="color:#EA4335"></i> Đang mở đăng nhập Google...';
+      } else {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = originalHtml;
+      }
+    };
+
+    setBtnLoading(true);
+
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
       provider.setCustomParameters({ prompt: 'select_account' });
+
+      // Thiết bị di động hoặc PWA standalone dùng redirect để tránh bị chặn popup
+      const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isStandalone = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+
+      if (isMobile || isStandalone) {
+        await this.auth.signInWithRedirect(provider);
+        return;
+      }
+
+      // Trên desktop, dùng signInWithPopup
       await this.auth.signInWithPopup(provider);
     } catch (e) {
-      // Người dùng đóng popup
-      if (e && e.code === 'auth/popup-closed-by-user') return;
-      Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(e));
+      console.warn('Lỗi đăng nhập Google:', e);
+
+      // Nếu popup bị chặn hoặc bị hủy bởi trình duyệt, tự động thử lại bằng signInWithRedirect
+      if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/internal-error')) {
+        try {
+          Toast.warning('Popup bị trình duyệt chặn, đang chuyển hướng sang trang đăng nhập Google...');
+          const provider = new firebase.auth.GoogleAuthProvider();
+          provider.addScope('profile');
+          provider.addScope('email');
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await this.auth.signInWithRedirect(provider);
+          return;
+        } catch (redirectErr) {
+          Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(redirectErr));
+        }
+      } else if (e && e.code === 'auth/popup-closed-by-user') {
+        Toast.warning('Bạn đã đóng cửa sổ đăng nhập Google.');
+      } else {
+        Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(e));
+      }
+    } finally {
+      setBtnLoading(false);
     }
   },
 
@@ -460,6 +564,7 @@ const AuthManager = {
   },
 
   friendlyError(e) {
+    const currentDomain = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
     const map = {
       'auth/user-not-found': 'Tên đăng nhập không tồn tại!',
       'auth/wrong-password': 'Sai mật khẩu!',
@@ -469,7 +574,14 @@ const AuthManager = {
       'auth/invalid-credential': 'Tên đăng nhập không tồn tại hoặc sai mật khẩu!',
       'auth/too-many-requests': 'Thử quá nhiều lần, vui lòng thử lại sau!',
       'auth/network-request-failed': 'Không có kết nối mạng. Dữ liệu vẫn được lưu trên máy này.',
-      'auth/requires-recent-login': 'Vui lòng đăng nhập lại trước khi thực hiện thao tác này.'
+      'auth/requires-recent-login': 'Vui lòng đăng nhập lại trước khi thực hiện thao tác này.',
+      'auth/operation-not-allowed': 'Phương thức đăng nhập này chưa được kích hoạt trong Firebase Console (Authentication > Sign-in method).',
+      'auth/unauthorized-domain': `Tên miền (${currentDomain || 'domain'}) chưa được thêm vào Authorized Domains trong Firebase Console. Nếu dùng 127.0.0.1, hãy chuyển sang http://localhost.`,
+      'auth/popup-blocked': 'Cửa sổ đăng nhập Google bị trình duyệt chặn. Hãy cho phép popup hoặc thử lại.',
+      'auth/popup-closed-by-user': 'Bạn đã đóng cửa sổ đăng nhập Google trước khi hoàn tất.',
+      'auth/cancelled-popup-request': 'Yêu cầu đăng nhập đã bị hủy do có thao tác mới.',
+      'auth/operation-not-supported-in-this-environment': 'Không hỗ trợ đăng nhập Google khi mở trực tiếp file://. Vui lòng chạy qua localhost hoặc đưa lên web.',
+      'auth/account-exists-with-different-credential': 'Email này đã được sử dụng với phương thức đăng nhập khác.'
     };
     return (e && map[e.code]) || (e && e.message) || 'Lỗi không xác định';
   },

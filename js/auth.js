@@ -46,7 +46,10 @@ const AuthManager = {
   APP_VERSION: '1.0.0',
 
   isConfigured() {
-    return typeof FIREBASE_CONFIG !== 'undefined' && !!FIREBASE_CONFIG.apiKey;
+    return typeof FIREBASE_CONFIG !== 'undefined' &&
+      !!FIREBASE_CONFIG.apiKey &&
+      !FIREBASE_CONFIG.apiKey.startsWith('__FIREBASE_') &&
+      !FIREBASE_CONFIG.apiKey.startsWith('YOUR_');
   },
 
   init() {
@@ -174,12 +177,12 @@ const AuthManager = {
      * Trước đây tự ghép "tên đăng nhập@spendwise.app" — địa chỉ giả lập này
      * không có hộp thư nên "Quên mật khẩu" không bao giờ dùng được.
      */
-    if (!/^[^@\\s]+@[^@\\s]+\\.[a-zA-Z]{2,}$/.test(email)) {
+    if (!/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/.test(email)) {
       Toast.error('Email không hợp lệ. Cần địa chỉ email thật để khôi phục mật khẩu.');
       return;
     }
     const domain = email.split('@')[1];
-    if (/spendwise\\.app$/i.test(domain)) {
+    if (/spendwise\.app$/i.test(domain)) {
       Toast.error('Vui lòng dùng email của bạn (gmail, outlook...) thay vì email tự tạo.');
       return;
     }
@@ -224,7 +227,7 @@ const AuthManager = {
      * Chỉ nhận EMAIL thậT. Không còn tự ghép "tên@spendwise.app" vì
      * địa chỉ giả lập không tồn tại trên hệ thống Firebase.
      */
-    if (!/^[^@\\s]+@[^@\\s]+\\.[a-zA-Z]{2,}$/.test(rawId)) {
+    if (!/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/.test(rawId)) {
       Toast.error('Hãy nhập email bạn đã đăng ký (VD: an123@gmail.com).');
       return;
     }
@@ -343,6 +346,9 @@ const AuthManager = {
     localStorage.removeItem('spendwise_sync_queue');
     localStorage.removeItem('spendwise_rates');
     localStorage.removeItem('spendwise_tombstones');
+    if (typeof Storage !== 'undefined' && Storage.invalidateTxCache) {
+      Storage.invalidateTxCache();
+    }
 
     ['authOverlay', 'authRegisterOverlay', 'modalOverlay', 'budgetModal', 'confirmOverlay']
       .forEach(id => {
@@ -497,7 +503,6 @@ const AuthManager = {
 
       const localTs = localStorage.getItem('spendwise_budgets_updated_at') || '';
       const cloudTs = cloud.budgetsUpdatedAt || '';
-      const localIsNewer = localTs > cloudTs;
 
       Object.keys(mergedBudgets).forEach(k => {
         const inLocal = localBudgets[k] !== undefined;
@@ -511,7 +516,6 @@ const AuthManager = {
       });
       localStorage.setItem('spendwise_budgets', JSON.stringify(mergedBudgets));
       if (cloudTs) localStorage.setItem('spendwise_budgets_updated_at', cloudTs);
-      void localIsNewer;
 
       // Cài đặt: ưu tiên lựa chọn trên máy
       if (local.spendwise_currency === undefined && cloud.settings.currency) {

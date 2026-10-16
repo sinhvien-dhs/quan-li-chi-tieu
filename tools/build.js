@@ -79,8 +79,8 @@ fs.writeFileSync(path.join(DIST, 'app.min.js'), minifyJs(js), 'utf8');
 
 // 3) index.html — thay toàn bộ link/script cục bộ
 let html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-html = html.replace(/<link rel="stylesheet" href="css\/[^"]+">/g, '');
-html = html.replace(/<script src="js\/[^"]+"><\/script>\s*/g, '');
+html = html.replace(/<link\s+rel="stylesheet"\s+href="css\/[^"]*"[^>]*>\s*/gi, '');
+html = html.replace(/<script\s+src="js\/[^"]*"[^>]*><\/script>\s*/gi, '');
 html = html.replace('</head>', `  <link rel="stylesheet" href="style.min.css?v=${VERSION}">\n</head>`);
 html = html.replace(
   '<!-- ===== JavaScript Modules ===== -->',

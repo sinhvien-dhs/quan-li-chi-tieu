@@ -47,23 +47,38 @@ const Storage = {
    * Xóa dữ liệu
    */
   remove(key) {
+    if (key === this.KEYS.TRANSACTIONS) this._txCache = null;
     localStorage.removeItem(key);
   },
 
   // ===== Transaction Methods =====
+  _txCache: null,
+
+  invalidateTxCache() {
+    this._txCache = null;
+  },
 
   /**
-   * Lấy tất cả giao dịch
+   * Lấy tất cả giao dịch (có bộ nhớ đệm in-memory, tránh parse JSON và sanitize lặp đi lặp lại)
    * @returns {Array}
    */
   getTransactions() {
-    const list = this.get(this.KEYS.TRANSACTIONS, []);
-    // Không coi dữ liệu cục bộ là đáng tin cậy — kiểm tra trước khi dùng
-    if (!Array.isArray(list)) return [];
-    if (typeof ExportManager !== 'undefined' && typeof ExportManager.sanitizeTransactions === 'function') {
-      return ExportManager.sanitizeTransactions(list);
+    if (this._txCache !== null) {
+      return this._txCache.slice();
     }
-    return list.filter(t => t && typeof t === 'object');
+    const list = this.get(this.KEYS.TRANSACTIONS, []);
+    if (!Array.isArray(list)) {
+      this._txCache = [];
+      return [];
+    }
+    let sanitized = list;
+    if (typeof ExportManager !== 'undefined' && typeof ExportManager.sanitizeTransactions === 'function') {
+      sanitized = ExportManager.sanitizeTransactions(list);
+    } else {
+      sanitized = list.filter(t => t && typeof t === 'object');
+    }
+    this._txCache = sanitized;
+    return this._txCache.slice();
   },
 
   /**
@@ -71,6 +86,7 @@ const Storage = {
    * @param {Array} transactions
    */
   saveTransactions(transactions) {
+    this._txCache = Array.isArray(transactions) ? transactions.slice() : null;
     return this.set(this.KEYS.TRANSACTIONS, transactions);
   },
 

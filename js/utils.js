@@ -34,14 +34,11 @@ const Utils = {
       .slice(0, maxLength);
   },
   /**
-   * Format số tiền theo kiểu Việt Nam
-   * @param {number} amount
-   * @returns {string} VD: "1.500.000đ"
-   */
-  /**
    * Định dạng số tiền.
    * amount luôn là số tiền gốc bằng VNĐ; hàm này chỉ quy đổi để HIỂN THỊ
    * theo đơn vị tiền tệ người dùng chọn (không sửa dữ liệu gốc).
+   * @param {number} amount
+   * @returns {string} VD: "1.500.000đ"
    */
   formatCurrency(amount) {
     const absVnd = Math.abs(amount);
@@ -56,17 +53,9 @@ const Utils = {
   },
 
   /**
-   * Format số tiền có dấu +/- 
-   * @param {number} amount
-   * @param {string} type - 'income' | 'expense'
-   * @returns {string} VD: "+1.500.000đ" hoặc "-500.000đ"
-   */
-  /**
-   * Định dạng số nguyên theo kiểu Việt Nam (dấu chấm phân cách nghìn)
-   * VD: 2000000 → "2.000.000" (dùng cho ô nhập số tiền)
-   */
-  /**
-   * Bo dau tieng Viet + viet thuong, dung cho tim kiem
+   * Bỏ dấu tiếng Việt + viết thường, dùng cho tìm kiếm không dấu
+   * @param {*} value
+   * @returns {string}
    */
   normalizeText(value) {
     if (value === null || value === undefined) return '';
@@ -85,6 +74,12 @@ const Utils = {
     return s.toLowerCase().trim();
   },
 
+  /**
+   * Định dạng số nguyên theo kiểu Việt Nam (dấu chấm phân cách nghìn)
+   * VD: 2000000 → "2.000.000" (dùng cho ô nhập số tiền)
+   * @param {number} amount
+   * @returns {string}
+   */
   formatNumber(amount) {
     const n = Math.round(Number(amount) || 0);
     return n.toLocaleString('vi-VN');
@@ -92,6 +87,9 @@ const Utils = {
 
   /**
    * Format số tiền có dấu +/-
+   * @param {number} amount
+   * @param {string} type - 'income' | 'expense'
+   * @returns {string} VD: "+1.500.000đ" hoặc "-500.000đ"
    */
   formatCurrencyWithSign(amount, type) {
     const sign = type === 'income' ? '+' : '-';
@@ -99,15 +97,12 @@ const Utils = {
   },
 
   /**
-   * Format ngày tháng
-   * @param {string} dateStr - ISO date string
-   * @returns {string} VD: "04/10/2026"
-   */
-  /**
    * Parse chuỗi ngày YYYY-MM-DD theo GIỜ ĐỊA PHƯƠNG.
    * `new Date('2026-10-15')` được JS hiểu là 00:00 UTC → ở Việt Nam (UTC+7)
    * thành 07:00 sáng, khiến giao dịch "hôm nay" bị coi là tương lai và bị loại
    * khỏi báo cáo. Hàm này trả về Date đúng theo lịch địa phương.
+   * @param {string|Date} dateStr
+   * @returns {Date|null}
    */
   parseDateLocal(dateStr) {
     if (dateStr instanceof Date) return dateStr;
@@ -119,8 +114,14 @@ const Utils = {
     return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   },
 
+  /**
+   * Format ngày tháng (DD/MM/YYYY)
+   * @param {string} dateStr
+   * @returns {string} VD: "04/10/2026"
+   */
   formatDate(dateStr) {
     const date = Utils.parseDateLocal(dateStr);
+    if (!date) return dateStr || '';
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
@@ -128,12 +129,13 @@ const Utils = {
   },
 
   /**
-   * Format ngày thân thiện 
+   * Format ngày thân thiện
    * @param {string} dateStr
    * @returns {string} VD: "Hôm nay", "Hôm qua", "04/10"
    */
   formatDateFriendly(dateStr) {
-    const date = new Date(dateStr);
+    const date = Utils.parseDateLocal(dateStr);
+    if (!date) return dateStr || '';
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);

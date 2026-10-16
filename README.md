@@ -136,7 +136,7 @@ Mỗi người dùng có tài khoản **email + mật khẩu** riêng; dữ li�
 1. Tạo project tại [console.firebase.google.com](https://console.firebase.google.com).
 2. **Authentication → Sign-in method**: bật **Email/Password**.
 3. **Firestore Database → Create database** (test mode hoặc production).
-4. **Project settings → Web app** → copy `firebaseConfig` dán vào `js/config.js`.
+4. **Project settings → Web app** → copy `firebaseConfig` dán vào `js/config.local.js` (copy từ `js/config.example.js` — file này được `.gitignore` bảo vệ, không bao giờ bị lộ lên GitHub).
 5. Đẩy rule bảo mật (mỗi user chỉ thấy dữ liệu của mình):
 
 ```bash

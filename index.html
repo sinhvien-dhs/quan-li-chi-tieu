@@ -277,7 +277,7 @@
               </button>
             </div>
             <div id="aiPreview" class="ai-preview" hidden></div>
-            <div class="ai-entry__hint" id="aiHint">AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (9Router / Gemini) để phân tích câu phức tạp.</div>
+            <div class="ai-entry__hint" id="aiHint">✨ <strong>Model AI đã tích hợp sẵn:</strong> Nhập câu tự nhiên (VD: <em>"Ăn phở 45k, đổ xăng 50 cành"</em>) — Dùng ngay, không cần API key!</div>
           </section>
 
           <!-- Ngan sach thang nay -->
@@ -713,70 +713,83 @@
       <!-- Section: AI & Bảo mật -->
       <section class="settings-section" data-tab="tienich">
         <h3 class="settings-section__title">
-          <i class="fa-solid fa-robot"></i> Trợ lý AI (Hybrid Online/Offline)
+          <i class="fa-solid fa-robot"></i> Trợ lý AI Thông Minh
         </h3>
         <div class="settings-group">
-          <!-- 9Router Gateway -->
+          <!-- Trạng thái AI tích hợp sẵn -->
           <div class="settings-item">
             <div class="settings-item__info">
-              <span class="settings-item__title">Máy chủ 9Router AI Gateway (Khuyên dùng)</span>
-              <span class="settings-item__desc">
-                Cổng AI Gateway cục bộ (OpenAI-compatible) bảo vệ API key (Gemini, Claude, GPT...), tự động fallback và nén token. Mặc định: <code>http://localhost:20128/v1</code>.
+              <span class="settings-item__title">
+                <i class="fa-solid fa-bolt" style="color:var(--color-primary)"></i> Model AI Tích Hợp (Mặc định — Sẵn sàng 100%)
+              </span>
+              <span class="settings-item__desc" id="aiStatusText">
+                Xử lý ngôn ngữ tự nhiên tài chính tiếng Việt tích hợp sẵn trong máy. Dùng ngay lập tức (0ms), bảo mật 100%, hoạt động cả khi offline và KHÔNG CẦN DÁN BẤT KỲ API KEY NÀO.
               </span>
             </div>
-            <input type="url" class="form__input" id="input9RouterUrl"
-                   placeholder="http://localhost:20128/v1" aria-label="9Router Endpoint URL" style="max-width:240px">
-          </div>
-          <div class="settings-item">
-            <div class="settings-item__info">
-              <span class="settings-item__title">API Key 9Router (Tùy chọn)</span>
-              <span class="settings-item__desc">
-                Nhập API key từ Dashboard 9Router (để trống nếu chạy cục bộ không bật token).
-              </span>
-            </div>
-            <input type="password" class="form__input" id="input9RouterKey"
-                   placeholder="Tùy chọn" aria-label="9Router API Key" style="max-width:240px">
-          </div>
-          <div class="settings-item">
-            <div class="settings-item__info">
-              <span class="settings-item__title">Mô hình AI trên 9Router (Model)</span>
-              <span class="settings-item__desc">
-                Mô hình đã liên kết trong 9Router (mặc định: <code>gemini-2.0-flash</code>, <code>gpt-4o-mini</code>...).
-              </span>
-            </div>
-            <input type="text" class="form__input" id="input9RouterModel"
-                   placeholder="gemini-2.0-flash" aria-label="9Router Model" style="max-width:240px">
+            <span class="status-tag status-tag--success" id="aiStatusTag">Sẵn sàng</span>
           </div>
 
-          <!-- Direct Gemini Key -->
-          <div class="settings-item">
-            <div class="settings-item__info">
-              <span class="settings-item__title">Google Gemini API key cá nhân (Tùy chọn trực tiếp)</span>
-              <span class="settings-item__desc">
-                Dán key từ Google AI Studio nếu bạn muốn gọi trực tiếp không qua 9Router. Key chỉ lưu trên thiết bị này.
-              </span>
-            </div>
-            <input type="password" class="form__input" id="inputGeminiKey"
-                   placeholder="AQ... hoặc AIza..." aria-label="Gemini API key" style="max-width:240px">
-          </div>
+          <!-- Tùy chọn nâng cao (9Router / Cloud API) -->
+          <details class="settings-details" style="margin-top:var(--space-xs);border:1px dashed var(--border-color);border-radius:var(--radius-md);padding:var(--space-sm)">
+            <summary style="cursor:pointer;font-size:var(--font-size-xs);font-weight:600;color:var(--text-muted);list-style:none;display:flex;align-items:center;gap:6px">
+              <i class="fa-solid fa-sliders"></i> Tùy chọn AI nâng cao (Dành cho lập trình viên / 9Router)
+            </summary>
+            <div style="margin-top:var(--space-md);display:flex;flex-direction:column;gap:var(--space-sm)">
+              <div class="settings-item">
+                <div class="settings-item__info">
+                  <span class="settings-item__title">Máy chủ 9Router AI Gateway (Tùy chọn)</span>
+                  <span class="settings-item__desc">
+                    Cổng AI Gateway cục bộ (OpenAI-compatible) chạy trên máy tính. Mặc định: <code>http://localhost:20128/v1</code>.
+                  </span>
+                </div>
+                <input type="url" class="form__input" id="input9RouterUrl"
+                       placeholder="http://localhost:20128/v1" aria-label="9Router Endpoint URL" style="max-width:240px">
+              </div>
+              <div class="settings-item">
+                <div class="settings-item__info">
+                  <span class="settings-item__title">API Key 9Router (Tùy chọn)</span>
+                  <span class="settings-item__desc">
+                    Nhập API key từ Dashboard 9Router (để trống nếu chạy cục bộ không bật token).
+                  </span>
+                </div>
+                <input type="password" class="form__input" id="input9RouterKey"
+                       placeholder="Tùy chọn" aria-label="9Router API Key" style="max-width:240px">
+              </div>
+              <div class="settings-item">
+                <div class="settings-item__info">
+                  <span class="settings-item__title">Mô hình AI trên 9Router (Model)</span>
+                  <span class="settings-item__desc">
+                    Mô hình đã liên kết trong 9Router (mặc định: <code>gemini-3.8-flash</code> hoặc <code>gemini-2.0-flash</code>).
+                  </span>
+                </div>
+                <input type="text" class="form__input" id="input9RouterModel"
+                       placeholder="gemini-3.8-flash" aria-label="9Router Model" style="max-width:240px">
+              </div>
 
-          <!-- Test button & status -->
-          <div class="settings-item">
-            <div class="settings-item__info">
-              <span class="settings-item__title">Kiểm tra kết nối AI</span>
-              <span class="settings-item__desc" id="geminiTestText">Thử gửi câu kiểm tra tới 9Router hoặc Google Gemini.</span>
+              <!-- Direct Gemini Key -->
+              <div class="settings-item">
+                <div class="settings-item__info">
+                  <span class="settings-item__title">Google Gemini API key cá nhân (Tùy chọn trực tiếp)</span>
+                  <span class="settings-item__desc">
+                    Dán key từ Google AI Studio nếu bạn muốn gọi trực tiếp cloud API. Key chỉ lưu trên thiết bị này.
+                  </span>
+                </div>
+                <input type="password" class="form__input" id="inputGeminiKey"
+                       placeholder="AQ... hoặc AIza..." aria-label="Gemini API key" style="max-width:240px">
+              </div>
+
+              <!-- Test button -->
+              <div class="settings-item">
+                <div class="settings-item__info">
+                  <span class="settings-item__title">Kiểm tra kết nối nâng cao</span>
+                  <span class="settings-item__desc" id="geminiTestText">Thử gửi câu kiểm tra tới 9Router hoặc Google Gemini.</span>
+                </div>
+                <button class="settings-btn" id="btnTestGemini">
+                  <i class="fa-solid fa-plug"></i> Thử kết nối
+                </button>
+              </div>
             </div>
-            <button class="settings-btn" id="btnTestGemini">
-              <i class="fa-solid fa-plug"></i> Thử kết nối
-            </button>
-          </div>
-          <div class="settings-item">
-            <div class="settings-item__info">
-              <span class="settings-item__title">Chế độ AI hiện tại</span>
-              <span class="settings-item__desc" id="aiStatusText">Đang dùng bộ phân tích trong máy</span>
-            </div>
-            <span class="status-tag status-tag--success" id="aiStatusTag">Cục bộ</span>
-          </div>
+          </details>
         </div>
       </section>
 

@@ -41,16 +41,16 @@ const AIEntry = {
 
   // Từ khoá → mã danh mục (khớp với Categories trong category.js)
   CATEGORY_KEYWORDS: {
-    food: ['ăn', 'an ', 'cơm', 'phở', 'pho', 'bún', 'bun', 'bánh', 'banh', 'uống', 'uong', 'uống nước', 'uong nuoc', 'nước mía', 'nuoc mia', 'sinh tố', 'sinh to', 'cà phê', 'ca phe', 'trà sữa', 'tra sua', 'trà', 'tra', 'quán', 'quan', 'ăn uống', 'an uong', 'đồ ăn', 'do an', 'bia', 'rượu', 'ruou', 'nhà hàng', 'nha hang'],
-    transport: ['xăng', 'xang', 'grab', 'taxi', 'xe', 'bus', 'tàu', 'tau', 'máy bay', 'may bay', 'di chuyển', 'di chuyen', 'gửi xe', 'gui xe', 'vô xe', 'đi xe', 'di xe'],
+    food: ['ăn', 'an', 'cơm', 'phở', 'pho', 'bún', 'bun', 'bánh mì', 'banh mi', 'cơm tấm', 'com tam', 'bánh', 'banh', 'uống', 'uong', 'uống nước', 'uong nuoc', 'nước mía', 'nuoc mia', 'sinh tố', 'sinh to', 'cà phê', 'ca phe', 'trà sữa', 'tra sua', 'trà đào', 'tra dao', 'trà đá', 'tra da', 'trà', 'tra', 'quán', 'quan', 'ăn uống', 'an uong', 'đồ ăn', 'do an', 'bia', 'rượu', 'ruou', 'nhà hàng', 'nha hang'],
+    transport: ['xăng', 'xang', 'đổ xăng', 'do xang', 'grab', 'taxi', 'xe', 'bus', 'tàu', 'tau', 'máy bay', 'may bay', 'di chuyển', 'di chuyen', 'gửi xe', 'gui xe', 'vô xe', 'đi xe', 'di xe', 'đi lại', 'di lai'],
     shopping: ['mua', 'mua sắm', 'mua sam', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'mỹ phẩm', 'my pham', 'shop', 'shopee', 'lazada', 'tiki'],
-    bills: ['điện', 'dien', 'tiền nước', 'tien nuoc', 'hóa đơn nước', 'hoa don nuoc', 'nước máy', 'nuoc may', 'tiền điện', 'tien dien', 'internet', 'wifi', 'điện thoại', 'dien thoai', 'hóa đơn', 'hoa don', 'bill', 'tiền mạng', 'tien mang'],
+    bills: ['điện', 'dien', 'tiền nước', 'tien nuoc', 'hóa đơn nước', 'hoa don nuoc', 'nước máy', 'nuoc may', 'tiền điện', 'tien dien', 'internet', 'wifi', 'điện thoại', 'dien thoai', 'hóa đơn', 'hoa don', 'bill', 'tiền mạng', 'tien mang', 'tiền trọ', 'tien tro', 'tiền phòng', 'tien phong', 'tiền nhà', 'tien nha'],
     education: ['học', 'hoc', 'sách', 'sach', 'khóa học', 'khoa hoc', 'học phí', 'hoc phi', 'tập vở'],
     health: ['thuốc', 'thuoc', 'khám', 'kham', 'bệnh', 'benh', 'viện phí', 'vien phi', 'y tế', 'y te', 'nha khoa'],
     entertainment: ['phim', 'xem phim', 'giải trí', 'giai tri', 'game', 'nhạc', 'nhac', 'youtube', 'netflix', 'vui chơi', 'vui choi'],
-    gift: ['quà', 'qua', 'tặng', 'tang', 'sinh nhật', 'sinh nhat', 'biếu', 'bieu'],
+    gift: ['quà', 'qua', 'tặng', 'tang', 'sinh nhật', 'sinh nhat', 'biếu', 'bieu', 'lì xì', 'li xi', 'mừng tuổi', 'mung tuoi'],
     freelance: ['freelance', 'dự án', 'du an', 'khách hàng', 'khach hang', 'làm thêm', 'lam them'],
-    salary: ['lương', 'luong', 'tháng lương', 'salary', 'payroll']
+    salary: ['lương', 'luong', 'tháng lương', 'salary', 'payroll', 'thưởng', 'thuong', 'bonus']
   },
 
   // Từ khoá nhận diện ví
@@ -111,8 +111,8 @@ const AIEntry = {
       return {
         engine: 'local',
         online: false,
-        label: 'Ngoại tuyến',
-        desc: 'Đang offline — AI chạy trực tiếp trong trình duyệt (0ms, không tốn dữ liệu).'
+        label: 'Ngoại tuyến (Sẵn sàng)',
+        desc: 'Model AI tích hợp sẵn chạy trực tiếp trong máy — 0ms, không cần mạng hay bất kỳ API key nào.'
       };
     }
 
@@ -122,7 +122,7 @@ const AIEntry = {
         engine: '9router',
         online: true,
         label: '9Router Gateway',
-        desc: `Trực tuyến — Phân tích qua 9Router AI Gateway (${model}). Tự động fallback về máy khi ngắt kết nối.`
+        desc: `Trực tuyến — Phân tích qua 9Router AI Gateway (${model}). Tự động fallback về AI trong máy khi ngắt kết nối.`
       };
     }
 
@@ -138,8 +138,8 @@ const AIEntry = {
     return {
       engine: 'local',
       online: true,
-      label: 'Cục bộ (Sẵn sàng)',
-      desc: 'Đang dùng bộ phân tích tích hợp trong máy (nhanh, bảo mật tuyệt đối).'
+      label: 'Tích hợp sẵn (Sẵn sàng)',
+      desc: 'Model AI tài chính tích hợp sẵn — Sẵn sàng sử dụng ngay 0ms, bảo mật tuyệt đối, không cần dán bất kỳ API key nào.'
     };
   },
 
@@ -241,17 +241,28 @@ const AIEntry = {
   /** Suy đoán danh mục theo từ khoá */
   detectCategory(clause, type) {
     const norm = Utils.normalizeText(clause);
+    const padded = ' ' + norm + ' ';
     let best = null;
     let bestLen = 0;
+
+    const incomeCategories = ['salary', 'freelance', 'gift'];
+
     Object.keys(this.CATEGORY_KEYWORDS).forEach((catId) => {
+      // Phân tách danh mục theo loại thu/chi
+      if (type === 'income' && !incomeCategories.includes(catId)) return;
+      if (type === 'expense' && incomeCategories.includes(catId)) return;
+
       this.CATEGORY_KEYWORDS[catId].forEach((kw) => {
         const n = Utils.normalizeText(kw).trim();
-        if (n && norm.includes(n) && n.length > bestLen) {
-          best = catId;
-          bestLen = n.length;
+        if (n && (padded.includes(' ' + n + ' ') || norm.startsWith(n + ' ') || norm.endsWith(' ' + n) || norm === n)) {
+          if (n.length > bestLen) {
+            best = catId;
+            bestLen = n.length;
+          }
         }
       });
     });
+
     if (best && typeof Categories !== 'undefined' && Categories.getById(best)) return best;
     return type === 'income' ? 'salary' : 'food';
   },
@@ -287,7 +298,7 @@ const AIEntry = {
       .replace(/\b\d[\d.,]*\b/g, ' ')
       .replace(/(?:^|[^\p{L}\p{N}])(?:hôm qua|hom qua|hôm kia|hom kia|hôm nay|hom nay|(?:sáng|sang|trưa|trua|chiều|chieu|tối|toi|đêm|dem)(?:\s+(?:nay|qua|hom nay))?|tối qua|toi qua|chiều qua|chieu qua|hồi hôm|hoi hom|cả ngày|ca ngay)(?=[^\p{L}\p{N}]|$)/giu, ' ')
       .replace(/\b(?:ngày|ngay|hôm|hom)?\s*\d{1,2}[/-]\d{1,2}(?:[/-]\d{4})?\b/gi, ' ')
-      .replace(/(?:bằng|ở|từ|voi|vo|với|using|qua)\s+(?:ví|vi|thẻ|the|tài khoản|tai khoan|momo|zalo|zalopay)?\s*\w*\s*$/iu, ' ')
+      .replace(/(?:^|[^\p{L}\p{N}])(?:bằng|ở|từ|voi|vo|với|using|qua)\s+(?:ví|vi|thẻ|the|tài khoản|tai khoan|momo|zalo|zalopay)?\s*\w*\s*$/giu, ' ')
       .replace(/\s+(?:hết|het|mất|mat|tổng|tong|tổng cộng|tong cong|là|la)\s*$/iu, ' ')
       .replace(/\s+/g, ' ')
       .trim();

@@ -85,17 +85,16 @@ const HomeWidgets = {
     if (!hint) return;
     const mode = (typeof AIEntry !== 'undefined' && AIEntry.getEngineMode) ? AIEntry.getEngineMode() : { online: true, engine: 'local' };
     if (!mode.online) {
-      hint.innerHTML = '⚡ <strong>Chế độ Ngoại tuyến:</strong> AI chạy ngay trong máy — 0ms, không cần mạng.';
+      hint.innerHTML = '⚡ <strong>Chế độ Ngoại tuyến:</strong> Model AI chạy ngay trong máy — 0ms, không cần mạng hay API key.';
     } else if (mode.engine === '9router') {
-      const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-2.0-flash';
+      const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-3.8-flash';
       hint.innerHTML = `✨ <strong>9Router AI:</strong> Đang kết nối Gateway (${model}). <a href="#" id="aiConfigLink">Cài đặt</a>`;
       this.bindConfigLink();
     } else if (mode.engine === 'gemini') {
       hint.innerHTML = '✨ <strong>Gemini Cá nhân:</strong> Đã kết nối API key. <a href="#" id="aiConfigLink">Cài đặt</a>';
       this.bindConfigLink();
     } else {
-      hint.innerHTML = 'AI chạy ngay trong máy — không cần mạng. <a href="#" id="aiConfigLink">Cấu hình AI</a> (9Router / Gemini) để phân tích câu phức tạp.';
-      this.bindConfigLink();
+      hint.innerHTML = '✨ <strong>Model AI đã tích hợp sẵn:</strong> Nhập câu tự nhiên (VD: <em>"Ăn phở 45k, đổ xăng 50 cành"</em>) — Dùng ngay, không cần API key!';
     }
   },
 

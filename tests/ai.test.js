@@ -184,10 +184,10 @@ test('Lưu & đọc cấu hình 9Router (URL, Key, Model)', () => {
 });
 
 test('Trạng thái chế độ AI (Engine Mode)', () => {
-  // Khi không có 9router và không có key
+  // Khi không có 9router và không có key (Mặc định khi vào web)
   const m1 = AIEntry.getEngineMode();
   eq(m1.engine, 'local');
-  eq(m1.label, 'Cục bộ (Sẵn sàng)');
+  eq(m1.label, 'Tích hợp sẵn (Sẵn sàng)');
 
   // Khi có 9Router
   AIEntry.set9RouterUrl('http://localhost:20128/v1');
@@ -208,7 +208,7 @@ test('Trạng thái chế độ AI (Engine Mode)', () => {
   sandbox.navigator.onLine = false;
   const m3 = AIEntry.getEngineMode();
   eq(m3.engine, 'local');
-  eq(m3.label, 'Ngoại tuyến');
+  eq(m3.label, 'Ngoại tuyến (Sẵn sàng)');
 
   // Khôi phục
   sandbox.navigator.onLine = true;

@@ -1,7 +1,7 @@
 rules_version = '2';
 
-// SPENDWISE-RULES v68 - BAN MOI - 2026-10-16 - DA-SUA-LOI-GHI-SO-NO
-// Neu ban thay dong nay thi da dan DUNG ban moi nhat.
+// SPENDWISE-RULES v69 - BAN MOI - 2026-10-16
+// Da bo moi su dung lambda (map/all) - do bi trinh bien dich tu choi ghi so no.
 // Khong con bien thuc debts.map(...).sum() gay loi chan ghi.
 service cloud.firestore {
   match /databases/{database}/documents {

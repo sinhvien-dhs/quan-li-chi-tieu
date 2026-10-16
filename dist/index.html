@@ -42,12 +42,9 @@
   <link rel="icon" href="assets/icon-192.png">
 
   <script>
-    // Kiểm tra nhanh phiên đăng nhập: có session thì đánh dấu để ẩn khóa, chưa có thì khóa chặt
-    if (localStorage.getItem('spendwise_uid')) {
-      document.documentElement.classList.add('auth-authenticated');
-    } else {
-      document.documentElement.classList.add('auth-pending');
-    }
+    // Luôn kích hoạt Auth Wall khóa toàn bộ ứng dụng từ đầu
+    // Chỉ mở khi Firebase Auth chính thức xác nhận người dùng đã đăng nhập
+    document.documentElement.classList.add('auth-pending');
   </script>
   <link rel="stylesheet" href="style.min.css?v=81">
 </head>
@@ -202,6 +199,13 @@
         </button>
         <button class="header__btn" id="themeToggle" title="Đổi giao diện" aria-label="Đổi giao diện sáng/tối">
           <i class="fa-solid fa-moon"></i>
+        </button>
+        <button class="header__btn header__btn--user" id="headerUserBtn" title="Tài khoản cá nhân" aria-label="Tài khoản cá nhân" style="display:none">
+          <i class="fa-solid fa-circle-user"></i>
+          <span class="header__user-email" id="headerUserEmail"></span>
+        </button>
+        <button class="header__btn header__btn--logout" id="headerLogoutBtn" title="Đăng xuất khỏi tài khoản" aria-label="Đăng xuất khỏi tài khoản" style="display:none">
+          <i class="fa-solid fa-right-from-bracket"></i>
         </button>
       </div>
     </header>
@@ -504,6 +508,24 @@
     <!--  PAGE: Cài đặt (Phase 3)                       -->
     <!-- ============================================== -->
     <div class="page page--settings" id="pageSettings">
+      <!-- User Profile Header Card -->
+      <div class="user-profile-card" id="userProfileCard" style="display:none">
+        <div class="user-profile-card__avatar">
+          <i class="fa-solid fa-circle-user"></i>
+        </div>
+        <div class="user-profile-card__info">
+          <div class="user-profile-card__email" id="accountEmailTitle">user@example.com</div>
+          <div class="user-profile-card__badge" id="accountStatusBadge">
+            <span class="status-tag status-tag--success"><i class="fa-solid fa-shield-halved"></i> Đã đăng nhập</span>
+          </div>
+        </div>
+        <div class="user-profile-card__actions">
+          <button type="button" class="settings-btn settings-btn--danger" id="btnTopLogout">
+            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+          </button>
+        </div>
+      </div>
+
       <!-- Tabs phu: chia trang Cai dat nganh gon -->
       <div class="settings-tabs" role="group" aria-label="Nhóm cài đặt">
         <button type="button" class="settings-tab is-active" data-tab="chung" aria-pressed="true">

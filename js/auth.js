@@ -57,7 +57,10 @@ const AuthManager = {
    */
   showAuthGate() {
     const overlay = document.getElementById('authOverlay');
-    if (overlay) overlay.classList.add('active');
+    if (overlay) {
+      overlay.classList.add('active');
+      overlay.classList.add('force-show');
+    }
     document.documentElement.classList.remove('auth-authenticated');
     document.documentElement.classList.add('auth-pending');
     document.body.classList.add('auth-locked');
@@ -70,7 +73,10 @@ const AuthManager = {
   hideAuthGate() {
     const overlay = document.getElementById('authOverlay');
     const regOverlay = document.getElementById('authRegisterOverlay');
-    if (overlay) overlay.classList.remove('active');
+    if (overlay) {
+      overlay.classList.remove('active');
+      overlay.classList.remove('force-show');
+    }
     if (regOverlay) regOverlay.classList.remove('active');
     document.documentElement.classList.add('auth-authenticated');
     document.documentElement.classList.remove('auth-pending');
@@ -157,8 +163,19 @@ const AuthManager = {
     });
     on('authGoogleBtn', () => this.signInWithGoogle());
     on('btnLogout', () => this.signOut());
+    on('headerLogoutBtn', () => this.signOut());
+    on('btnTopLogout', () => this.signOut());
+    on('headerUserBtn', () => {
+      if (typeof PageManager !== 'undefined') {
+        PageManager.switchTo('pageSettings');
+        if (typeof SettingsTabs !== 'undefined') {
+          SettingsTabs.switchTo('taikhoan');
+        }
+      }
+    });
     on('btnOpenAuth', () => this.openAuthOverlay());
     on('btnForgotPassword', () => this.sendPasswordReset());
+    on('btnDeleteAccount', () => this.deleteAccount());
 
     // Hiện nút "quên mật khẩu" chỉ khi nhập email
     const emailEl = document.getElementById('authEmail');
@@ -317,27 +334,41 @@ const AuthManager = {
   },
 
   /**
-   * Đăng xuất: đẩy nốt thay đổi chưa đồng bộ TRƯỚC, rồi mới xóa dữ liệu cục bộ
+   * Đăng xuất: đồng bộ dữ liệu nhanh với timeout 1.5s, sau đó luôn hoàn tất đăng xuất
    */
   async signOut() {
     const doSignOut = async () => {
       if (this.currentUser) {
-        // Chờ đẩy hết dữ liệu lên máy chủ; nếu thất bại thì KHÔNG xóa cục bộ
+        // Cố gắng đồng bộ lên cloud trong 1.5s; nếu lỗi/mạng chậm vẫn tiếp tục đăng xuất an toàn
         try {
-          await this.pushToCloud();
+          const syncPromise = this.pushToCloud();
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 1500));
+          await Promise.race([syncPromise, timeoutPromise]);
         } catch (e) {
-          console.error(e);
-          Toast.error('Chưa đồng bộ được dữ liệu lên máy chủ. Hãy kiểm tra mạng rồi thử lại!');
-          return; // giữ nguyên dữ liệu cục bộ
+          console.warn('Lỗi hoặc timeout khi đồng bộ trước đăng xuất:', e);
         }
       }
+
       this.clearLocalUserData();
-      await this.auth.signOut();
+      localStorage.removeItem('spendwise_uid');
+
+      if (this.auth) {
+        try {
+          await this.auth.signOut();
+        } catch (e) {
+          console.warn('Firebase auth signOut error:', e);
+        }
+      }
+
+      this.currentUser = null;
+      this.updateAccountUI(null);
+
       if (typeof PageManager !== 'undefined') {
         PageManager.switchTo('pageHome');
       }
+
       this.showAuthGate();
-      Toast.success('Đã đăng xuất!');
+      Toast.success('Đã đăng xuất thành công!');
     };
 
     // Cảnh báo nếu còn thay đổi chưa đồng bộ
@@ -345,14 +376,14 @@ const AuthManager = {
       ConfirmDialog.show({
         title: 'Còn thay đổi chưa đồng bộ',
         message: 'Bạn có ' + SyncManager.getQueue().length +
-          ' thay đổi chưa được đồng bộ lên máy chủ. Tiếp tục đăng xuất?',
-        confirmText: 'Đồng bộ rồi đăng xuất',
+          ' thay đổi chưa được đồng bộ lên máy chủ. Bạn có chắc chắn muốn đăng xuất?',
+        confirmText: 'Vẫn đăng xuất',
         onConfirm: doSignOut
       });
       return;
     }
 
-    doSignOut();
+    await doSignOut();
   },
 
   /**
@@ -446,22 +477,47 @@ const AuthManager = {
   updateAccountUI(user) {
     const emailEl = document.getElementById('accountEmail');
     const descEl = emailEl && emailEl.parentElement ? emailEl.parentElement.querySelector('.settings-item__desc') : null;
+    const emailText = user
+      ? (user.displayName ? `${user.displayName} — ${user.email}` : user.email)
+      : 'Chưa đăng nhập';
+
     if (emailEl) {
-      emailEl.textContent = user
-        ? (user.displayName ? `${user.displayName} — ${user.email}` : user.email)
-        : 'Chưa đăng nhập';
+      emailEl.textContent = emailText;
     }
     if (descEl) {
       descEl.textContent = user
         ? 'Dữ liệu được đồng bộ đám mây và bảo vệ theo tài khoản của bạn.'
         : 'Vui lòng đăng nhập để sử dụng SpendWise và đồng bộ đám mây.';
     }
+
     const logoutBtn = document.getElementById('btnLogout');
     if (logoutBtn) logoutBtn.style.display = user ? '' : 'none';
+
     const openAuthBtn = document.getElementById('btnOpenAuth');
     if (openAuthBtn) openAuthBtn.style.display = user ? 'none' : '';
+
     const deleteBtn = document.getElementById('btnDeleteAccount');
     if (deleteBtn) deleteBtn.style.display = user ? '' : 'none';
+
+    // Nút tài khoản & đăng xuất trên thanh tiêu đề (Header)
+    const headerUserBtn = document.getElementById('headerUserBtn');
+    const headerUserEmail = document.getElementById('headerUserEmail');
+    const headerLogoutBtn = document.getElementById('headerLogoutBtn');
+
+    if (headerUserBtn) headerUserBtn.style.display = user ? 'inline-flex' : 'none';
+    if (headerLogoutBtn) headerLogoutBtn.style.display = user ? 'inline-flex' : 'none';
+    if (headerUserEmail && user) {
+      headerUserEmail.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'Tài khoản');
+    }
+
+    // Thẻ hồ sơ người dùng nổi bật ở đầu trang Cài đặt
+    const profileCard = document.getElementById('userProfileCard');
+    const accountEmailTitle = document.getElementById('accountEmailTitle');
+
+    if (profileCard) profileCard.style.display = user ? 'flex' : 'none';
+    if (accountEmailTitle && user) {
+      accountEmailTitle.textContent = user.email || user.displayName || 'Tài khoản';
+    }
   },
 
   openAuthOverlay() {

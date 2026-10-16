@@ -1442,8 +1442,9 @@ html.auth-authenticated #authOverlay:not(.force-show) .modal {
   transform: translateY(100%) !important;
 }
 
-/* Khi chưa đăng nhập hoặc có class active: Luôn hiện màn hình khóa */
+/* Khi chưa đăng nhập hoặc có class active / force-show: Luôn hiện màn hình khóa */
 #authOverlay.active,
+#authOverlay.force-show,
 html.auth-pending #authOverlay {
   opacity: 1 !important;
   visibility: visible !important;
@@ -1451,6 +1452,7 @@ html.auth-pending #authOverlay {
 }
 
 #authOverlay.active .modal,
+#authOverlay.force-show .modal,
 html.auth-pending #authOverlay .modal {
   transform: translateY(0) !important;
 }
@@ -1521,4 +1523,93 @@ html.auth-pending #authOverlay .modal {
   font-size: var(--font-size-xs);
   font-weight: 600;
 }
+
+/* ===== Header User Profile & Logout ===== */
+.header__btn--user {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: var(--bg-hover);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  max-width: 170px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all var(--transition-fast);
+}
+
+.header__btn--user:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.header__user-email {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.header__btn--logout {
+  color: var(--danger) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.08);
+  transition: all var(--transition-fast);
+}
+
+.header__btn--logout:hover {
+  background: var(--danger) !important;
+  color: #fff !important;
+  border-color: var(--danger) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+/* ===== User Profile Card (Settings) ===== */
+.user-profile-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.user-profile-card__avatar {
+  font-size: 2.2rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-profile-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-profile-card__email {
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile-card__badge {
+  margin-top: 4px;
+}
+
+.user-profile-card__actions {
+  flex-shrink: 0;
+}
+
 

@@ -50,6 +50,8 @@ const domClasses = {
   authRegisterOverlay: new Set(['modal-overlay'])
 };
 
+const elemCache = {};
+
 const documentMock = {
   documentElement: {
     classList: {
@@ -67,9 +69,15 @@ const documentMock = {
     style: { overflow: '' }
   },
   getElementById: (id) => {
-    if (id === 'authOverlay' || id === 'authRegisterOverlay') {
-      return {
+    if (!elemCache[id]) {
+      if (!domClasses[id]) domClasses[id] = new Set();
+      elemCache[id] = {
         id,
+        textContent: '',
+        style: { display: '' },
+        parentElement: {
+          querySelector: () => ({ textContent: '' })
+        },
         classList: {
           add: (c) => domClasses[id].add(c),
           remove: (c) => domClasses[id].delete(c),
@@ -77,7 +85,7 @@ const documentMock = {
         }
       };
     }
-    return null;
+    return elemCache[id];
   }
 };
 
@@ -91,7 +99,12 @@ const sandbox = {
   Business: { mergeById: (a, b) => a.concat(b) },
   Storage: { get: () => null, set: () => {}, KEYS: {} },
   Toast: { success: () => {}, error: () => {}, warning: () => {} },
-  PWAManager: { initOnboarding: () => {} }
+  PWAManager: { initOnboarding: () => {} },
+  ConfirmDialog: { show: (opts) => { if (opts && opts.onConfirm) opts.onConfirm(); } },
+  PageManager: { switchTo: () => {} },
+  setTimeout,
+  clearTimeout,
+  Promise
 };
 
 vm.createContext(sandbox);
@@ -111,11 +124,12 @@ test('AuthManager.friendlyError dịch đúng các mã lỗi Firebase', () => {
   eq(AuthManager.friendlyError({ code: 'auth/weak-password' }), 'Mật khẩu quá yếu (tối thiểu 8 ký tự, có chữ và số)!');
 });
 
-test('showAuthGate khóa toàn bộ ứng dụng và bật lớp phủ đăng nhập', () => {
+test('showAuthGate khóa toàn bộ ứng dụng và bật lớp phủ đăng nhập kèm force-show', () => {
   AuthManager.showAuthGate();
   ok(domClasses.html.has('auth-pending'), 'html phải có class auth-pending');
   ok(domClasses.body.has('auth-locked'), 'body phải có class auth-locked');
   ok(domClasses.authOverlay.has('active'), 'authOverlay phải có class active');
+  ok(domClasses.authOverlay.has('force-show'), 'authOverlay phải có class force-show');
   eq(documentMock.body.style.overflow, 'hidden', 'body.style.overflow phải là hidden');
 });
 
@@ -124,6 +138,7 @@ test('hideAuthGate mở khóa ứng dụng khi đăng nhập thành công', () =
   ok(!domClasses.html.has('auth-pending'), 'auth-pending phải bị xóa');
   ok(!domClasses.body.has('auth-locked'), 'auth-locked phải bị xóa');
   ok(!domClasses.authOverlay.has('active'), 'authOverlay active phải bị xóa');
+  ok(!domClasses.authOverlay.has('force-show'), 'authOverlay force-show phải bị xóa');
   eq(documentMock.body.style.overflow, '', 'body.style.overflow phải rỗng');
 });
 
@@ -131,6 +146,37 @@ test('clearLocalUserData không làm mất lớp khóa authOverlay', () => {
   AuthManager.showAuthGate();
   AuthManager.clearLocalUserData();
   ok(domClasses.authOverlay.has('active'), 'authOverlay vẫn phải active khi chưa có người dùng');
+});
+
+test('updateAccountUI cập nhật đúng trạng thái header và profile card', () => {
+  const user = { email: 'test@example.com', displayName: 'Tester' };
+  AuthManager.updateAccountUI(user);
+
+  const headerUserBtn = documentMock.getElementById('headerUserBtn');
+  const headerLogoutBtn = documentMock.getElementById('headerLogoutBtn');
+  const profileCard = documentMock.getElementById('userProfileCard');
+  eq(headerUserBtn.style.display, 'inline-flex', 'headerUserBtn phải hiện khi có user');
+  eq(headerLogoutBtn.style.display, 'inline-flex', 'headerLogoutBtn phải hiện khi có user');
+  eq(profileCard.style.display, 'flex', 'userProfileCard phải hiện khi có user');
+
+  AuthManager.updateAccountUI(null);
+  eq(headerUserBtn.style.display, 'none', 'headerUserBtn phải ẩn khi không có user');
+  eq(headerLogoutBtn.style.display, 'none', 'headerLogoutBtn phải ẩn khi không có user');
+  eq(profileCard.style.display, 'none', 'userProfileCard phải ẩn khi không có user');
+});
+
+test('signOut đăng xuất thành công không bị block và khóa lại app', async () => {
+  localStorageMock.setItem('spendwise_uid', 'user123');
+  AuthManager.currentUser = { uid: 'user123' };
+  AuthManager.pushToCloud = async () => { throw new Error('Cloud sync failed'); };
+  AuthManager.auth = { signOut: async () => {} };
+
+  await AuthManager.signOut();
+
+  eq(localStorageMock.getItem('spendwise_uid'), null, 'spendwise_uid phải bị xóa');
+  eq(AuthManager.currentUser, null, 'currentUser phải null sau signOut');
+  ok(domClasses.authOverlay.has('active'), 'authOverlay phải active sau khi đăng xuất');
+  ok(domClasses.authOverlay.has('force-show'), 'authOverlay phải force-show sau khi đăng xuất');
 });
 
 console.log(`\nKết quả: ${passed} đạt, ${failed} không đạt\n`);

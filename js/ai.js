@@ -323,7 +323,10 @@ const AIEntry = {
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(directKey),
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': directKey
+          },
           body: JSON.stringify({
             contents: [{ parts: [{ text: 'Trả lời duy nhất bằng chữ OK' }] }],
             generationConfig: { temperature: 0, maxOutputTokens: 10 }
@@ -334,7 +337,7 @@ const AIEntry = {
       if (!res.ok) {
         const detail = await res.text().catch(() => '');
         let msg = 'Gemini trả về lỗi ' + res.status;
-        if (res.status === 400) msg = 'Key không hợp lệ — hãy kiểm tra lại chuỗi AIza...';
+        if (res.status === 400 || res.status === 401) msg = 'Key không hợp lệ hoặc chưa được cấp quyền — hãy kiểm tra lại key từ Google AI Studio (bắt đầu bằng AQ... hoặc AIza...).';
         if (res.status === 403) msg = 'Key bị từ chối — có thể chưa bật Generative Language API cho project.';
         if (res.status === 429) msg = 'Đã vượt hạn mức miễn phí, thử lại sau ít phút.';
         console.warn('Gemini test:', detail.slice(0, 200));
@@ -471,7 +474,10 @@ const AIEntry = {
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key),
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': key
+        },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
@@ -481,7 +487,7 @@ const AIEntry = {
 
     if (!res.ok) {
       if (res.status === 400 || res.status === 401) {
-        throw new Error('API key không đúng định dạng (mã ' + res.status + ' — key của Gemini phải bắt đầu bằng "AIzaSy...")');
+        throw new Error('API key không hợp lệ (mã ' + res.status + ' — hãy kiểm tra lại key từ Google AI Studio)');
       }
       throw new Error('Gemini lỗi ' + res.status);
     }

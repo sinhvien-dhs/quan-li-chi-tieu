@@ -1431,12 +1431,26 @@ body.auth-locked #fabAdd {
   z-index: 1501;
 }
 
+/* Khi đã đăng nhập trước đó: Ẩn màn hình khóa */
+html.auth-authenticated #authOverlay:not(.force-show) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+html.auth-authenticated #authOverlay:not(.force-show) .modal {
+  transform: translateY(100%) !important;
+}
+
+/* Khi chưa đăng nhập hoặc có class active: Luôn hiện màn hình khóa */
+#authOverlay.active,
 html.auth-pending #authOverlay {
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
 }
 
+#authOverlay.active .modal,
 html.auth-pending #authOverlay .modal {
   transform: translateY(0) !important;
 }

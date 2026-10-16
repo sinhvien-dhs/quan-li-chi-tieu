@@ -21,28 +21,6 @@ jobs:
         with:
           node-version: '20'
 
-      # Inject Firebase config từ GitHub Secrets vào js/config.js
-      # (thay thế các placeholder "__FIREBASE_*__" bằng giá trị thật)
-      - name: Inject Firebase config
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
-          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
-          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
-        run: |
-          echo "🔑 Injecting Firebase config from GitHub Secrets..."
-          sed -i "s|__FIREBASE_API_KEY__|${FIREBASE_API_KEY}|g" js/config.js
-          sed -i "s|__FIREBASE_AUTH_DOMAIN__|${FIREBASE_AUTH_DOMAIN}|g" js/config.js
-          sed -i "s|__FIREBASE_PROJECT_ID__|${FIREBASE_PROJECT_ID}|g" js/config.js
-          sed -i "s|__FIREBASE_STORAGE_BUCKET__|${FIREBASE_STORAGE_BUCKET}|g" js/config.js
-          sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|${FIREBASE_MESSAGING_SENDER_ID}|g" js/config.js
-          sed -i "s|__FIREBASE_APP_ID__|${FIREBASE_APP_ID}|g" js/config.js
-          echo "✅ Config injected (key redacted):"
-          grep -c "apiKey" js/config.js
-
       - name: Unit test - lop nghiep vu
         run: node tests/business.test.js
 

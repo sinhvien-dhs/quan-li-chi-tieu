@@ -58,6 +58,7 @@ const AuthManager = {
   showAuthGate() {
     const overlay = document.getElementById('authOverlay');
     if (overlay) overlay.classList.add('active');
+    document.documentElement.classList.remove('auth-authenticated');
     document.documentElement.classList.add('auth-pending');
     document.body.classList.add('auth-locked');
     document.body.style.overflow = 'hidden';
@@ -71,20 +72,22 @@ const AuthManager = {
     const regOverlay = document.getElementById('authRegisterOverlay');
     if (overlay) overlay.classList.remove('active');
     if (regOverlay) regOverlay.classList.remove('active');
+    document.documentElement.classList.add('auth-authenticated');
     document.documentElement.classList.remove('auth-pending');
     document.body.classList.remove('auth-locked');
     document.body.style.overflow = '';
   },
 
   init() {
-    if (!this.isConfigured() || typeof firebase === 'undefined') {
-      this.hideAuthGate();
-      return;
-    }
-
     // Nếu trên máy chưa có phiên đăng nhập, lập tức khóa ứng dụng bằng màn hình đăng nhập
     if (!localStorage.getItem('spendwise_uid')) {
       this.showAuthGate();
+    }
+
+    if (!this.isConfigured() || typeof firebase === 'undefined') {
+      console.warn('Firebase chưa sẵn sàng hoặc chưa được cấu hình.');
+      this.showAuthGate();
+      return;
     }
 
     firebase.initializeApp(FIREBASE_CONFIG);

@@ -214,5 +214,30 @@ test('Trạng thái chế độ AI (Engine Mode)', () => {
   sandbox.navigator.onLine = true;
 });
 
+test('Phân loại chính xác các từ nhạy cảm (thuốc, thuê, lương, thưởng) không bị nhầm loại', () => {
+  const t1 = AIEntry.parseLocal('mua thuốc 120k');
+  eq(t1.items.length, 1);
+  eq(t1.items[0].type, 'expense', 'mua thuốc phải là chi tiêu');
+  eq(t1.items[0].category, 'health', 'mua thuốc phải thuộc danh mục sức khỏe');
+  eq(t1.items[0].amount, 120000);
+
+  const t2 = AIEntry.parseLocal('thuê nhà 3 triệu');
+  eq(t2.items.length, 1);
+  eq(t2.items[0].type, 'expense', 'thuê nhà phải là chi tiêu');
+  eq(t2.items[0].category, 'bills', 'thuê nhà phải thuộc hóa đơn/nhà ở');
+  eq(t2.items[0].amount, 3000000);
+
+  const t3 = AIEntry.parseLocal('nhận lương 15 triệu');
+  eq(t3.items.length, 1);
+  eq(t3.items[0].type, 'income', 'nhận lương phải là thu nhập');
+  eq(t3.items[0].category, 'salary');
+  eq(t3.items[0].amount, 15000000);
+
+  const t4 = AIEntry.parseLocal('được hoàn tiền 50k');
+  eq(t4.items.length, 1);
+  eq(t4.items[0].type, 'income', 'hoàn tiền phải là thu nhập');
+  eq(t4.items[0].amount, 50000);
+});
+
 console.log(`\nKết quả: ${passed} đạt, ${failed} không đạt\n`);
 if (failed > 0) process.exit(1);

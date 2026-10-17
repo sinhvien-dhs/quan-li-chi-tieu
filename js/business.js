@@ -206,19 +206,37 @@ const Business = {
   mergeById(localArr, cloudArr, tombstones) {
     const tombs = Array.isArray(tombstones) ? tombstones : [];
     const map = new Map();
+    const cloudIds = new Set();
 
-    const add = (item) => {
+    const addCloud = (item) => {
       if (!item || !item.id) return;
       if (tombs.indexOf(item.id) > -1) return;
+      cloudIds.add(item.id);
+      map.set(item.id, item);
+    };
+
+    const addLocal = (item) => {
+      if (!item || !item.id) return;
+      if (tombs.indexOf(item.id) > -1) return;
+
+      // Nếu bản ghi địa phương đã từng được đồng bộ (synced) nhưng trên server
+      // không còn nữa (và server có dữ liệu), tức là bản ghi đã bị xóa trên thiết bị khác!
+      if (item.syncState === 'synced' && cloudIds.size > 0 && !cloudIds.has(item.id)) {
+        return; // Không hồi sinh bản ghi đã bị xóa trên cloud
+      }
+
       const cur = map.get(item.id);
-      if (!cur) { map.set(item.id, item); return; }
+      if (!cur) {
+        map.set(item.id, item);
+        return;
+      }
       const a = cur.updatedAt || cur.lastRun || '';
       const b = item.updatedAt || item.lastRun || '';
       if (b > a) map.set(item.id, item);
     };
 
-    (Array.isArray(cloudArr) ? cloudArr : []).forEach(add);
-    (Array.isArray(localArr) ? localArr : []).forEach(add);
+    (Array.isArray(cloudArr) ? cloudArr : []).forEach(addCloud);
+    (Array.isArray(localArr) ? localArr : []).forEach(addLocal);
     return Array.from(map.values());
   },
 

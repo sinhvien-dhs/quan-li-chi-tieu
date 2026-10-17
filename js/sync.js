@@ -74,12 +74,11 @@ const SyncManager = {
     Storage.set = (key, data) => {
       const result = origSet(key, data);
       // Chỉ đồng bộ khi lưu cục bộ thành công; nếu lỗi bộ nhớ đầy (false) thì không đẩy lên cloud
-      if (result !== false && key !== this.QUEUE_KEY && key !== this.URL_KEY && key !== this.LAST_SYNC_KEY) {
+      if (result !== false && key !== this.QUEUE_KEY && key !== this.URL_KEY && key !== this.LAST_SYNC_KEY && key !== this.TOMBSTONE_KEY) {
+        this.pushQueue({ op: 'set', key });
         const useFirebase = typeof AuthManager !== 'undefined' && AuthManager.currentUser;
         if (useFirebase) {
           AuthManager.schedulePush();
-        } else {
-          this.pushQueue({ op: 'set', key });
         }
       }
       return result;
@@ -87,12 +86,11 @@ const SyncManager = {
 
     Storage.remove = (key) => {
       origRemove(key);
-      if (key !== this.QUEUE_KEY && key !== this.URL_KEY && key !== this.LAST_SYNC_KEY) {
+      if (key !== this.QUEUE_KEY && key !== this.URL_KEY && key !== this.LAST_SYNC_KEY && key !== this.TOMBSTONE_KEY) {
+        this.pushQueue({ op: 'remove', key });
         const useFirebase = typeof AuthManager !== 'undefined' && AuthManager.currentUser;
         if (useFirebase) {
           AuthManager.schedulePush();
-        } else {
-          this.pushQueue({ op: 'remove', key });
         }
       }
     };

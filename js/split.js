@@ -178,6 +178,7 @@ const SplitManager = {
 
   deleteDebt(debtId) {
     this.saveDebts(this.getDebts().filter(d => d.id !== debtId));
+    if (typeof SyncManager !== 'undefined') SyncManager.markDeleted(debtId);
   },
 
   /** Tổng đang nợ và đã thu hồi */

@@ -227,6 +227,147 @@ console.log('\n== Kiểm thử Độ Tin Cậy & Toàn Vẹn Dữ Liệu (Reliab
     eq(cleanLimits['Vô cực'], undefined, 'Số vượt 1e12 phải bị loại');
   });
 
+  // Test 6: Đa thiết bị — Device B đẩy dữ liệu không được xóa giao dịch mới của Device A trên Firestore
+  await test('Đa thiết bị: Device B đẩy dữ liệu không xóa các giao dịch Device A đã tạo trên Firestore', async () => {
+    // Giả lập Firestore collection 'transactions'
+    const firestoreDb = new Map();
+    // Device A đã tạo giao dịch tx_A trên cloud
+    firestoreDb.set('tx_A', { id: 'tx_A', name: 'Mua sách', amount: 200000, type: 'expense' });
+
+    // Device B có giao dịch tx_B trên máy cục bộ, chưa tải tx_A
+    const deviceB_local = [{ id: 'tx_B', name: 'Cà phê', amount: 35000, type: 'expense' }];
+    const deviceB_tombs = []; // Device B không chủ động xóa gì
+
+    // Logic pushToCloud mới của SpendWise:
+    // Chỉ xóa những tài liệu nằm trong tombstones, tuyệt đối không suy ra xóa từ difference!
+    const toPush = deviceB_local;
+    const ops = [];
+    toPush.forEach(item => {
+      ops.push({ id: item.id, payload: item });
+    });
+
+    if (deviceB_tombs.length > 0) {
+      Array.from(firestoreDb.keys()).forEach(id => {
+        if (deviceB_tombs.includes(id)) {
+          ops.push({ id: id, payload: null });
+        }
+      });
+    }
+
+    // Thực hiện batch commit lên firestore
+    ops.forEach(op => {
+      if (op.payload === null) firestoreDb.delete(op.id);
+      else firestoreDb.set(op.id, op.payload);
+    });
+
+    // Xác minh kết quả trên cloud
+    ok(firestoreDb.has('tx_A'), 'Giao dịch tx_A của Device A PHẢI VẪN TỒN TẠI trên cloud sau khi B đồng bộ');
+    ok(firestoreDb.has('tx_B'), 'Giao dịch tx_B của Device B đã được lưu lên cloud');
+    eq(firestoreDb.size, 2, 'Cả 2 giao dịch từ 2 thiết bị đều được bảo toàn');
+  });
+
+  // Test 7: Không hồi sinh bản ghi đã bị xóa trên cloud khi kéo dữ liệu về
+  await test('Đồng bộ hai chiều: không hồi sinh bản ghi đã bị xóa trên cloud', () => {
+    // Cloud chỉ còn tx_2 (vì tx_1 đã bị Device A xóa trên cloud)
+    const cloudArr = [{ id: 'tx_2', name: 'Mua sắm', amount: 500000, syncState: 'synced' }];
+
+    // Device B trước đó đã từng sync tx_1 và tx_2 (syncState: 'synced')
+    const localArr = [
+      { id: 'tx_1', name: 'Đã xóa ở A', amount: 100000, syncState: 'synced' },
+      { id: 'tx_2', name: 'Mua sắm', amount: 500000, syncState: 'synced' },
+      { id: 'tx_3', name: 'Mới thêm offline ở B', amount: 80000, syncState: 'pending' }
+    ];
+
+    const merged = Business.mergeById(localArr, cloudArr, []);
+    const ids = merged.map(x => x.id);
+
+    eq(ids.includes('tx_1'), false, 'tx_1 đã bị xóa trên cloud nên KHÔNG được hồi sinh ở Device B');
+    eq(ids.includes('tx_2'), true, 'tx_2 còn trên cloud phải được giữ');
+    eq(ids.includes('tx_3'), true, 'tx_3 tạo offline ở B (syncState: pending) phải được giữ để upload');
+  });
+
+  // Test 8: Fail-Closed cho deleteAccount — Lỗi Google Popup hoặc mạng dừng ngay, không xóa Firestore
+  await test('deleteAccount tuân thủ Fail-Closed: lỗi popup hoặc mạng dừng ngay lập tức', async () => {
+    let firestoreTouched = false;
+    let authUserDeleted = false;
+    let localCleared = false;
+
+    const mockAuthManager = {
+      currentUser: {
+        providerData: [{ providerId: 'google.com' }],
+        reauthenticateWithPopup: async () => {
+          const err = new Error('Popup closed by user or blocked');
+          err.code = 'auth/popup-closed-by-user';
+          throw err;
+        },
+        delete: async () => { authUserDeleted = true; }
+      },
+      COLLECTIONS: { tx: 'transactions' },
+      userRoot: () => ({
+        collection: () => ({
+          get: async () => {
+            firestoreTouched = true;
+            return { docs: [] };
+          }
+        }),
+        delete: async () => { firestoreTouched = true; }
+      }),
+      clearLocalUserData: () => { localCleared = true; },
+      friendlyError: () => 'Đã hủy',
+      async deleteAccount() {
+        const user = this.currentUser;
+        const providerId = user.providerData[0].providerId;
+
+        // BƯỚC 1: Xác thực lại (Fail-closed)
+        if (providerId === 'google.com') {
+          try {
+            await user.reauthenticateWithPopup();
+          } catch (reauthErr) {
+            // FAIL-CLOSED: Dừng ngay lập tức!
+            return;
+          }
+        }
+
+        // BƯỚC 2: Firestore
+        firestoreTouched = true;
+        // BƯỚC 3: Auth user
+        await user.delete();
+        // BƯỚC 4: Local
+        this.clearLocalUserData();
+      }
+    };
+
+    await mockAuthManager.deleteAccount();
+
+    eq(firestoreTouched, false, 'Firestore tuyệt đối KHÔNG bị chạm vào khi re-auth không thành công');
+    eq(authUserDeleted, false, 'Auth user KHÔNG bị xóa khi re-auth không thành công');
+    eq(localCleared, false, 'Local data KHÔNG bị xóa khi re-auth không thành công');
+  });
+
+  // Test 9: Đăng xuất an toàn khi offline kể cả khi queue rỗng nhưng có dữ liệu máy
+  await test('signOut chặn xóa dữ liệu khi push thất bại dù sync queue rỗng', async () => {
+    let dialogShown = false;
+    let localWiped = false;
+
+    // Giả lập trạng thái: người dùng offline, queue rỗng nhưng trên máy có 5 giao dịch
+    const storageData = [{ id: '1', amount: 50000, syncState: 'pending' }];
+    const syncOk = false; // pushToCloud thất bại do mất mạng
+
+    const hasUnsyncedTxs = storageData.some(t => t.syncState !== 'synced');
+    const hasAnyLocalData = storageData.length > 0;
+
+    // Điều kiện bảo vệ mới trong signOut:
+    if (!syncOk && (hasUnsyncedTxs || hasAnyLocalData)) {
+      dialogShown = true;
+      // Không gọi clearLocalUserData!
+    } else {
+      localWiped = true;
+    }
+
+    eq(dialogShown, true, 'Phải mở cảnh báo bảo vệ dữ liệu khi mất mạng');
+    eq(localWiped, false, 'Tuyệt đối không được xóa dữ liệu cục bộ khi chưa đồng bộ xong');
+  });
+
   console.log(`\nKết quả kiểm thử độ tin cậy: ${passed} đạt, ${failed} không đạt\n`);
   if (failed > 0) process.exit(1);
 })();

@@ -151,6 +151,7 @@ const Storage = {
     const filtered = transactions.filter(t => t.id !== id);
     if (filtered.length === transactions.length) return false;
     if (!this.saveTransactions(filtered)) return false;
+    if (typeof SyncManager !== 'undefined') SyncManager.markDeleted(id);
     return true;
   },
 

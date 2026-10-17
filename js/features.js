@@ -1,4 +1,4 @@
-﻿/**
+/**
  * features.js — Ví/tài khoản, Giao dịch định kỳ, Mục tiêu tiết kiệm,
  *               Ảnh hóa đơn, Đa tiền tệ, Xuất PDF
  */
@@ -121,6 +121,10 @@ const Features = {
       }
       Storage.saveTransactions(txs);
       this.saveWallets(this.getWallets().filter(w => w.id !== id));
+      if (typeof SyncManager !== 'undefined') {
+        SyncManager.markDeleted(id);
+        doomed.forEach(d => SyncManager.markDeleted(d.id));
+      }
       this.renderWalletList();
       this.renderWalletOptions();
       TransactionManager.renderTransactions();
@@ -247,6 +251,7 @@ const Features = {
       message: goal ? `Bạn có chắc muốn xóa mục tiêu "${goal.name}"?` : 'Bạn có chắc muốn xóa mục tiêu này?',
       onConfirm: () => {
         this.saveGoals(this.getGoals().filter(g => g.id !== id));
+        if (typeof SyncManager !== 'undefined') SyncManager.markDeleted(id);
         this.renderGoals();
         Toast.success('Đã xóa mục tiêu!');
       }
@@ -330,6 +335,7 @@ const Features = {
 
   deleteRecurring(id) {
     this.saveRecurring(this.getRecurring().filter(r => r.id !== id));
+    if (typeof SyncManager !== 'undefined') SyncManager.markDeleted(id);
     this.renderRecurringList();
   },
 

@@ -26,16 +26,19 @@ const AIEntry = {
   // ============================================================
   INCOME_WORDS: [
     'lương', 'luong', 'salary', 'thưởng', 'thuong', 'bonus', 'cộng', 'cong',
-    'nhận', 'nhan', 'thu', 'bán', 'ban', 'lãi', 'lai', 'hoàn', 'hoan',
-    'refund', 'hoàn tiền', 'hoan tien', 'chuyển vào', 'chuyen vao', 'gửi vô'
+    'nhận', 'nhan', 'thu nhập', 'thu nhap', 'tiền thu', 'tien thu', 'thu tiền', 'thu tien',
+    'thu nợ', 'thu no', 'khoản thu', 'khoan thu', 'bán', 'ban', 'lãi', 'lai',
+    'hoàn tiền', 'hoan tien', 'hoàn', 'hoan', 'refund', 'chuyển vào', 'chuyen vao', 'gửi vô'
   ],
 
   EXPENSE_WORDS: [
     'ăn', 'an', 'mua', 'uống', 'uong', 'cà phê', 'ca phe', 'trà', 'tra',
     'xăng', 'xang', 'đổ xăng', 'do xang', 'điện', 'dien', 'nước', 'nuoc',
-    'wifi', 'internet', 'thuê', 'thue', 'mua sắm', 'mua sam', 'quần', 'quan',
-    'áo', 'ao', 'giày', 'giay', 'sách', 'sach', 'học', 'hoc', 'khám', 'kham',
-    'thuốc', 'thuoc', 'phim', 'vé', 've', 'gửi', 'gui', 'nộp', 'nop', 'trả', 'tra',
+    'wifi', 'internet', 'thuê', 'thue', 'tiền nhà', 'tien nha', 'tiền phòng', 'tien phong',
+    'tiền trọ', 'tien tro', 'mua sắm', 'mua sam', 'quần', 'quan',
+    'áo', 'ao', 'giày', 'giay', 'sách', 'sach', 'học', 'hoc', 'học phí', 'hoc phi',
+    'khám', 'kham', 'thuốc', 'thuoc', 'tiền thuốc', 'tien thuoc', 'phim', 'vé', 've',
+    'gửi', 'gui', 'nộp', 'nop', 'trả', 'tra', 'tốn', 'ton', 'hết', 'het',
     'đóng', 'dong', 'phí', 'phi', 'rượu', 'ruou', 'bia'
   ],
 
@@ -44,9 +47,9 @@ const AIEntry = {
     food: ['ăn', 'an', 'cơm', 'phở', 'pho', 'bún', 'bun', 'bánh mì', 'banh mi', 'cơm tấm', 'com tam', 'bánh', 'banh', 'uống', 'uong', 'uống nước', 'uong nuoc', 'nước mía', 'nuoc mia', 'sinh tố', 'sinh to', 'cà phê', 'ca phe', 'trà sữa', 'tra sua', 'trà đào', 'tra dao', 'trà đá', 'tra da', 'trà', 'tra', 'quán', 'quan', 'ăn uống', 'an uong', 'đồ ăn', 'do an', 'bia', 'rượu', 'ruou', 'nhà hàng', 'nha hang'],
     transport: ['xăng', 'xang', 'đổ xăng', 'do xang', 'grab', 'taxi', 'xe', 'bus', 'tàu', 'tau', 'máy bay', 'may bay', 'di chuyển', 'di chuyen', 'gửi xe', 'gui xe', 'vô xe', 'đi xe', 'di xe', 'đi lại', 'di lai'],
     shopping: ['mua', 'mua sắm', 'mua sam', 'quần', 'quan', 'áo', 'ao', 'giày', 'giay', 'mỹ phẩm', 'my pham', 'shop', 'shopee', 'lazada', 'tiki'],
-    bills: ['điện', 'dien', 'tiền nước', 'tien nuoc', 'hóa đơn nước', 'hoa don nuoc', 'nước máy', 'nuoc may', 'tiền điện', 'tien dien', 'internet', 'wifi', 'điện thoại', 'dien thoai', 'hóa đơn', 'hoa don', 'bill', 'tiền mạng', 'tien mang', 'tiền trọ', 'tien tro', 'tiền phòng', 'tien phong', 'tiền nhà', 'tien nha'],
+    bills: ['điện', 'dien', 'tiền nước', 'tien nuoc', 'hóa đơn nước', 'hoa don nuoc', 'nước máy', 'nuoc may', 'tiền điện', 'tien dien', 'internet', 'wifi', 'điện thoại', 'dien thoai', 'hóa đơn', 'hoa don', 'bill', 'tiền mạng', 'tien mang', 'tiền trọ', 'tien tro', 'tiền phòng', 'tien phong', 'tiền nhà', 'tien nha', 'thuê nhà', 'thue nha', 'thuê phòng', 'thue phong', 'thuê trọ', 'thue tro', 'thuê', 'thue'],
     education: ['học', 'hoc', 'sách', 'sach', 'khóa học', 'khoa hoc', 'học phí', 'hoc phi', 'tập vở'],
-    health: ['thuốc', 'thuoc', 'khám', 'kham', 'bệnh', 'benh', 'viện phí', 'vien phi', 'y tế', 'y te', 'nha khoa'],
+    health: ['thuốc', 'thuoc', 'tiền thuốc', 'tien thuoc', 'mua thuốc', 'mua thuoc', 'uống thuốc', 'uong thuoc', 'khám', 'kham', 'bệnh', 'benh', 'viện phí', 'vien phi', 'y tế', 'y te', 'nha khoa'],
     entertainment: ['phim', 'xem phim', 'giải trí', 'giai tri', 'game', 'nhạc', 'nhac', 'youtube', 'netflix', 'vui chơi', 'vui choi'],
     gift: ['quà', 'qua', 'tặng', 'tang', 'sinh nhật', 'sinh nhat', 'biếu', 'bieu', 'lì xì', 'li xi', 'mừng tuổi', 'mung tuoi'],
     freelance: ['freelance', 'dự án', 'du an', 'khách hàng', 'khach hang', 'làm thêm', 'lam them'],
@@ -226,16 +229,38 @@ const AIEntry = {
 
   /** Suy đoán loại: thu hay chi */
   detectType(clause) {
-    // 1. Kiểm tra ưu tiên các từ khóa thu nhập rõ ràng
-    const hasIncomeStrong = /(?:^|[^\p{L}\p{N}])(?:\+|nhận|nhan|lương|luong|thưởng|thuong|bonus|cộng|cong|thu|lãi|lai|hoàn|hoan|refund|gửi vào|chuyển vào)(?=[^\p{L}\p{N}]|$)/iu.test(clause);
-    if (hasIncomeStrong) return 'income';
+    const raw = String(clause || '').trim();
+    if (!raw) return 'expense';
 
-    const norm = Utils.normalizeText(clause);
-    const isIncome = this.INCOME_WORDS.some(w => norm.includes(Utils.normalizeText(w)));
-    const isExpense = this.EXPENSE_WORDS.some(w => norm.includes(Utils.normalizeText(w)));
-    if (isIncome && !isExpense) return 'income';
+    // 1. Kiểm tra ưu tiên các từ khóa thu/chi rõ ràng (nguyên từ)
+    const hasIncomeStrong = /(?:^|[^\p{L}\p{N}])(?:\+|nhận|nhan|lương|luong|thưởng|thuong|bonus|cộng|cong|lãi|lai|hoàn tiền|hoan tien|refund|gửi vào|chuyển vào|được chuyển|thu nhập|thu nhap|thu nợ|thu no|thu tiền|thu tien)(?=[^\p{L}\p{N}]|$)/iu.test(raw);
+    const hasExpenseStrong = /(?:^|[^\p{L}\p{N}])(?:-|chi|mua|thuê|thue|trả|tra|tốn|ton|hết|het|đóng|dong|nộp|nop|tiền thuốc|thuốc|thuoc|tiền nhà|tien nha|tiền phòng|tien phong|khám|kham|học phí|hoc phi)(?=[^\p{L}\p{N}]|$)/iu.test(raw);
+
+    if (hasExpenseStrong && !hasIncomeStrong) return 'expense';
+    if (hasIncomeStrong && !hasExpenseStrong) return 'income';
+    if (hasExpenseStrong && hasIncomeStrong) {
+      // Khi cả hai xuất hiện (ví dụ: "dùng tiền lương mua thuốc 120k"), hành động chính là mua thuốc -> chi tiêu
+      return 'expense';
+    }
+
+    const norm = Utils.normalizeText(raw);
+    const padded = ' ' + norm + ' ';
+
+    const matchWord = (w) => {
+      const nw = Utils.normalizeText(w).trim();
+      if (!nw) return false;
+      // Khớp nguyên từ (word boundary) tránh bắt nhầm xâu con (như "thu" trong "thuoc" hay "thue")
+      return padded.includes(' ' + nw + ' ');
+    };
+
+    const isExpense = this.EXPENSE_WORDS.some(matchWord);
+    const isIncome = this.INCOME_WORDS.some(matchWord);
+
     if (isExpense && !isIncome) return 'expense';
-    return isIncome ? 'income' : 'expense';
+    if (isIncome && !isExpense) return 'income';
+    if (isExpense && isIncome) return 'expense';
+
+    return 'expense';
   },
 
   /** Suy đoán danh mục theo từ khoá */

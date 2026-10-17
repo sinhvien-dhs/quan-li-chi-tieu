@@ -522,21 +522,31 @@ const AuthManager = {
       try {
         const syncPromise = this.pushToCloud();
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 1500));
-        await Promise.race([syncPromise, timeoutPromise]);
+        const res = await Promise.race([syncPromise, timeoutPromise]);
+        if (res !== true) syncOk = false;
       } catch (e) {
         console.warn('Lỗi hoặc timeout khi đồng bộ trước đăng xuất:', e);
         syncOk = false;
       }
     }
 
-    // Kiểm tra còn thay đổi chưa được đẩy lên cloud (queue hoặc tombstone hoặc sync thất bại)
-    const hasPending = (typeof SyncManager !== 'undefined') &&
+    // Kiểm tra còn dữ liệu địa phương hoặc thay đổi chưa được đẩy lên cloud
+    const localTxs = (typeof Storage !== 'undefined' && typeof Storage.getTransactions === 'function')
+      ? (Storage.getTransactions() || [])
+      : (typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? (Storage.get('spendwise_transactions', []) || []) : []);
+    const hasUnsyncedTxs = localTxs.some(t => t && t.syncState !== 'synced');
+    const hasPendingChanges = (typeof SyncManager !== 'undefined') &&
       (SyncManager.getQueue().length > 0 || SyncManager.getTombstones().length > 0);
+    const hasAnyLocalData = localTxs.length > 0 ||
+      (typeof Features !== 'undefined' && Features.getWallets().length > 0) ||
+      (typeof Features !== 'undefined' && Features.getGoals().length > 0) ||
+      (typeof Features !== 'undefined' && Features.getRecurring().length > 0);
 
-    if (!syncOk && hasPending) {
+    // Nếu đồng bộ thất bại/timeout VÀ máy có dữ liệu cần bảo vệ
+    if (!syncOk && (hasUnsyncedTxs || hasPendingChanges || hasAnyLocalData)) {
       ConfirmDialog.show({
         title: 'Chưa đồng bộ xong dữ liệu',
-        message: 'Dữ liệu mới nhất chưa được lưu lên máy chủ (có thể do mất mạng). Nếu đăng xuất lúc này, các thay đổi trên máy có thể bị mất. Bạn có muốn tải file sao lưu trước khi đăng xuất?',
+        message: 'Dữ liệu mới nhất chưa được xác nhận lưu lên máy chủ (có thể do mất mạng hoặc quá thời gian chờ). Nếu đăng xuất lúc này, các thay đổi trên máy có thể bị mất. Bạn có muốn tải file sao lưu trước khi đăng xuất?',
         confirmText: 'Sao lưu & Đăng xuất',
         onConfirm: async () => {
           if (typeof ExportManager !== 'undefined' && typeof ExportManager.exportJSON === 'function') {
@@ -548,7 +558,7 @@ const AuthManager = {
       return;
     }
 
-    if (hasPending) {
+    if (hasUnsyncedTxs || hasPendingChanges) {
       ConfirmDialog.show({
         title: 'Còn thay đổi chưa đồng bộ',
         message: 'Bạn có thay đổi chưa được xác nhận đồng bộ lên máy chủ. Bạn có chắc chắn muốn đăng xuất?',
@@ -562,11 +572,13 @@ const AuthManager = {
   },
 
   /**
-   * Xóa tài khoản + toàn bộ dữ liệu trên cloud:
+   * Xóa tài khoản + toàn bộ dữ liệu trên cloud (Tuân thủ nguyên tắc Fail-Closed):
    * 1. Xác thực lại danh tính trước (re-auth) để tránh lỗi requires-recent-login
+   *    Nếu thất bại (kể cả đóng popup hoặc lỗi mạng) → DỪNG NGAY, không chạm vào Firestore.
    * 2. Chỉ khi xác thực thành công mới dọn dẹp Firestore (cả collection mới + legacy 'data')
-   * 3. Xóa user trên Firebase Auth
-   * 4. Cuối cùng mới xóa local storage, tuyệt đối không mất dữ liệu giữa chừng
+   *    Nếu xóa bất kỳ collection nào gặp lỗi → DỪNG NGAY, không xóa Auth user và không xóa local.
+   * 3. Xóa user trên Firebase Auth.
+   * 4. Cuối cùng mới xóa local storage sau khi cloud đã xóa hoàn toàn thành công.
    */
   async deleteAccount() {
     if (!this.currentUser) { Toast.error('Bạn chưa đăng nhập!'); return; }
@@ -588,9 +600,11 @@ const AuthManager = {
               } catch (reauthErr) {
                 if (reauthErr.code === 'auth/popup-closed-by-user') {
                   Toast.warning('Đã hủy xác thực — dữ liệu tài khoản được giữ an toàn.');
-                  return;
+                } else {
+                  console.warn('Re-auth error:', reauthErr);
+                  Toast.error('Không thể xác thực lại danh tính: ' + this.friendlyError(reauthErr));
                 }
-                console.warn('Re-auth popup note:', reauthErr);
+                return; // Fail-Closed: Dừng toàn bộ, tuyệt đối không xóa Firestore
               }
             } else if (providerId === 'password' && typeof user.reauthenticateWithCredential === 'function') {
               const pass = (typeof window !== 'undefined' && typeof window.prompt === 'function')
@@ -609,7 +623,7 @@ const AuthManager = {
                 await user.reauthenticateWithCredential(cred);
               } catch (credErr) {
                 Toast.error('Mật khẩu không chính xác — đã hủy thao tác để bảo vệ dữ liệu.');
-                return;
+                return; // Fail-Closed: Dừng toàn bộ
               }
             }
           }
@@ -618,13 +632,9 @@ const AuthManager = {
           const root = this.userRoot();
           const targetCollections = Object.values(this.COLLECTIONS).concat(['data']);
           for (const colName of targetCollections) {
-            try {
-              const snap = await root.collection(colName).get();
-              if (snap && snap.docs && snap.docs.length > 0) {
-                await Promise.all(snap.docs.map(d => d.ref.delete()));
-              }
-            } catch (colErr) {
-              console.warn(`Lỗi khi dọn bộ sưu tập ${colName}:`, colErr);
+            const snap = await root.collection(colName).get();
+            if (snap && snap.docs && snap.docs.length > 0) {
+              await Promise.all(snap.docs.map(d => d.ref.delete()));
             }
           }
           await root.collection('budgets').doc('main').delete().catch(() => {});
@@ -806,6 +816,7 @@ const AuthManager = {
         cloud[key] = snap.docs.map(d => {
           const data = Object.assign({}, d.data());
           if (!data.id) data.id = d.id;
+          data.syncState = 'synced';
           return data;
         });
       }
@@ -939,22 +950,24 @@ const AuthManager = {
         const real = (typeof DemoData !== 'undefined') ? DemoData.filterForCloud(list) : list;
         const toPush = tombs.length ? real.filter(t => !tombs.includes(t.id)) : real;
 
-        const existingSnap = await root.collection(colName).get();
-        const existingIds = new Set(existingSnap.docs.map(d => d.id));
-
         const ops = [];
         toPush.forEach(item => {
           if (!item || !item.id) return;
           const payload = Object.assign({}, item);
           delete payload.syncState;      // trạng thái chỉ có ý nghĩa cục bộ
           ops.push({ path: colName + '/' + item.id, payload: payload });
-          existingIds.delete(item.id);
         });
 
-        // Xóa trên server các bản ghi không còn ở máy này (xóa thật, không tombstone)
-        existingIds.forEach(id => {
-          ops.push({ path: colName + '/' + id, payload: null }); // null = delete
-        });
+        // Chỉ xóa trên server những tài liệu NẰM TRONG TOMBSTONES (người dùng máy này chủ động xóa).
+        // Tuyệt đối KHÔNG xóa các tài liệu cloud chỉ vì máy này chưa tải về (bảo vệ đa thiết bị).
+        if (tombs.length > 0) {
+          const existingSnap = await root.collection(colName).get();
+          existingSnap.docs.forEach(d => {
+            if (tombs.includes(d.id)) {
+              ops.push({ path: colName + '/' + d.id, payload: null });
+            }
+          });
+        }
 
         // Ghi theo lô 300 op
         for (let i = 0; i < ops.length; i += 300) {
@@ -1008,6 +1021,27 @@ const AuthManager = {
         localStorage.setItem(SyncManager.LAST_SYNC_KEY, now);
         SyncManager.updateBadge();
       }
+
+      // Đánh dấu toàn bộ giao dịch địa phương đã được đồng bộ an toàn (synced)
+      try {
+        const txs = (typeof Storage !== 'undefined' && typeof Storage.getTransactions === 'function')
+          ? (Storage.getTransactions() || [])
+          : (typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? (Storage.get('spendwise_transactions', []) || []) : []);
+        let txsChanged = false;
+        const updatedTxs = txs.map(t => {
+          if (t && t.syncState !== 'synced') {
+            txsChanged = true;
+            return Object.assign({}, t, { syncState: 'synced' });
+          }
+          return t;
+        });
+        if (txsChanged) {
+          localStorage.setItem('spendwise_transactions', JSON.stringify(updatedTxs));
+        }
+      } catch (err) {
+        console.warn('Cập nhật syncState thất bại:', err);
+      }
+
       return true;
     } catch (e) {
       console.error('pushToCloud:', e);

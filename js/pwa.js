@@ -76,12 +76,20 @@ const PWAManager = {
       Toast.show('Có bản cập nhật mới. Trang sẽ tải lại ngay khi bạn xong thao tác nhập.', 'info');
     }
 
+    let warnedLongWait = false;
     let waited = 0;
     const timer = setInterval(() => {
       waited += 2000;
-      if (!isBusy() || waited >= 120000) {
+      if (!isBusy()) {
         clearInterval(timer);
         window.location.reload();
+        return;
+      }
+      if (waited >= 120000 && !warnedLongWait) {
+        warnedLongWait = true;
+        if (typeof Toast !== 'undefined') {
+          Toast.show('Bản cập nhật mới đã sẵn sàng. Trang sẽ tự tải lại ngay khi bạn đóng biểu mẫu.', 'info');
+        }
       }
     }, 2000);
   },

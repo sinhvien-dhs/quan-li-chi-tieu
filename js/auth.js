@@ -150,7 +150,7 @@ const AuthManager = {
         }
         localStorage.setItem('spendwise_uid', user.uid);
 
-        await this.pullFromCloud();
+        await this.pullFromCloud({ silent: true });
 
         // Chạy hướng dẫn người dùng mới nếu chưa từng xem
         if (typeof PWAManager !== 'undefined' && typeof PWAManager.initOnboarding === 'function') {
@@ -702,8 +702,9 @@ const AuthManager = {
   /**
    * Tải dữ liệu từ cloud và gộp với dữ liệu cục bộ
    */
-  async pullFromCloud() {
+  async pullFromCloud(options = {}) {
     if (!this.currentUser) return;
+    const silent = Boolean(options && options.silent);
 
     // Giữ bản local (dùng khi chưa đăng nhập) để gộp
     const local = {};
@@ -747,7 +748,7 @@ const AuthManager = {
         // Tài khoản mới → đẩy dữ liệu cục bộ (nếu có) lên cloud
         await this.pushToCloud();
         this.rerender();
-        Toast.success('Đã tạo kho dữ liệu trên máy chủ!');
+        if (!silent) Toast.success('Đã tạo kho dữ liệu trên máy chủ!');
         return;
       }
 
@@ -813,11 +814,15 @@ const AuthManager = {
       }
 
       this.rerender();
-      Toast.success('Đã đồng bộ dữ liệu từ máy chủ!');
+      if (!silent) {
+        Toast.success('Đã đồng bộ dữ liệu từ máy chủ!');
+      }
       await this.pushToCloud();
     } catch (e) {
       console.error(e);
-      Toast.error('Không tải được dữ liệu từ máy chủ (có thể đang offline).');
+      if (!silent) {
+        Toast.error('Không tải được dữ liệu từ máy chủ (có thể đang offline).');
+      }
     }
   },
 
@@ -909,6 +914,8 @@ const AuthManager = {
       if (typeof SyncManager !== 'undefined') {
         SyncManager.clearTombstones();
         SyncManager.clearQueue();
+        localStorage.setItem(SyncManager.LAST_SYNC_KEY, now);
+        SyncManager.updateBadge();
       }
       return true;
     } catch (e) {
@@ -920,17 +927,24 @@ const AuthManager = {
   },
 
   /**
-   * Debounce push mỗi khi dữ liệu đổi
+   * Debounce push mỗi khi dữ liệu đổi (tự động chạy ngầm, không hiện toast làm phiền)
    */
   schedulePush() {
     if (!this.currentUser) return;
     clearTimeout(this._pushTimer);
     this._pushTimer = setTimeout(() => {
       this.pushToCloud()
-        .then(ok => { if (ok) Toast.success('Đã lưu lên máy chủ!'); })
-        .catch(() => {
-          // Giữ hàng đợi để thử lại khi có mạng
-          Toast.warning('Chưa đồng bộ được — sẽ thử lại khi có mạng.');
+        .then(ok => {
+          if (ok && typeof SyncManager !== 'undefined') {
+            SyncManager.updateBadge();
+          }
+        })
+        .catch(err => {
+          // Lưu ngầm thất bại (offline/mạng yếu) → chỉ ghi log, không hiện toast spam đè thông báo khác
+          console.warn('Tự động lưu ngầm chưa thành công (sẽ tự thử lại khi có mạng):', err);
+          if (typeof SyncManager !== 'undefined') {
+            SyncManager.updateBadge();
+          }
         });
     }, 1500);
   },

@@ -946,6 +946,10 @@ body {
   border-left: 4px solid var(--warning);
 }
 
+.toast--info {
+  border-left: 4px solid var(--primary);
+}
+
 .toast__icon {
   font-size: var(--font-size-lg);
 }
@@ -953,6 +957,7 @@ body {
 .toast--success .toast__icon { color: var(--success-text); }
 .toast--error .toast__icon { color: var(--danger-text); }
 .toast--warning .toast__icon { color: var(--warning); }
+.toast--info .toast__icon { color: var(--primary); }
 
 .toast__message {
   flex: 1;

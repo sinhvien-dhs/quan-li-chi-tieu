@@ -11,21 +11,27 @@ const Toast = {
   },
 
   show(message, type = 'success') {
-    // Chỉ hiển thị 1 toast tại một thời điểm, tránh chồng lấn
-    if (this.container) {
-      this.container.innerHTML = '';
+    if (!this.container) {
+      this.container = document.getElementById('toastContainer');
+    }
+    if (!this.container) return;
+
+    // Giữ tối đa 2 toast hiển thị đồng thời, không xóa đột ngột thông báo trước
+    while (this.container.children.length >= 2) {
+      this.container.removeChild(this.container.firstChild);
     }
 
     const icons = {
       success: 'fa-circle-check',
       error: 'fa-circle-xmark',
-      warning: 'fa-triangle-exclamation'
+      warning: 'fa-triangle-exclamation',
+      info: 'fa-circle-info'
     };
 
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
     toast.innerHTML = `
-      <i class="fa-solid ${icons[type]} toast__icon"></i>
+      <i class="fa-solid ${icons[type] || 'fa-circle-check'} toast__icon"></i>
       <span class="toast__message"></span>
       <button class="toast__close" aria-label="Đóng" style="background:none;border:none;color:inherit;cursor:pointer;padding:0 0 0 8px;font-size:14px">
         <i class="fa-solid fa-xmark"></i>
@@ -37,21 +43,26 @@ const Toast = {
 
     this.container.appendChild(toast);
 
-    // Hiệu ứng theo mẫu: hiện dần (fadein 0.5s), giữ 3s, rồi mờ dần (fadeout 0.5s)
-    // fadein 0.5s → giữ hiển thị 2s → fadeout 0.5s
-    toast.style.animation = 'fadein 0.5s forwards, fadeout 0.5s 2.5s forwards';
-    setTimeout(() => toast.remove(), 3000);
+    // Hiệu ứng hiện dần và tự biến mất sau 3s
+    toast.style.animation = 'fadein 0.3s forwards, fadeout 0.4s 2.6s forwards';
+    const timer = setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 3000);
 
-    // Bấm ✕ để đóng ngay (giữ nguyên hiệu ứng fadeout)
+    // Bấm ✕ để đóng ngay
     toast.querySelector('.toast__close').addEventListener('click', () => {
-      toast.style.animation = 'fadeout 0.3s forwards';
-      setTimeout(() => toast.remove(), 300);
+      clearTimeout(timer);
+      toast.style.animation = 'fadeout 0.2s forwards';
+      setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+      }, 200);
     });
   },
 
   success(msg) { this.show(msg, 'success'); },
   error(msg) { this.show(msg, 'error'); },
-  warning(msg) { this.show(msg, 'warning'); }
+  warning(msg) { this.show(msg, 'warning'); },
+  info(msg) { this.show(msg, 'info'); }
 };
 
 // ===== Trợ giúp đóng modal bằng phím Esc (hỗ trợ bàn phím) =====

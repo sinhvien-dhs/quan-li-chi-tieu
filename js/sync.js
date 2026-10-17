@@ -100,12 +100,34 @@ const SyncManager = {
   },
 
   /**
-   * Đồng bộ hàng đợi: POST lên server nếu có URL, nếu không thì chỉ ghi nhận cục bộ
+   * Đồng bộ hàng đợi / đám mây:
+   * - Khi người dùng bấm nút: hiển thị thông báo kết quả rõ ràng
+   * - Khi hệ thống tự chạy ngầm (reconnect mạng): chạy trong im lặng, không spam toast
    */
-  async syncNow() {
+  async syncNow(options = { manual: true }) {
+    const isManual = Boolean(options && options.manual);
+
+    // Ưu tiên đồng bộ hai chiều Firebase Firestore nếu đang đăng nhập
+    if (typeof AuthManager !== 'undefined' && AuthManager.currentUser) {
+      try {
+        await AuthManager.pushToCloud();
+        await AuthManager.pullFromCloud({ silent: true });
+        this.updateBadge();
+        if (isManual) {
+          Toast.success('Đã đồng bộ dữ liệu với máy chủ thành công!');
+        }
+      } catch (err) {
+        console.error('Đồng bộ thất bại:', err);
+        if (isManual) {
+          Toast.error('Đồng bộ thất bại, vui lòng kiểm tra kết nối mạng!');
+        }
+      }
+      return;
+    }
+
     const queue = this.getQueue();
     if (queue.length === 0) {
-      Toast.success('Dữ liệu đã đồng bộ, không có thay đổi mới!');
+      if (isManual) Toast.success('Dữ liệu đã đồng bộ, không có thay đổi mới!');
       this.updateBadge();
       return;
     }
@@ -121,27 +143,32 @@ const SyncManager = {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         this.clearQueue();
         localStorage.setItem(this.LAST_SYNC_KEY, new Date().toISOString());
-        Toast.success(`Đã đồng bộ ${queue.length} thay đổi lên máy chủ!`);
+        if (isManual) Toast.success(`Đã đồng bộ ${queue.length} thay đổi lên máy chủ!`);
       } catch (err) {
-        Toast.error('Đồng bộ thất bại, sẽ thử lại khi có mạng!');
+        if (isManual) Toast.error('Đồng bộ thất bại, sẽ thử lại khi có mạng!');
       }
     } else {
       // Không cấu hình server: xác nhận đồng bộ cục bộ
       this.clearQueue();
       localStorage.setItem(this.LAST_SYNC_KEY, new Date().toISOString());
-      Toast.success(`Đã đồng bộ cục bộ ${queue.length} thay đổi (chưa cấu hình server).`);
+      if (isManual) Toast.success(`Đã đồng bộ cục bộ ${queue.length} thay đổi (chưa cấu hình server).`);
     }
     this.updateBadge();
   },
 
   onOnline() {
-    Toast.success('Đã có mạng — đang đồng bộ dữ liệu...');
+    this.renderConnectionBanner();
     this.updateBadge();
-    setTimeout(() => this.syncNow(), 800);
+    // Tự động đồng bộ nền khi có mạng trở lại mà không spam popup
+    if (typeof AuthManager !== 'undefined' && AuthManager.currentUser) {
+      AuthManager.schedulePush();
+    } else {
+      setTimeout(() => this.syncNow({ manual: false }), 800);
+    }
   },
 
   onOffline() {
-    Toast.warning('Mất kết nối mạng — dữ liệu sẽ được lưu tạm và đồng bộ sau.');
+    this.renderConnectionBanner();
     this.updateBadge();
   },
 

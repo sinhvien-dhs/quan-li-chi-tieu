@@ -13,11 +13,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // Ngày hợp lệ: YYYY-MM-DD, tháng 01-12, ngày 01-31
+    // Ngày hợp lệ: YYYY-MM-DD, chặn ngày không tồn tại (như 31 ở tháng 30 ngày hoặc tháng 2)
     function validDate(d) {
       return d is string
         && d.size() == 10
-        && d.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
+        && d.matches('^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|[12][0-9]))$');
     }
 
     function validTs(v) {

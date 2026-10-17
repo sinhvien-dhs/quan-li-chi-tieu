@@ -2,10 +2,10 @@
 
 Ứng dụng web **Single Page Application (SPA)** chuẩn **Progressive Web App (PWA)** giúp theo dõi thu chi cá nhân, phân tích ngân sách theo danh mục, chia tiền nhóm VietQR, nhập nhanh bằng AI và trực quan hoá tài chính bằng biểu đồ — hoạt động mượt mà cả khi **offline**.
 
-![SpendWise](https://img.shields.io/badge/SpendWise-v81-6C63FF?style=for-the-badge&logo=wallet)
+![SpendWise](https://img.shields.io/badge/SpendWise-v82-6C63FF?style=for-the-badge&logo=wallet)
 ![Tech](https://img.shields.io/badge/HTML5%20%7C%20CSS3%20%7C%20VanillaJS-orange?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-00C897?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-87%2F87%20Passed%20(100%25)-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-101%2F101%20Passed%20(100%25)-brightgreen?style=for-the-badge)
 ![Zero Dependency](https://img.shields.io/badge/Zero%20NPM%20Dependencies-black?style=for-the-badge)
 
 ---
@@ -123,7 +123,7 @@ Truy cập địa chỉ: `http://localhost:8000`
 | **Biểu đồ** | [Chart.js v4](https://www.chartjs.org/) |
 | **Xuất Excel** | [SheetJS (xlsx)](https://sheetjs.com/) |
 | **Thanh toán & QR** | VietQR Specification (Napas 247) |
-| **Offline & PWA** | Service Worker (`sw.js` v81) + Web App Manifest |
+| **Offline & PWA** | Service Worker (`sw.js` v82) + Web App Manifest |
 | **Fonts & Icons** | Inter (Google Fonts), Font Awesome 6 |
 
 ---
@@ -172,14 +172,15 @@ quan-li-chi-tieu/
 │   ├── split.test.js          # Kiểm thử thuật toán chia tiền & VietQR
 │   ├── storage.test.js        # Kiểm thử tầng lưu trữ & cache
 │   ├── rules.lint.js          # Kiểm tra cú pháp Firestore Security Rules
-│   └── rules-debt-check.js    # Kiểm tra payload dữ liệu sổ nợ
+│   ├── rules-debt-check.js    # Kiểm tra payload dữ liệu sổ nợ
+│   └── reliability.test.js    # Kiểm thử độ tin cậy, toàn vẹn dữ liệu & bảo vệ tài khoản
 ├── tools/
 │   └── build.js               # Kịch bản đóng gói bản phát hành dist/ (tối ưu nén)
 ├── dist/                      # Bản phát hành tối ưu hoá (HTML + minified CSS/JS)
 ├── firestore.rules            # Quy tắc bảo mật Firestore đám mây
 ├── index.html                 # Giao diện chính Single Page Application
 ├── manifest.json              # Cấu hình PWA Web App Manifest
-├── sw.js                      # Service Worker quản lý bộ nhớ đệm offline (v81)
+├── sw.js                      # Service Worker quản lý bộ nhớ đệm offline (v82)
 ├── Mo SpendWise.cmd           # Lối tắt chạy app 1-click trên Windows
 └── README.md                  # Tài liệu hướng dẫn sử dụng dự án
 ```
@@ -188,10 +189,10 @@ quan-li-chi-tieu/
 
 ## 🧪 Kiểm Thử Tự Động (Automated Testing)
 
-Dự án tích hợp sẵn **7 bộ kiểm thử độc lập** viết thuần bằng JavaScript chạy trên môi trường Node.js (không cần tải thêm thư viện test bên ngoài):
+Dự án tích hợp sẵn **8 bộ kiểm thử độc lập** viết thuần bằng JavaScript chạy trên môi trường Node.js (không cần tải thêm thư viện test bên ngoài):
 
 ```bash
-# Chạy toàn bộ 7 bộ kiểm thử:
+# Chạy toàn bộ 8 bộ kiểm thử:
 node tests/business.test.js
 node tests/ai.test.js
 node tests/split.test.js
@@ -199,6 +200,7 @@ node tests/storage.test.js
 node tests/auth.test.js
 node tests/rules.lint.js
 node tests/rules-debt-check.js
+node tests/reliability.test.js
 ```
 
 **Kết quả kiểm thử:**
@@ -206,10 +208,11 @@ node tests/rules-debt-check.js
 - ✅ **Phân tích AI & Tiếng lóng (`ai.test.js`):** 9/9 test passed
 - ✅ **Chia tiền & VietQR & Sổ nợ (`split.test.js`):** 20/20 test passed
 - ✅ **Lưu trữ & Dữ liệu (`storage.test.js`):** 25/25 test passed
-- ✅ **Auth Wall & Xác thực (`auth.test.js`):** 5/5 test passed
+- ✅ **Auth Wall & Xác thực (`auth.test.js`):** 9/9 test passed
 - ✅ **Kiểm tra cú pháp Firestore Rules (`rules.lint.js`):** 0 syntax errors
 - ✅ **Kiểm thử payload Sổ nợ Firestore (`rules-debt-check.js`):** 14/14 test passed
-- **Tổng cộng: 87/87 kiểm thử thành công 100%.**
+- ✅ **Độ tin cậy & Toàn vẹn dữ liệu (`reliability.test.js`):** 5/5 test passed
+- **Tổng cộng: 101/101 kiểm thử thành công 100%.**
 
 ---
 
@@ -218,7 +221,7 @@ node tests/rules-debt-check.js
 Dự án cung cấp công cụ tự đóng gói và nén code mà không cần cài đặt Webpack/Vite:
 
 ```bash
-node tools/build.js 81
+node tools/build.js 82
 ```
 
 Thư mục `dist/` sẽ được tạo ra với:

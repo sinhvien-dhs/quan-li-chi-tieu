@@ -22,6 +22,17 @@
     base-uri 'self';
     form-action 'self' https://accounts.google.com https://*.firebaseapp.com">
   <title>SpendWise - Quản Lý Chi Tiêu</title>
+  <link rel="canonical" href="https://sinhvien-dhs.github.io/quan-li-chi-tieu/">
+
+  <!-- Open Graph & Social Meta Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SpendWise - Quản Lý Chi Tiêu Cá Nhân Thông Minh">
+  <meta property="og:description" content="Ứng dụng quản lý tài chính, phân bổ ngân sách, chia tiền nhóm và trợ lý AI thông minh. Miễn phí, an toàn, hỗ trợ PWA offline.">
+  <meta property="og:url" content="https://sinhvien-dhs.github.io/quan-li-chi-tieu/">
+  <meta property="og:image" content="https://sinhvien-dhs.github.io/quan-li-chi-tieu/assets/icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SpendWise - Quản Lý Chi Tiêu Cá Nhân Thông Minh">
+  <meta name="twitter:description" content="Ứng dụng quản lý tài chính, phân bổ ngân sách, chia tiền nhóm và trợ lý AI thông minh.">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +43,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=81">
+  <link rel="manifest" href="manifest.json?v=82">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -114,7 +125,7 @@
       <button type="button" class="settings-btn" id="btnForgotPassword" style="width:100%;justify-content:center;margin-top:var(--space-sm);display:none">
         <i class="fa-solid fa-key"></i> Quên mật khẩu? Nhận link đặt lại qua email
       </button>
-      <button type="button" id="authGoogleBtn" style="width:100%;padding:var(--space-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:9999px;font-weight:600;font-family:var(--font-family);font-size:var(--font-size-base);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--space-sm);box-shadow:var(--shadow-sm);transition:all var(--transition-fast)" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow-sm)'">
+      <button type="button" id="authGoogleBtn" class="auth-google-btn" style="width:100%;padding:var(--space-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:9999px;font-weight:600;font-family:var(--font-family);font-size:var(--font-size-base);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--space-sm);box-shadow:var(--shadow-sm);transition:all var(--transition-fast)">
         <i class="fa-brands fa-google" style="color:#EA4335"></i> Tiếp tục với Google
       </button>
       <button type="button" id="authGoogleRedirectBtn" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:var(--font-size-xs);margin-top:var(--space-xs);cursor:pointer;text-align:center;text-decoration:underline">
@@ -139,7 +150,7 @@
       </div>
       <div class="form__group">
         <label class="form__label" for="registerName"><i class="fa-solid fa-envelope"></i> Email đăng ký</label>
-        <input type="email" class="form__input" id="registerName" placeholder="VD: an123@gmail.com" autocomplete="email" maxlength="60" oninput="document.getElementById('registerNameError').style.display='none'">
+        <input type="email" class="form__input" id="registerName" placeholder="VD: an123@gmail.com" autocomplete="email" maxlength="60">
         <p class="form__hint">Dùng email thật để có thể khôi phục mật khẩu khi quên.</p>
         <p id="registerNameError" style="display:none;color:var(--danger);font-size:var(--font-size-xs);margin-top:var(--space-xs)">
           <i class="fa-solid fa-circle-exclamation"></i> Email này đã được đăng ký!
@@ -1265,7 +1276,7 @@
   </div>
 
   <!-- ===== Toast Container ===== -->
-  <div class="toast-container" id="toastContainer"></div>
+  <div class="toast-container" id="toastContainer" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- ===== Bottom Navigation ===== -->
   <nav class="bottom-nav">

@@ -39,6 +39,15 @@ jobs:
       - name: Lint Firestore security rules
         run: node tests/rules.lint.js
 
+      - name: Test Firestore rules debt model
+        run: node tests/rules-debt-check.js
+
+      - name: Unit test - do tin cay va toan ven du lieu
+        run: node tests/reliability.test.js
+
+      - name: Build release package verification (dist/)
+        run: node tools/build.js 82
+
       - name: Syntax check
         run: |
-          for f in js/*.js; do node --check "$f" || exit 1; done
+          for f in js/*.js tools/*.js; do node --check "$f" || exit 1; done

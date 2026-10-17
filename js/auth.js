@@ -221,6 +221,14 @@ const AuthManager = {
         if (e.key === 'Enter') { e.preventDefault(); this.signIn(); }
       });
     });
+    const regNameEl = document.getElementById('registerName');
+    if (regNameEl) {
+      regNameEl.addEventListener('input', () => {
+        const err = document.getElementById('registerNameError');
+        if (err) err.style.display = 'none';
+      });
+    }
+
     ['registerName', 'registerPassword', 'registerPassword2'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('keydown', (e) => {
@@ -481,19 +489,11 @@ const AuthManager = {
   /**
    * Đăng xuất: đồng bộ dữ liệu nhanh với timeout 1.5s, sau đó luôn hoàn tất đăng xuất
    */
+  /**
+   * Đăng xuất: đồng bộ dữ liệu nhanh và bảo vệ dữ liệu chưa kịp lên server
+   */
   async signOut() {
-    const doSignOut = async () => {
-      if (this.currentUser) {
-        // Cố gắng đồng bộ lên cloud trong 1.5s; nếu lỗi/mạng chậm vẫn tiếp tục đăng xuất an toàn
-        try {
-          const syncPromise = this.pushToCloud();
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 1500));
-          await Promise.race([syncPromise, timeoutPromise]);
-        } catch (e) {
-          console.warn('Lỗi hoặc timeout khi đồng bộ trước đăng xuất:', e);
-        }
-      }
-
+    const doFinalSignOut = async () => {
       this.clearLocalUserData();
       localStorage.removeItem('spendwise_uid');
 
@@ -516,54 +516,135 @@ const AuthManager = {
       Toast.success('Đã đăng xuất thành công!');
     };
 
-    // Cảnh báo nếu còn thay đổi chưa đồng bộ
-    if (typeof SyncManager !== 'undefined' && SyncManager.getQueue().length > 0) {
+    let syncOk = true;
+    if (this.currentUser) {
+      // Cố gắng đồng bộ lên cloud trước khi đăng xuất
+      try {
+        const syncPromise = this.pushToCloud();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 1500));
+        await Promise.race([syncPromise, timeoutPromise]);
+      } catch (e) {
+        console.warn('Lỗi hoặc timeout khi đồng bộ trước đăng xuất:', e);
+        syncOk = false;
+      }
+    }
+
+    // Kiểm tra còn thay đổi chưa được đẩy lên cloud (queue hoặc tombstone hoặc sync thất bại)
+    const hasPending = (typeof SyncManager !== 'undefined') &&
+      (SyncManager.getQueue().length > 0 || SyncManager.getTombstones().length > 0);
+
+    if (!syncOk && hasPending) {
       ConfirmDialog.show({
-        title: 'Còn thay đổi chưa đồng bộ',
-        message: 'Bạn có ' + SyncManager.getQueue().length +
-          ' thay đổi chưa được đồng bộ lên máy chủ. Bạn có chắc chắn muốn đăng xuất?',
-        confirmText: 'Vẫn đăng xuất',
-        onConfirm: doSignOut
+        title: 'Chưa đồng bộ xong dữ liệu',
+        message: 'Dữ liệu mới nhất chưa được lưu lên máy chủ (có thể do mất mạng). Nếu đăng xuất lúc này, các thay đổi trên máy có thể bị mất. Bạn có muốn tải file sao lưu trước khi đăng xuất?',
+        confirmText: 'Sao lưu & Đăng xuất',
+        onConfirm: async () => {
+          if (typeof ExportManager !== 'undefined' && typeof ExportManager.exportJSON === 'function') {
+            try { ExportManager.exportJSON(); } catch (err) { console.warn(err); }
+          }
+          await doFinalSignOut();
+        }
       });
       return;
     }
 
-    await doSignOut();
+    if (hasPending) {
+      ConfirmDialog.show({
+        title: 'Còn thay đổi chưa đồng bộ',
+        message: 'Bạn có thay đổi chưa được xác nhận đồng bộ lên máy chủ. Bạn có chắc chắn muốn đăng xuất?',
+        confirmText: 'Vẫn đăng xuất',
+        onConfirm: doFinalSignOut
+      });
+      return;
+    }
+
+    await doFinalSignOut();
   },
 
   /**
-   * Xóa tài khoản + toàn bộ dữ liệu trên cloud
+   * Xóa tài khoản + toàn bộ dữ liệu trên cloud:
+   * 1. Xác thực lại danh tính trước (re-auth) để tránh lỗi requires-recent-login
+   * 2. Chỉ khi xác thực thành công mới dọn dẹp Firestore (cả collection mới + legacy 'data')
+   * 3. Xóa user trên Firebase Auth
+   * 4. Cuối cùng mới xóa local storage, tuyệt đối không mất dữ liệu giữa chừng
    */
   async deleteAccount() {
     if (!this.currentUser) { Toast.error('Bạn chưa đăng nhập!'); return; }
 
     ConfirmDialog.show({
-      title: 'Xóa tài khoản?',
-      message: 'Toàn bộ dữ liệu trên máy chủ (giao dịch, ví, mục tiêu, ngân sách) sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác!',
+      title: 'Xóa tài khoản và dữ liệu?',
+      message: 'Toàn bộ dữ liệu trên máy chủ (giao dịch, ví, mục tiêu, ngân sách, nợ) sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác!',
       confirmText: 'Xóa tài khoản',
       onConfirm: async () => {
         try {
+          const user = this.currentUser;
+          const providerId = (user.providerData && user.providerData[0]) ? user.providerData[0].providerId : '';
+
+          // BƯỚC 1: Xác thực lại trước nếu môi trường hỗ trợ
+          if (typeof firebase !== 'undefined' && firebase.auth) {
+            if (providerId === 'google.com' && typeof user.reauthenticateWithPopup === 'function') {
+              try {
+                await user.reauthenticateWithPopup(new firebase.auth.GoogleAuthProvider());
+              } catch (reauthErr) {
+                if (reauthErr.code === 'auth/popup-closed-by-user') {
+                  Toast.warning('Đã hủy xác thực — dữ liệu tài khoản được giữ an toàn.');
+                  return;
+                }
+                console.warn('Re-auth popup note:', reauthErr);
+              }
+            } else if (providerId === 'password' && typeof user.reauthenticateWithCredential === 'function') {
+              const pass = (typeof window !== 'undefined' && typeof window.prompt === 'function')
+                ? window.prompt('Nhập mật khẩu tài khoản để xác nhận xóa vĩnh viễn:')
+                : null;
+              if (pass === null) {
+                Toast.info('Đã hủy thao tác xóa tài khoản.');
+                return;
+              }
+              if (!pass) {
+                Toast.error('Vui lòng nhập mật khẩu để xác nhận xóa tài khoản!');
+                return;
+              }
+              try {
+                const cred = firebase.auth.EmailAuthProvider.credential(user.email, pass);
+                await user.reauthenticateWithCredential(cred);
+              } catch (credErr) {
+                Toast.error('Mật khẩu không chính xác — đã hủy thao tác để bảo vệ dữ liệu.');
+                return;
+              }
+            }
+          }
+
+          // BƯỚC 2: Dọn sạch dữ liệu Firestore (bao gồm cả collection cũ 'data' tránh rác tài liệu con)
           const root = this.userRoot();
-          // Xóa từng bộ sưu tập con
-          for (const colName of Object.values(this.COLLECTIONS)) {
-            const snap = await root.collection(colName).get();
-            await Promise.all(snap.docs.map(d => d.ref.delete()));
+          const targetCollections = Object.values(this.COLLECTIONS).concat(['data']);
+          for (const colName of targetCollections) {
+            try {
+              const snap = await root.collection(colName).get();
+              if (snap && snap.docs && snap.docs.length > 0) {
+                await Promise.all(snap.docs.map(d => d.ref.delete()));
+              }
+            } catch (colErr) {
+              console.warn(`Lỗi khi dọn bộ sưu tập ${colName}:`, colErr);
+            }
           }
           await root.collection('budgets').doc('main').delete().catch(() => {});
           await root.collection('settings').doc('main').delete().catch(() => {});
           await root.delete().catch(() => {});
 
-          this.clearLocalUserData();
-          localStorage.removeItem('spendwise_uid');
-
+          // BƯỚC 3: Xóa tài khoản Firebase Auth
           try {
             await this.currentUser.delete();
           } catch (delErr) {
             if (delErr && delErr.code === 'auth/requires-recent-login') {
-              Toast.warning('Vì lý do an toàn của Firebase, vui lòng đăng nhập lại ngay trước khi thực hiện xóa tài khoản!');
+              Toast.warning('Vì lý do bảo mật, vui lòng đăng nhập lại ngay trước khi thực hiện xóa tài khoản!');
               return;
             }
+            throw delErr;
           }
+
+          // BƯỚC 4: Hoàn tất xóa local storage sau khi cloud đã xóa thành công
+          this.clearLocalUserData();
+          localStorage.removeItem('spendwise_uid');
 
           if (this.auth) {
             await this.auth.signOut().catch(() => {});
@@ -577,7 +658,7 @@ const AuthManager = {
           this.showAuthGate();
           Toast.success('Đã xóa tài khoản và toàn bộ dữ liệu.');
         } catch (e) {
-          console.error(e);
+          console.error('Lỗi xóa tài khoản:', e);
           Toast.error('Không xóa được tài khoản: ' + this.friendlyError(e));
         }
       }
@@ -892,9 +973,19 @@ const AuthManager = {
         }
       }
 
-      // Ngân sách & cài đặt (1 tài liệu mỗi loại)
+      // Ngân sách & cài đặt (1 tài liệu mỗi loại, làm sạch limits theo schema Firestore)
+      const rawLimits = Storage.get('spendwise_budgets', {}) || {};
+      const cleanLimits = {};
+      if (rawLimits && typeof rawLimits === 'object') {
+        Object.keys(rawLimits).slice(0, 50).forEach(cat => {
+          const val = Number(rawLimits[cat]);
+          if (typeof cat === 'string' && cat.trim() && !isNaN(val) && val >= 0 && val <= 1000000000000) {
+            cleanLimits[cat.trim().slice(0, 40)] = Math.round(val);
+          }
+        });
+      }
       await root.collection('budgets').doc('main').set({
-        limits: Storage.get('spendwise_budgets', {}) || {},
+        limits: cleanLimits,
         updatedAt: now
       }, { merge: true });
 

@@ -1529,6 +1529,10 @@ html.auth-pending #authOverlay .modal {
   font-weight: 600;
 }
 
+.auth-google-btn:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
 /* ===== Header User Profile & Logout ===== */
 .header__btn--user {
   display: inline-flex;

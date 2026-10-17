@@ -10,16 +10,17 @@
        Khi deploy lên https/web, nguồn file: không có tác dụng nên không hở cửa bảo mật. -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self' file:;
-    script-src 'self' 'unsafe-inline' file: https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com;
+    script-src 'self' 'unsafe-inline' file: https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com https://apis.google.com https://*.firebaseapp.com;
     style-src 'self' 'unsafe-inline' file: https://fonts.googleapis.com https://cdnjs.cloudflare.com;
     font-src 'self' file: https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
-    img-src 'self' file: data: blob: https://img.vietqr.io;
+    img-src 'self' file: data: blob: https://img.vietqr.io https://*.googleusercontent.com https://*.gstatic.com;
+    frame-src 'self' https://spendwise-364bd.firebaseapp.com https://*.firebaseapp.com https://accounts.google.com;
     manifest-src 'self' file:;
-    connect-src 'self' file: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://cdn.sheetjs.com;
+    connect-src 'self' file: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://accounts.google.com https://cdn.sheetjs.com;
     worker-src 'self' file: blob:;
     object-src 'none';
     base-uri 'self';
-    form-action 'self'">
+    form-action 'self' https://accounts.google.com https://*.firebaseapp.com">
   <title>SpendWise - Quản Lý Chi Tiêu</title>
 
   <!-- Google Fonts -->
@@ -115,6 +116,9 @@
       </button>
       <button type="button" id="authGoogleBtn" style="width:100%;padding:var(--space-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:9999px;font-weight:600;font-family:var(--font-family);font-size:var(--font-size-base);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--space-sm);box-shadow:var(--shadow-sm);transition:all var(--transition-fast)" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow-sm)'">
         <i class="fa-brands fa-google" style="color:#EA4335"></i> Tiếp tục với Google
+      </button>
+      <button type="button" id="authGoogleRedirectBtn" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:var(--font-size-xs);margin-top:var(--space-xs);cursor:pointer;text-align:center;text-decoration:underline">
+        Không mở được popup? Bấm vào đây để chuyển hướng Google
       </button>
       <div id="authEnvironmentHint" style="display:none;margin-top:var(--space-sm);padding:8px 12px;background:var(--bg-hover);border-radius:var(--radius-md);font-size:var(--font-size-xs);color:var(--text-muted);text-align:center;line-height:1.5"></div>
     </div>

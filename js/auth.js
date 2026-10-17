@@ -84,7 +84,12 @@ const AuthManager = {
     document.body.style.overflow = '';
   },
 
+  _uiBound: false,
+
   init() {
+    this.bindUI();
+    this.checkEnvironment();
+
     // Nếu trên máy chưa có phiên đăng nhập, lập tức khóa ứng dụng bằng màn hình đăng nhập
     if (!localStorage.getItem('spendwise_uid')) {
       this.showAuthGate();
@@ -106,6 +111,10 @@ const AuthManager = {
     if (this.auth && typeof this.auth.getRedirectResult === 'function') {
       this.auth.getRedirectResult().then(result => {
         if (result && result.user) {
+          this.currentUser = result.user;
+          localStorage.setItem('spendwise_uid', result.user.uid);
+          this.hideAuthGate();
+          this.updateAccountUI(result.user);
           Toast.success(`Đăng nhập Google thành công! Chào ${result.user.displayName || result.user.email}`);
         }
       }).catch(err => {
@@ -115,8 +124,6 @@ const AuthManager = {
         }
       });
     }
-
-    this.checkEnvironment();
 
     // Bật cache cục bộ để dùng offline.
     // Khi mở bằng file://, trình duyệt chặn IndexedDB nên promise bị từ chối —
@@ -155,11 +162,12 @@ const AuthManager = {
         this.showAuthGate();
       }
     });
-
-    this.bindUI();
   },
 
   bindUI() {
+    if (this._uiBound) return;
+    this._uiBound = true;
+
     const on = (id, fn) => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('click', fn);
@@ -180,6 +188,7 @@ const AuthManager = {
       document.getElementById('authOverlay').classList.add('active');
     });
     on('authGoogleBtn', () => this.signInWithGoogle());
+    on('authGoogleRedirectBtn', () => this.signInWithGoogleRedirect());
     on('btnLogout', () => this.signOut());
     on('headerLogoutBtn', () => this.signOut());
     on('btnTopLogout', () => this.signOut());
@@ -393,14 +402,21 @@ const AuthManager = {
       }
 
       // Trên desktop, dùng signInWithPopup
-      await this.auth.signInWithPopup(provider);
+      const result = await this.auth.signInWithPopup(provider);
+      if (result && result.user) {
+        this.currentUser = result.user;
+        localStorage.setItem('spendwise_uid', result.user.uid);
+        this.hideAuthGate();
+        this.updateAccountUI(result.user);
+        Toast.success('Đăng nhập Google thành công!');
+      }
     } catch (e) {
       console.warn('Lỗi đăng nhập Google:', e);
 
-      // Nếu popup bị chặn hoặc bị hủy bởi trình duyệt, tự động thử lại bằng signInWithRedirect
-      if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/internal-error')) {
+      // Nếu popup bị chặn, bị hủy hoặc lỗi internal/network do partitioned storage, tự động fallback sang signInWithRedirect
+      if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/internal-error' || e.code === 'auth/network-request-failed')) {
         try {
-          Toast.warning('Popup bị trình duyệt chặn, đang chuyển hướng sang trang đăng nhập Google...');
+          Toast.warning('Đang tự động chuyển hướng sang trang Google...');
           const provider = new firebase.auth.GoogleAuthProvider();
           provider.addScope('profile');
           provider.addScope('email');
@@ -411,12 +427,33 @@ const AuthManager = {
           Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(redirectErr));
         }
       } else if (e && e.code === 'auth/popup-closed-by-user') {
-        Toast.warning('Bạn đã đóng cửa sổ đăng nhập Google.');
+        Toast.warning('Bạn đã đóng cửa sổ Google. Nếu popup bị đơ hoặc trắng trang, hãy bấm nút "Không mở được popup?" bên dưới.');
       } else {
         Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(e));
       }
     } finally {
       setBtnLoading(false);
+    }
+  },
+
+  async signInWithGoogleRedirect() {
+    if (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') {
+      Toast.error('Google không hỗ trợ đăng nhập qua file:// trực tiếp. Hãy chạy localhost (dùng file chay-web.bat) hoặc mở qua link web GitHub Pages.');
+      return;
+    }
+    if (!this.auth) {
+      Toast.error('Hệ thống xác thực chưa sẵn sàng. Vui lòng tải lại trang.');
+      return;
+    }
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+      provider.setCustomParameters({ prompt: 'select_account' });
+      Toast.info('Đang chuyển hướng sang Google...');
+      await this.auth.signInWithRedirect(provider);
+    } catch (e) {
+      Toast.error('Lỗi chuyển hướng Google: ' + this.friendlyError(e));
     }
   },
 

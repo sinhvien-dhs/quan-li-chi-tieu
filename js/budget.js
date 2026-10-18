@@ -249,7 +249,7 @@ const BudgetManager = {
                 <span class="budget-item__badge budget-item__badge--${statusClass}">${statusText}</span>
               </div>
             </div>
-            <button class="budget-item__edit-btn" onclick="BudgetManager.openModal('${cat.id}')" title="Sửa hạn mức">
+            <button class="budget-item__edit-btn" onclick="BudgetManager.openModal('${cat.id}')" title="Sửa hạn mức" aria-label="Sửa hạn mức ${cat.name}">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
           </div>

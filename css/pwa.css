@@ -1,31 +1,29 @@
 /* ===== PWA Install Banner ===== */
 .pwa-install-banner {
-  position: fixed;
-  top: calc(var(--space-md) + env(safe-area-inset-top, 0px));
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   width: calc(100% - var(--space-lg) * 2);
   max-width: var(--max-width);
+  margin: var(--space-sm) auto;
   background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
   border: 1px solid var(--primary-light);
   border-radius: var(--radius-lg);
   padding: var(--space-md) var(--space-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  z-index: 250;
-  animation: bannerSlideDown 0.4s ease;
+  z-index: 101;
+  animation: bannerFadeIn 0.3s ease;
 }
 
-@keyframes bannerSlideDown {
+@keyframes bannerFadeIn {
   from {
-    transform: translate(-50%, -40px);
+    transform: translateY(-8px);
     opacity: 0;
   }
   to {
-    transform: translate(-50%, 0);
+    transform: translateY(0);
     opacity: 1;
   }
 }

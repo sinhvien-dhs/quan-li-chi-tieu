@@ -21,18 +21,24 @@
     object-src 'none';
     base-uri 'self';
     form-action 'self' https://accounts.google.com https://*.firebaseapp.com">
-  <title>SpendWise - Quản Lý Chi Tiêu</title>
+  <title>SpendWise - Ứng dụng Quản lý Chi tiêu &amp; Chia tiền Nhóm cho Sinh viên</title>
   <link rel="canonical" href="https://sinhvien-dhs.github.io/quan-li-chi-tieu/">
+  <meta name="keywords" content="quản lý chi tiêu, chia tiền nhóm, quản lý tài chính sinh viên, spendwise, vietqr, ngân sách, tiết kiệm, pwa">
 
   <!-- Open Graph & Social Meta Tags -->
+  <meta property="og:site_name" content="SpendWise">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="SpendWise - Quản Lý Chi Tiêu Cá Nhân Thông Minh">
-  <meta property="og:description" content="Ứng dụng quản lý tài chính, phân bổ ngân sách, chia tiền nhóm và trợ lý AI thông minh. Miễn phí, an toàn, hỗ trợ PWA offline.">
+  <meta property="og:title" content="SpendWise - Ứng dụng Quản lý Chi tiêu &amp; Chia tiền Nhóm cho Sinh viên">
+  <meta property="og:description" content="Ứng dụng quản lý tài chính, phân bổ ngân sách, chia tiền nhóm và trợ lý AI thông minh cho sinh viên. Miễn phí, an toàn, hỗ trợ PWA offline.">
   <meta property="og:url" content="https://sinhvien-dhs.github.io/quan-li-chi-tieu/">
   <meta property="og:image" content="https://sinhvien-dhs.github.io/quan-li-chi-tieu/assets/icon-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="Logo ứng dụng SpendWise">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="SpendWise - Quản Lý Chi Tiêu Cá Nhân Thông Minh">
-  <meta name="twitter:description" content="Ứng dụng quản lý tài chính, phân bổ ngân sách, chia tiền nhóm và trợ lý AI thông minh.">
+  <meta name="twitter:title" content="SpendWise - Ứng dụng Quản lý Chi tiêu &amp; Chia tiền Nhóm cho Sinh viên">
+  <meta name="twitter:description" content="Ứng dụng quản lý tài chính, phân bổ ngân sách, chia tiền nhóm và trợ lý AI thông minh cho sinh viên.">
+  <meta name="twitter:image" content="https://sinhvien-dhs.github.io/quan-li-chi-tieu/assets/icon-512.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,22 +49,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=85">
+  <link rel="manifest" href="manifest.json?v=86">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/variables.css?v=85">
-  <link rel="stylesheet" href="css/style.css?v=85">
-  <link rel="stylesheet" href="css/stats.css?v=85">
-  <link rel="stylesheet" href="css/budget.css?v=85">
-  <link rel="stylesheet" href="css/pwa.css?v=85">
-  <link rel="stylesheet" href="css/home.css?v=85">
-  <link rel="stylesheet" href="css/debts.css?v=85">
-  <link rel="stylesheet" href="css/lock.css?v=85">
-  <link rel="stylesheet" href="css/responsive.css?v=85">
+  <link rel="stylesheet" href="css/variables.css?v=86">
+  <link rel="stylesheet" href="css/style.css?v=86">
+  <link rel="stylesheet" href="css/stats.css?v=86">
+  <link rel="stylesheet" href="css/budget.css?v=86">
+  <link rel="stylesheet" href="css/pwa.css?v=86">
+  <link rel="stylesheet" href="css/home.css?v=86">
+  <link rel="stylesheet" href="css/debts.css?v=86">
+  <link rel="stylesheet" href="css/lock.css?v=86">
+  <link rel="stylesheet" href="css/responsive.css?v=86">
 
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
@@ -146,22 +152,22 @@
     </div>
   </div>
 
-  <!-- ===== PWA Install Banner ===== -->
-  <div class="pwa-install-banner" id="pwaInstallBanner" style="display: none;">
-    <div class="pwa-install-banner__left">
-      <img src="assets/icon-192.png" class="pwa-install-banner__icon" alt="SpendWise">
-      <div>
-        <div class="pwa-install-banner__title">Cài đặt SpendWise</div>
-        <div class="pwa-install-banner__desc">Dùng như app điện thoại, mở nhanh & offline</div>
+  <main class="app" id="appMain">
+    <!-- ===== PWA Install Banner ===== -->
+    <div class="pwa-install-banner" id="pwaInstallBanner" style="display: none;">
+      <div class="pwa-install-banner__left">
+        <img src="assets/icon-192.png" class="pwa-install-banner__icon" alt="SpendWise">
+        <div>
+          <div class="pwa-install-banner__title">Cài đặt SpendWise</div>
+          <div class="pwa-install-banner__desc">Dùng như app điện thoại, mở nhanh & offline</div>
+        </div>
+      </div>
+      <div class="pwa-install-banner__right">
+        <button class="pwa-install-btn" id="pwaInstallBtn">Cài đặt</button>
+        <button class="pwa-close-btn" id="pwaCloseBtn" aria-label="Đóng banner cài đặt" title="Đóng banner"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    <div class="pwa-install-banner__right">
-      <button class="pwa-install-btn" id="pwaInstallBtn">Cài đặt</button>
-      <button class="pwa-close-btn" id="pwaCloseBtn"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-  </div>
 
-  <main class="app" id="appMain">
     <!-- ===== Header ===== -->
     <header class="header">
       <a href="#" class="header__logo">
@@ -273,7 +279,7 @@
               <button type="button" id="btnAiMic" class="ai-entry__mic" title="Nhập bằng giọng nói" aria-label="Nhập bằng giọng nói">
                 <i class="fa-solid fa-microphone"></i>
               </button>
-              <button type="button" id="btnAiParse" class="ai-entry__go" title="Phân tích và thêm giao dịch">
+              <button type="button" id="btnAiParse" class="ai-entry__go" title="Phân tích và thêm giao dịch" aria-label="Phân tích và thêm giao dịch">
                 <i class="fa-solid fa-arrow-right"></i>
               </button>
             </div>
@@ -921,7 +927,7 @@
       <div class="modal__handle"></div>
       <div class="modal__header">
         <h3 class="modal__title" id="modalTitle">Thêm giao dịch</h3>
-        <button class="modal__close" id="modalClose">
+        <button class="modal__close" id="modalClose" aria-label="Đóng hộp thoại giao dịch" title="Đóng">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1043,7 +1049,7 @@
       <div class="modal__handle"></div>
       <div class="modal__header">
         <h3 class="modal__title">Thiết lập ngân sách</h3>
-        <button class="modal__close" id="budgetModalClose">
+        <button class="modal__close" id="budgetModalClose" aria-label="Đóng hộp thoại ngân sách" title="Đóng">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -1089,7 +1095,7 @@
       <div class="modal__handle"></div>
       <div class="modal__header">
         <h3 class="modal__title"><i class="fa-solid fa-calculator" style="color: var(--primary)"></i> Chia tiền nhóm</h3>
-        <button class="modal__close" id="splitterCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+        <button class="modal__close" id="splitterCloseBtn" aria-label="Đóng hộp thoại chia tiền" title="Đóng"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="form__group">
         <label class="form__label">Tên bữa ăn / dịp chia tiền</label>
@@ -1267,27 +1273,27 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <!-- ===== JavaScript Modules ===== -->
-  <script src="js/utils.js?v=85"></script>
-  <script src="js/business.js?v=85"></script>
-  <script src="js/storage.js?v=85"></script>
-  <script src="js/category.js?v=85"></script>
-  <script src="js/transaction.js?v=85"></script>
-  <script src="js/chart.js?v=85"></script>
-  <script src="js/budget.js?v=85"></script>
-  <script src="js/export.js?v=85"></script>
-  <script src="js/notification.js?v=85"></script>
-  <script src="js/pwa.js?v=85"></script>
-  <script src="js/features.js?v=85"></script>
-  <script src="js/sync.js?v=85"></script>
-  <script src="js/config.local.js?v=85"></script>
-  <script src="js/config.js?v=85"></script>
-  <script src="js/auth.js?v=85"></script>
-  <script src="js/lock.js?v=85"></script>
-  <script src="js/split.js?v=85"></script>
-  <script src="js/ai.js?v=85"></script>
-  <script src="js/home.js?v=85"></script>
-  <script src="js/demo.js?v=85"></script>
-  <script src="js/app.js?v=85"></script>
+  <script src="js/utils.js?v=86"></script>
+  <script src="js/business.js?v=86"></script>
+  <script src="js/storage.js?v=86"></script>
+  <script src="js/category.js?v=86"></script>
+  <script src="js/transaction.js?v=86"></script>
+  <script src="js/chart.js?v=86"></script>
+  <script src="js/budget.js?v=86"></script>
+  <script src="js/export.js?v=86"></script>
+  <script src="js/notification.js?v=86"></script>
+  <script src="js/pwa.js?v=86"></script>
+  <script src="js/features.js?v=86"></script>
+  <script src="js/sync.js?v=86"></script>
+  <script src="js/config.local.js?v=86"></script>
+  <script src="js/config.js?v=86"></script>
+  <script src="js/auth.js?v=86"></script>
+  <script src="js/lock.js?v=86"></script>
+  <script src="js/split.js?v=86"></script>
+  <script src="js/ai.js?v=86"></script>
+  <script src="js/home.js?v=86"></script>
+  <script src="js/demo.js?v=86"></script>
+  <script src="js/app.js?v=86"></script>
 </body>
 </html>
 

@@ -198,22 +198,29 @@ const FormManager = {
     const catGroup = document.getElementById('categoryContainer');
     if (catGroup && catGroup.parentElement) {
       catGroup.parentElement.hidden = isTransfer;
+      catGroup.parentElement.style.display = isTransfer ? 'none' : '';
+      if (!isTransfer) catGroup.style.display = 'grid';
     }
 
     // Ô lặp định kỳ: không áp dụng cho chuyển ví
     const repeatSel = document.getElementById('inputRepeat');
     if (repeatSel && repeatSel.parentElement) {
       repeatSel.parentElement.hidden = isTransfer;
+      repeatSel.parentElement.style.display = isTransfer ? 'none' : '';
     }
 
     // Khối chuyển ví
     const box = document.getElementById('transferBox');
-    if (box) box.hidden = !isTransfer;
+    if (box) {
+      box.hidden = !isTransfer;
+      box.style.display = isTransfer ? 'block' : 'none';
+    }
 
     // Nhãn ví đơn lẻ -> ẩn (dùng 2 ô From/To)
     const walletSel = document.getElementById('inputWallet');
     if (walletSel && walletSel.parentElement) {
       walletSel.parentElement.hidden = isTransfer;
+      walletSel.parentElement.style.display = isTransfer ? 'none' : '';
     }
 
     if (isTransfer) {
@@ -223,7 +230,13 @@ const FormManager = {
       if (nameInput && !nameInput.value.trim()) nameInput.value = 'Chuyển tiền giữa ví';
     } else {
       this.renderCategories(this.currentType);
-      this.selectedCategory = null;
+      const firstCatBtn = catGroup ? catGroup.querySelector('.form__category-btn') : null;
+      if (firstCatBtn) {
+        firstCatBtn.classList.add('active');
+        this.selectedCategory = firstCatBtn.dataset.category;
+      } else {
+        this.selectedCategory = null;
+      }
     }
   },
 
@@ -563,12 +576,28 @@ const ThemeManager = {
   },
 
   applyTheme(theme) {
+    const isDark = theme === 'dark';
     document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.classList.toggle('dark-theme', isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+    if (document.body) {
+      document.body.setAttribute('data-theme', theme);
+      document.body.classList.toggle('dark-theme', isDark);
+      document.body.classList.toggle('dark', isDark);
+    }
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) {
+      themeMeta.setAttribute('content', isDark ? '#1A1B2E' : '#6C63FF');
+    }
+    const btn = document.getElementById('themeToggle');
+    if (btn) {
+      const label = isDark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối';
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+    }
     const icon = document.querySelector('#themeToggle i');
-    if (theme === 'dark') {
-      icon.className = 'fa-solid fa-sun';
-    } else {
-      icon.className = 'fa-solid fa-moon';
+    if (icon) {
+      icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
     }
   }
 };

@@ -176,7 +176,7 @@ const Features = {
         <div class="settings-item__info">
           <span class="settings-item__title"><i class="fa-solid ${w.icon}"></i> ${this.esc(w.name)}</span>
         </div>
-        <button class="settings-btn settings-btn--danger" data-wallet-id="${w.id}">
+        <button class="settings-btn settings-btn--danger" data-wallet-id="${w.id}" aria-label="Xóa ví ${this.esc(w.name)}" title="Xóa ví">
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>
@@ -467,7 +467,7 @@ const Features = {
           <span class="settings-item__title">${this.esc(r.name)} — ${Utils.formatCurrency(r.amount)}</span>
           <span class="settings-item__desc">${freqLabel[r.frequency] || r.frequency}</span>
         </div>
-        <button class="settings-btn settings-btn--danger" data-rec-del="${r.id}">
+        <button class="settings-btn settings-btn--danger" data-rec-del="${r.id}" aria-label="Xóa giao dịch định kỳ ${this.esc(r.name)}" title="Xóa giao dịch định kỳ">
           <i class="fa-solid fa-trash"></i>
         </button>
       </div>`).join('');

@@ -3,7 +3,7 @@
  * Hỗ trợ chạy offline khi không có kết nối Internet
  */
 
-const CACHE_NAME = 'spendwise-cache-v84';
+const CACHE_NAME = 'spendwise-cache-v85';
 
 // Tài nguyên CỐT LÕI: bắt buộc phải cache thành công, nếu không thì hủy cài đặt
 // (tránh trường hợp bản mới thiếu file cốt lõi nhưng cache cũ đã bị xóa)

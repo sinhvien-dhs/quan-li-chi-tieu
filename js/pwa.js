@@ -58,8 +58,19 @@ const PWAManager = {
    */
   reloadWhenIdle() {
     const isBusy = () => {
-      const modalOpen = document.querySelector('.modal-overlay.active, .confirm-overlay.active, .onboarding-overlay.active');
-      if (modalOpen) return true;
+      // Modals dữ liệu nghiệp vụ (thêm giao dịch, sửa ngân sách, chia tiền, xác nhận)
+      const dataModalOpen = document.querySelector(
+        '#modalOverlay.active, #budgetModal.active, #splitterModal.active, .confirm-overlay.active, .onboarding-overlay.active'
+      );
+      if (dataModalOpen) return true;
+
+      // Màn hình đăng nhập / đăng ký: chỉ hoãn reload nếu người dùng đang nhập dở
+      const authInputs = document.querySelectorAll('#authOverlay input, #authRegisterOverlay input');
+      for (const input of authInputs) {
+        if (String(input.value || '').trim() !== '') return true;
+      }
+
+      // Ô nhập liệu bất kỳ đang focus có nội dung
       const active = document.activeElement;
       if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) &&
           String(active.value || '').trim() !== '') return true;

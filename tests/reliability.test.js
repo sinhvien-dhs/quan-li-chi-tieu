@@ -571,6 +571,29 @@ console.log('\n== Kiểm thử Độ Tin Cậy & Toàn Vẹn Dữ Liệu (Reliab
     eq(Business.isValidDate('2026-04-31'), false, '2026-04-31 phải bị từ chối');
   });
 
+  // Test 16 (F-11): PWA reloadWhenIdle không bị hoãn vô cớ khi người dùng ở auth gate chưa nhập liệu
+  await test('PWA reloadWhenIdle cho phép tải lại khi màn hình đăng nhập chưa nhập liệu', () => {
+    const isBusyCheck = (hasDataModal, authInputs, activeEl) => {
+      if (hasDataModal) return true;
+      for (const val of authInputs) {
+        if (String(val || '').trim() !== '') return true;
+      }
+      if (activeEl && /^(INPUT|TEXTAREA|SELECT)$/.test(activeEl.tagName) && String(activeEl.value || '').trim() !== '') {
+        return true;
+      }
+      return false;
+    };
+
+    // Khi người dùng mới vào app, auth gate hiện nhưng các ô input đều rỗng
+    eq(isBusyCheck(false, ['', ''], null), false, 'Auth gate rỗng không được chặn PWA reload');
+
+    // Khi người dùng đang nhập email hoặc password
+    eq(isBusyCheck(false, ['user@example.com', ''], null), true, 'Đang nhập email phải hoãn reload');
+
+    // Khi mở modal giao dịch
+    eq(isBusyCheck(true, ['', ''], null), true, 'Data modal đang mở phải hoãn reload');
+  });
+
   console.log(`\nKết quả kiểm thử độ tin cậy: ${passed} đạt, ${failed} không đạt\n`);
   if (failed > 0) process.exit(1);
 })();

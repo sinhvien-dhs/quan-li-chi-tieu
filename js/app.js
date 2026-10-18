@@ -421,25 +421,6 @@ const FormManager = {
     if (this._saving) return;           // chặn bấm liên tiếp
 
     const name = document.getElementById('inputName').value.trim();
-    const rawAmount = parseFloat(document.getElementById('inputAmount').value);
-    const currency = (document.getElementById('inputCurrencyTx') || {}).value || 'VND';
-
-    // Số tiền LUÔN được lưu bằng VNĐ.
-    // Nếu nhập bằng ngoại tệ → quy đổi sang VNĐ và lưu kèm thông tin gốc để truy vết.
-    const rate = (typeof Features !== 'undefined' && Features.CURRENCIES[currency])
-      ? Features.CURRENCIES[currency].rate : 1;
-    const amount = Math.round(rawAmount * rate);
-
-    const foreign = currency !== 'VND';
-    const originalInfo = foreign ? {
-      originalAmount: rawAmount,
-      originalCurrency: currency,
-      exchangeRate: rate
-    } : {};
-    const date = document.getElementById('inputDate').value;
-    const note = document.getElementById('inputNote').value.trim();
-
-    // Validate
     if (!name) {
       Toast.error('Vui lòng nhập tên giao dịch!');
       return;
@@ -448,12 +429,15 @@ const FormManager = {
       Toast.error('Tên giao dịch không được vượt quá 50 ký tự!');
       return;
     }
+
     // Số tiền: chặn âm, rỗng, NaN, vượt giới hạn — dùng chung Business.parseAmount
     const validAmount = Business.parseAmount(document.getElementById('inputAmount').value);
     if (validAmount === null) {
       Toast.error('Số tiền không hợp lệ (phải là số dương, tối đa 1 nghìn tỷ).');
       return;
     }
+
+    const date = document.getElementById('inputDate').value;
     if (!Business.isValidDate(date)) {
       Toast.error('Ngày giao dịch không hợp lệ!');
       return;
@@ -463,11 +447,26 @@ const FormManager = {
       return;
     }
 
+    const note = document.getElementById('inputNote').value.trim();
+    const currency = (document.getElementById('inputCurrencyTx') || {}).value || 'VND';
+
+    // Số tiền LUÔN được lưu bằng VNĐ. Nếu nhập bằng ngoại tệ → quy đổi sang VNĐ
+    const rate = (typeof Features !== 'undefined' && Features.CURRENCIES && Features.CURRENCIES[currency])
+      ? Features.CURRENCIES[currency].rate : 1;
+    const finalAmount = Math.round(validAmount * rate);
+
+    const foreign = currency !== 'VND';
+    const originalInfo = foreign ? {
+      originalAmount: validAmount,
+      originalCurrency: currency,
+      exchangeRate: rate
+    } : {};
+
     // ===== Chuyển tiền giữa các ví =====
     if (this.currentType === 'transfer') {
       const transfer = Business.buildTransfer({
         name: name,
-        amount: validAmount,
+        amount: finalAmount,
         fromWallet: (document.getElementById('inputFromWallet') || {}).value || null,
         toWallet: (document.getElementById('inputToWallet') || {}).value || null,
         date: date,
@@ -503,7 +502,7 @@ const FormManager = {
 
     const data = {
       name,
-      amount: validAmount,
+      amount: finalAmount,
       date,
       note,
       type: this.currentType,
@@ -517,7 +516,7 @@ const FormManager = {
     const repeat = (document.getElementById('inputRepeat') || {}).value;
     if (repeat && repeat !== 'none' && typeof Features !== 'undefined' && !TransactionManager.editingId) {
       Features.addRecurring({
-        name, amount: validAmount, type: this.currentType, category: this.selectedCategory,
+        name, amount: finalAmount, type: this.currentType, category: this.selectedCategory,
         wallet: data.wallet, frequency: repeat,
         startDate: date,
         lastRun: date,      // ngày hôm nay đã tạo giao dịch thủ công → không tạo trùng
@@ -927,11 +926,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       updateDemoBtn();
     });
-  }
-
-  if (Storage.getTransactions().length === 0 &&
-      (typeof AuthManager === 'undefined' || !AuthManager.isConfigured())) {
-    // Không tự thêm dữ liệu mẫu: tài khoản mới bắt đầu sạch
   }
 
   console.log('🚀 SpendWise đã khởi động thành công!');

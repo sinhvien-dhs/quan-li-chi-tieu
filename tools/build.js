@@ -17,7 +17,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
-const VERSION = process.argv[2] || '62';
+const VERSION = process.argv[2] || '83';
 
 // Thứ tự nạp đúng như index.html
 const JS_FILES = [

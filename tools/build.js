@@ -17,7 +17,15 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
-const VERSION = process.argv[2] || '83';
+
+// Phiên bản lấy từ sw.js (nguồn sự thật) — tránh ghim số vào CI.
+// Có thể ghi đè: node tools/build.js 84
+const readBuildVersion = () => {
+  const sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  const m = sw.match(/spendwise-cache-v(\d+)/);
+  return m ? m[1] : '0';
+};
+const VERSION = process.argv[2] || readBuildVersion();
 
 // Thứ tự nạp đúng như index.html
 const JS_FILES = [

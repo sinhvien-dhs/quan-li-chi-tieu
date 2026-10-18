@@ -2,7 +2,7 @@
 
 Ứng dụng web **Single Page Application (SPA)** chuẩn **Progressive Web App (PWA)** giúp theo dõi thu chi cá nhân, phân tích ngân sách theo danh mục, chia tiền nhóm VietQR, nhập nhanh bằng AI và trực quan hoá tài chính bằng biểu đồ — hoạt động mượt mà cả khi **offline**.
 
-![SpendWise](https://img.shields.io/badge/SpendWise-v83-6C63FF?style=for-the-badge&logo=wallet)
+![SpendWise](https://img.shields.io/badge/SpendWise-v84-6C63FF?style=for-the-badge&logo=wallet)
 ![Tech](https://img.shields.io/badge/HTML5%20%7C%20CSS3%20%7C%20VanillaJS-orange?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-00C897?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/Tests-115%2F115%20Passed%20(100%25)-brightgreen?style=for-the-badge)
@@ -123,7 +123,7 @@ Truy cập địa chỉ: `http://localhost:8000`
 | **Biểu đồ** | [Chart.js v4](https://www.chartjs.org/) |
 | **Xuất Excel** | [SheetJS (xlsx)](https://sheetjs.com/) |
 | **Thanh toán & QR** | VietQR Specification (Napas 247) |
-| **Offline & PWA** | Service Worker (`sw.js` v82) + Web App Manifest |
+| **Offline & PWA** | Service Worker (`sw.js` v84) + Web App Manifest |
 | **Fonts & Icons** | Inter (Google Fonts), Font Awesome 6 |
 
 ---
@@ -180,7 +180,7 @@ quan-li-chi-tieu/
 ├── firestore.rules            # Quy tắc bảo mật Firestore đám mây
 ├── index.html                 # Giao diện chính Single Page Application
 ├── manifest.json              # Cấu hình PWA Web App Manifest
-├── sw.js                      # Service Worker quản lý bộ nhớ đệm offline (v82)
+├── sw.js                      # Service Worker quản lý bộ nhớ đệm offline (v84)
 ├── Mo SpendWise.cmd           # Lối tắt chạy app 1-click trên Windows
 └── README.md                  # Tài liệu hướng dẫn sử dụng dự án
 ```

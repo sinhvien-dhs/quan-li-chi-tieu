@@ -1,7 +1,7 @@
 # 📋 BÁO CÁO DỰ ÁN — SpendWise (Quản Lý Chi Tiêu Cá Nhân)
 
 > Ngày cập nhật: 16/10/2026  
-> Phiên bản: v1.0.0 (Build v77)  
+> Phiên bản: v1.0.0 (Build v84)  
 > Thư mục dự án: `D:\web số 1`  
 > Live Demo: [https://sinhvien-dhs.github.io/quan-li-chi-tieu/](https://sinhvien-dhs.github.io/quan-li-chi-tieu/)
 

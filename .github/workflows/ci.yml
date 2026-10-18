@@ -46,7 +46,8 @@ jobs:
         run: node tests/reliability.test.js
 
       - name: Build release package verification (dist/)
-        run: node tools/build.js 83
+        # Không ghim số phiên bản ở đây — tools/build.js tự đọc từ sw.js
+        run: node tools/build.js
 
       - name: Syntax check
         run: |

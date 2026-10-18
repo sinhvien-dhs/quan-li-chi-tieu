@@ -107,7 +107,8 @@ const SyncManager = {
     // Ưu tiên đồng bộ hai chiều Firebase Firestore nếu đang đăng nhập
     if (typeof AuthManager !== 'undefined' && AuthManager.currentUser) {
       try {
-        await AuthManager.pushToCloud();
+        const pushRes = await AuthManager.pushToCloud();
+        if (pushRes === false) throw new Error('Push failed or not authenticated');
         await AuthManager.pullFromCloud({ silent: true });
         this.updateBadge();
         if (isManual) {
@@ -123,13 +124,20 @@ const SyncManager = {
     }
 
     const queue = this.getQueue();
+    const url = this.getUrl();
+
+    if (queue.length === 0 && !url) {
+      if (isManual) Toast.info('Dữ liệu đã lưu an toàn trên máy (chưa đăng nhập tài khoản đám mây).');
+      this.updateBadge();
+      return;
+    }
+
     if (queue.length === 0) {
       if (isManual) Toast.success('Dữ liệu đã đồng bộ, không có thay đổi mới!');
       this.updateBadge();
       return;
     }
 
-    const url = this.getUrl();
     if (url) {
       try {
         const res = await fetch(url, {
@@ -145,10 +153,8 @@ const SyncManager = {
         if (isManual) Toast.error('Đồng bộ thất bại, sẽ thử lại khi có mạng!');
       }
     } else {
-      // Không cấu hình server: xác nhận đồng bộ cục bộ
-      this.clearQueue();
-      localStorage.setItem(this.LAST_SYNC_KEY, new Date().toISOString());
-      if (isManual) Toast.success(`Đã đồng bộ cục bộ ${queue.length} thay đổi (chưa cấu hình server).`);
+      // Không cấu hình server: thông báo lưu trữ trên máy rõ ràng
+      if (isManual) Toast.info(`Dữ liệu đã lưu trên thiết bị (${queue.length} thay đổi chưa cấu hình máy chủ).`);
     }
     this.updateBadge();
   },
@@ -190,12 +196,16 @@ const SyncManager = {
     if (!badge) return;
     const pending = this.getQueue().length;
     if (this.getQueue().length > 200) this.pushQueue(this.getQueue().slice(-1)[0]);
+    const hasCloud = Boolean((typeof AuthManager !== 'undefined' && AuthManager.currentUser) || this.getUrl());
     if (!navigator.onLine) {
       badge.className = 'status-tag status-tag--danger';
       badge.textContent = `Ngoại tuyến • chờ đồng bộ ${pending}`;
     } else if (pending > 0) {
       badge.className = 'status-tag status-tag--warning';
       badge.textContent = `Chờ đồng bộ ${pending}`;
+    } else if (!hasCloud) {
+      badge.className = 'status-tag status-tag--info';
+      badge.textContent = 'Lưu trên máy';
     } else {
       badge.className = 'status-tag status-tag--success';
       badge.textContent = 'Đã đồng bộ';

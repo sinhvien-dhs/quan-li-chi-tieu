@@ -385,6 +385,11 @@
   color: var(--danger-text);
 }
 
+.status-tag--info {
+  background: var(--info-light, rgba(59, 130, 246, 0.15));
+  color: var(--info-text, #2563eb);
+}
+
 /* Time input in settings */
 .settings-time-input {
   border: 1px solid var(--border);

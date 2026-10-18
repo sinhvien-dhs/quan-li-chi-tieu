@@ -46,7 +46,7 @@ jobs:
         run: node tests/reliability.test.js
 
       - name: Build release package verification (dist/)
-        run: node tools/build.js 82
+        run: node tools/build.js 83
 
       - name: Syntax check
         run: |

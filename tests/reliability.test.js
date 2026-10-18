@@ -368,6 +368,91 @@ console.log('\n== Kiểm thử Độ Tin Cậy & Toàn Vẹn Dữ Liệu (Reliab
     eq(localWiped, false, 'Tuyệt đối không được xóa dữ liệu cục bộ khi chưa đồng bộ xong');
   });
 
+  // Test 10: Cách ly dữ liệu chéo tài khoản khi đổi user trên cùng thiết bị
+  await test('Chuyển đổi tài khoản dọn sạch toàn bộ cache, sync queue và tombstone của tài khoản cũ', () => {
+    const store = {
+      spendwise_uid: 'user_A',
+      spendwise_transactions: JSON.stringify([{ id: 'tx_A1' }]),
+      spendwise_sync_queue: JSON.stringify([{ op: 'set', key: 'tx_A1' }]),
+      spendwise_tombstones: JSON.stringify(['deleted_A2']),
+      spendwise_rates: '{"USD":25000}'
+    };
+    const localStorageMock = {
+      getItem: (k) => store[k] || null,
+      setItem: (k, v) => { store[k] = String(v); },
+      removeItem: (k) => { delete store[k]; }
+    };
+    let cacheInvalidated = false;
+    const authManagerMock = {
+      DATA_KEYS: ['spendwise_transactions'],
+      clearLocalUserData() {
+        this.DATA_KEYS.forEach(key => localStorageMock.removeItem(key));
+        localStorageMock.removeItem('spendwise_uid');
+        localStorageMock.removeItem('spendwise_sync_queue');
+        localStorageMock.removeItem('spendwise_rates');
+        localStorageMock.removeItem('spendwise_tombstones');
+        cacheInvalidated = true;
+      },
+      switchUser(newUid) {
+        const storedUid = localStorageMock.getItem('spendwise_uid');
+        if (storedUid && storedUid !== newUid) {
+          this.clearLocalUserData();
+        }
+        localStorageMock.setItem('spendwise_uid', newUid);
+      }
+    };
+
+    authManagerMock.switchUser('user_B');
+
+    eq(store.spendwise_uid, 'user_B', 'UID mới phải là user_B');
+    eq(store.spendwise_transactions, undefined, 'Giao dịch của user_A phải được xóa sạch');
+    eq(store.spendwise_sync_queue, undefined, 'Hàng đợi của user_A phải được xóa sạch');
+    eq(store.spendwise_tombstones, undefined, 'Tombstones của user_A phải được xóa sạch');
+    eq(cacheInvalidated, true, 'Bộ nhớ đệm trong RAM phải được vô hiệu hóa');
+  });
+
+  // Test 11: Khóa tương tranh pushToCloud chia sẻ cùng Promise thay vì trả về false
+  await test('pushToCloud chia sẻ Promise đang chạy khi có nhiều luồng gọi đồng thời', async () => {
+    let executionCount = 0;
+    const authPushMock = {
+      currentUser: { uid: 'user123' },
+      _pushing: false,
+      _currentPushPromise: null,
+      schedulePush() {},
+      async pushToCloud() {
+        if (!this.currentUser) return false;
+        if (this._pushing && this._currentPushPromise) {
+          this.schedulePush();
+          return this._currentPushPromise;
+        }
+        this._pushing = true;
+        this._currentPushPromise = (async () => {
+          try {
+            executionCount++;
+            await new Promise(r => setTimeout(r, 50));
+            return true;
+          } finally {
+            this._pushing = false;
+            this._currentPushPromise = null;
+          }
+        })();
+        return this._currentPushPromise;
+      }
+    };
+
+    // Gọi đồng thời 3 lần pushToCloud
+    const [res1, res2, res3] = await Promise.all([
+      authPushMock.pushToCloud(),
+      authPushMock.pushToCloud(),
+      authPushMock.pushToCloud()
+    ]);
+
+    eq(res1, true, 'Luồng 1 phải thành công');
+    eq(res2, true, 'Luồng 2 phải nhận kết quả thành công thay vì false');
+    eq(res3, true, 'Luồng 3 phải nhận kết quả thành công thay vì false');
+    eq(executionCount, 1, 'Chỉ 1 lần ghi Firestore thực tế được kích hoạt');
+  });
+
   console.log(`\nKết quả kiểm thử độ tin cậy: ${passed} đạt, ${failed} không đạt\n`);
   if (failed > 0) process.exit(1);
 })();

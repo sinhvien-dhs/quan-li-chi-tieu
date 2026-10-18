@@ -143,14 +143,14 @@ const AuthManager = {
         this.hideAuthGate();
         this.updateAccountUI(user);
 
-        // Đổi tài khoản trên cùng thiết bị → xóa dữ liệu của tài khoản trước
+        // Đổi tài khoản trên cùng thiết bị → dọn dẹp sạch toàn bộ dữ liệu, cache và tombstone của tài khoản trước tránh rò rỉ chéo
         const storedUid = localStorage.getItem('spendwise_uid');
         if (storedUid && storedUid !== user.uid) {
-          this.DATA_KEYS.forEach(key => localStorage.removeItem(key));
+          this.clearLocalUserData();
         }
         localStorage.setItem('spendwise_uid', user.uid);
 
-        await this.pullFromCloud({ silent: true });
+        await this.pullFromCloud({ silent: true }).catch(err => console.warn('Lỗi kéo dữ liệu ban đầu:', err));
 
         // Chạy hướng dẫn người dùng mới nếu chưa từng xem
         if (typeof PWAManager !== 'undefined' && typeof PWAManager.initOnboarding === 'function') {
@@ -494,6 +494,29 @@ const AuthManager = {
    */
   async signOut() {
     const doFinalSignOut = async () => {
+      // Trước khi dọn dữ liệu bộ nhớ của phiên đăng nhập, tạo bản sao lưu offline dạng spendwise_backup_<uid>
+      // để nếu người dùng đăng xuất trong lúc mất mạng hoặc lỗi đồng bộ thì dữ liệu vẫn phục hồi được
+      if (this.currentUser && this.currentUser.uid) {
+        try {
+          const backupObj = {
+            backedUpAt: new Date().toISOString(),
+            uid: this.currentUser.uid,
+            email: this.currentUser.email,
+            transactions: (typeof Storage !== 'undefined' && typeof Storage.getTransactions === 'function')
+              ? Storage.getTransactions()
+              : (typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? Storage.get('spendwise_transactions', []) : []),
+            wallets: typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? Storage.get('spendwise_wallets', []) : [],
+            goals: typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? Storage.get('spendwise_goals', []) : [],
+            recurring: typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? Storage.get('spendwise_recurring', []) : [],
+            debts: typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? Storage.get('spendwise_debts', []) : [],
+            budgets: typeof Storage !== 'undefined' && typeof Storage.get === 'function' ? Storage.get('spendwise_budgets', {}) : {}
+          };
+          localStorage.setItem('spendwise_backup_' + this.currentUser.uid, JSON.stringify(backupObj));
+        } catch (e) {
+          console.warn('Không thể lưu bản sao lưu offline trước khi đăng xuất:', e);
+        }
+      }
+
       this.clearLocalUserData();
       localStorage.removeItem('spendwise_uid');
 
@@ -655,6 +678,9 @@ const AuthManager = {
           // BƯỚC 4: Hoàn tất xóa local storage sau khi cloud đã xóa thành công
           this.clearLocalUserData();
           localStorage.removeItem('spendwise_uid');
+          if (user && user.uid) {
+            localStorage.removeItem('spendwise_backup_' + user.uid);
+          }
 
           if (this.auth) {
             await this.auth.signOut().catch(() => {});
@@ -837,6 +863,22 @@ const AuthManager = {
         Object.keys(cloud.spendwise_budgets).length > 0;
 
       if (!hasCloudData) {
+        // Nếu trên cloud chưa có dữ liệu, kiểm tra xem có bản sao lưu offline của tài khoản này không
+        const backupRaw = localStorage.getItem('spendwise_backup_' + this.currentUser.uid);
+        if (backupRaw && (!local.spendwise_transactions || local.spendwise_transactions.length === 0)) {
+          try {
+            const backup = JSON.parse(backupRaw);
+            if (backup && Array.isArray(backup.transactions) && backup.transactions.length > 0) {
+              local.spendwise_transactions = backup.transactions;
+              localStorage.setItem('spendwise_transactions', JSON.stringify(backup.transactions));
+              if (Array.isArray(backup.wallets)) localStorage.setItem('spendwise_wallets', JSON.stringify(backup.wallets));
+              if (Array.isArray(backup.goals)) localStorage.setItem('spendwise_goals', JSON.stringify(backup.goals));
+              if (Array.isArray(backup.recurring)) localStorage.setItem('spendwise_recurring', JSON.stringify(backup.recurring));
+              if (Array.isArray(backup.debts)) localStorage.setItem('spendwise_debts', JSON.stringify(backup.debts));
+              if (backup.budgets && typeof backup.budgets === 'object') localStorage.setItem('spendwise_budgets', JSON.stringify(backup.budgets));
+            }
+          } catch (bErr) { console.warn('Lỗi đọc bản sao lưu dự phòng:', bErr); }
+        }
         // Tài khoản mới → đẩy dữ liệu cục bộ (nếu có) lên cloud
         await this.pushToCloud();
         this.rerender();
@@ -915,6 +957,7 @@ const AuthManager = {
       if (!silent) {
         Toast.error('Không tải được dữ liệu từ máy chủ (có thể đang offline).');
       }
+      throw e;
     }
   },
 
@@ -933,11 +976,14 @@ const AuthManager = {
    */
   async pushToCloud() {
     if (!this.currentUser) return false;
-    if (this._pushing) { this.schedulePush(); return false; }
+    if (this._pushing && this._currentPushPromise) {
+      this.schedulePush();
+      return this._currentPushPromise;
+    }
     this._pushing = true;
-
-    try {
-      const root = this.userRoot();
+    this._currentPushPromise = (async () => {
+      try {
+        const root = this.userRoot();
       const now = new Date().toISOString();
 
       for (const key of Object.keys(this.COLLECTIONS)) {
@@ -1048,7 +1094,10 @@ const AuthManager = {
       throw e;
     } finally {
       this._pushing = false;
+      this._currentPushPromise = null;
     }
+    })();
+    return this._currentPushPromise;
   },
 
   /**

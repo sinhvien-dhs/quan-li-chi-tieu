@@ -115,7 +115,7 @@ const AIEntry = {
         engine: 'local',
         online: false,
         label: 'Ngoại tuyến (Sẵn sàng)',
-        desc: 'Model AI tích hợp sẵn chạy trực tiếp trong máy — 0ms, không cần mạng hay bất kỳ API key nào.'
+        desc: 'Model AI tích hợp sẵn chạy trực tiếp trên thiết bị — phân tích nhanh, không cần mạng hay bất kỳ API key nào.'
       };
     }
 
@@ -142,7 +142,7 @@ const AIEntry = {
       engine: 'local',
       online: true,
       label: 'Tích hợp sẵn (Sẵn sàng)',
-      desc: 'Model AI tài chính tích hợp sẵn — Sẵn sàng sử dụng ngay 0ms, bảo mật tuyệt đối, không cần dán bất kỳ API key nào.'
+      desc: 'Model AI tài chính tích hợp sẵn — Phân tích tức thì, xử lý cục bộ trên thiết bị, không cần cấu hình API key.'
     };
   },
 

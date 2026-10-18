@@ -86,18 +86,46 @@ const AuthManager = {
 
   _uiBound: false,
 
+  /**
+   * Dùng ứng dụng KHÔNG cần tài khoản.
+   *
+   * Trước đây màn hình đăng nhập là "tường chặn" không lối ra: mở app mà
+   * chưa có tài khoản thì bị chặn hoàn toàn, kể cả khi chỉ muốn thử nhanh
+   * các tính năng cơ bản. Nay người dùng có thể bỏ qua; dữ liệu chỉ nằm trên
+   * máy này và vẫn đăng nhập được bất cứ lúc nào ở Cài đặt → Tài khoản.
+   */
+  skipAuth() {
+    localStorage.setItem('spendwise_local_mode', '1');
+    this.hideAuthGate();
+    Toast.success('Đã bật chế độ dùng trên máy này. Vào Cài đặt → Tài khoản để đồng bộ lên mây.');
+    if (typeof App !== 'undefined' && typeof App.init === 'function') {
+      // Bảo đảm phần giao diện vẽ lại sau khi tháo khóa
+      Promise.resolve().then(() => App.render && App.render());
+    }
+  },
+
+  /**
+   * Người dùng có đang ở chế độ chỉ dùng trên máy này không?
+   */
+  isLocalMode() {
+    return localStorage.getItem('spendwise_local_mode') === '1';
+  },
+
   init() {
     this.bindUI();
     this.checkEnvironment();
 
     // Nếu trên máy chưa có phiên đăng nhập, lập tức khóa ứng dụng bằng màn hình đăng nhập
-    if (!localStorage.getItem('spendwise_uid')) {
+    // (trừ khi người dùng đã chọn "Tiếp tục không cần tài khoản")
+    if (!localStorage.getItem('spendwise_uid') && !this.isLocalMode()) {
       this.showAuthGate();
     }
 
     if (!this.isConfigured() || typeof firebase === 'undefined') {
       console.warn('Firebase chưa sẵn sàng hoặc chưa được cấu hình.');
-      this.showAuthGate();
+      // Không có Firebase thì các nút đăng nhập vô dụng — cho dùng trên máy
+      // này thay vì khóa app ở một màn hình không lối thoát.
+      this.hideAuthGate();
       return;
     }
 
@@ -149,6 +177,7 @@ const AuthManager = {
           this.clearLocalUserData();
         }
         localStorage.setItem('spendwise_uid', user.uid);
+        localStorage.removeItem('spendwise_local_mode');
 
         await this.pullFromCloud({ silent: true }).catch(err => console.warn('Lỗi kéo dữ liệu ban đầu:', err));
 
@@ -203,6 +232,7 @@ const AuthManager = {
     on('btnOpenAuth', () => this.openAuthOverlay());
     on('btnForgotPassword', () => this.sendPasswordReset());
     on('btnDeleteAccount', () => this.deleteAccount());
+    on('btnSkipAuth', () => this.skipAuth());
 
     // Hiện nút "quên mật khẩu" chỉ khi nhập email
     const emailEl = document.getElementById('authEmail');
@@ -535,7 +565,13 @@ const AuthManager = {
         PageManager.switchTo('pageHome');
       }
 
-      this.showAuthGate();
+      // Đã chọn "Tiếp tục không cần tài khoản" thì đăng xuất xong vẫn dùng được,
+      // không khóa lại ứng dụng.
+      if (this.isLocalMode()) {
+        this.hideAuthGate();
+      } else {
+        this.showAuthGate();
+      }
       Toast.success('Đã đăng xuất thành công!');
     };
 
@@ -792,7 +828,9 @@ const AuthManager = {
     if (descEl) {
       descEl.textContent = user
         ? 'Dữ liệu được đồng bộ đám mây và bảo vệ theo tài khoản của bạn.'
-        : 'Vui lòng đăng nhập để sử dụng SpendWise và đồng bộ đám mây.';
+        : (this.isLocalMode()
+            ? 'Chế độ dùng trên máy này: dữ liệu chỉ lưu trên máy, không đồng bộ. Đăng nhập để dùng trên nhiều thiết bị.'
+            : 'Chưa đăng nhập: dữ liệu chỉ lưu trên máy này. Đăng nhập để đồng bộ lên máy chủ và dùng trên nhiều thiết bị.');
     }
 
     const logoutBtn = document.getElementById('btnLogout');

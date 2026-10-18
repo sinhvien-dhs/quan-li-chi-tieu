@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=83">
+  <link rel="manifest" href="manifest.json?v=81">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -53,7 +53,7 @@
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
 
-  <link rel="stylesheet" href="style.min.css?v=83">
+  <link rel="stylesheet" href="style.min.css?v=81">
 </head>
 <body>
   <div id="printReport"></div>
@@ -126,6 +126,18 @@
       <button type="button" id="authGoogleRedirectBtn" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:var(--font-size-xs);margin-top:var(--space-xs);cursor:pointer;text-align:center;text-decoration:underline">
         Không mở được popup? Bấm vào đây để chuyển hướng Google
       </button>
+
+      <!-- Lối ra cho người chưa có tài khoản: dữ liệu lưu trên máy này -->
+      <div style="margin-top:var(--space-md);padding-top:var(--space-md);border-top:1px solid var(--border);text-align:center">
+        <button type="button" id="btnSkipAuth" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:var(--font-size-sm);cursor:pointer;text-decoration:underline;padding:var(--space-sm)">
+          Tiếp tục không cần tài khoản
+        </button>
+        <div style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:var(--space-xs);line-height:1.5">
+          Dữ liệu lưu trên máy này, không đồng bộ lên mây.<br>
+          Vào <b>Cài đặt → Tài khoản</b> bất cứ lúc nào để đăng nhập và bật đồng bộ.
+        </div>
+      </div>
+
       <div id="authEnvironmentHint" style="display:none;margin-top:var(--space-sm);padding:8px 12px;background:var(--bg-hover);border-radius:var(--radius-md);font-size:var(--font-size-xs);color:var(--text-muted);text-align:center;line-height:1.5"></div>
     </div>
   </div>
@@ -1301,7 +1313,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-    <script src="app.min.js?v=83"></script>
+    <script src="app.min.js?v=81"></script>
   <!-- ===== JavaScript Modules ===== -->
   </body>
 </html>

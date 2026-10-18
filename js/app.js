@@ -67,7 +67,7 @@ const Toast = {
 
 // ===== Trợ giúp đóng modal bằng phím Esc (hỗ trợ bàn phím) =====
 const ModalHelper = {
-  OVERLAYS: ['onboardingOverlay', 'authRegisterOverlay', 'authOverlay', 'splitterModal',
+  OVERLAYS: ['onboardingOverlay', 'authOverlay', 'splitterModal',
              'budgetModal', 'modalOverlay', 'confirmOverlay'],
 
   init() {
@@ -83,16 +83,6 @@ const ModalHelper = {
           // Khi chưa đăng nhập, KHÔNG đóng authOverlay bằng phím Esc (bắt buộc đăng nhập để dùng)
           if (el.id === 'authOverlay' && (typeof AuthManager === 'undefined' || !AuthManager.currentUser)) {
             return;
-          }
-
-          // Khi đóng form đăng ký mà chưa đăng nhập: quay lại màn hình đăng nhập chính
-          if (el.id === 'authRegisterOverlay') {
-            el.classList.remove('active');
-            if (typeof AuthManager !== 'undefined' && !AuthManager.currentUser) {
-              const authOverlay = document.getElementById('authOverlay');
-              if (authOverlay) authOverlay.classList.add('active');
-              return;
-            }
           }
 
           el.classList.remove('active');

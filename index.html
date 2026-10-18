@@ -90,7 +90,7 @@
     <i class="fa-solid fa-wifi"></i> Đang ngoại tuyến — giao dịch vẫn được lưu trên máy này và sẽ đồng bộ khi có mạng
   </div>
 
-  <!-- ===== Auth Overlay (Đăng nhập / Đăng ký - Màn hình khóa bắt buộc) ===== -->
+  <!-- ===== Auth Overlay (Đăng nhập - Màn hình khóa bắt buộc) ===== -->
   <div class="modal-overlay active" id="authOverlay" role="dialog" aria-modal="true" aria-label="Đăng nhập SpendWise">
     <div class="modal auth-gate-modal">
       <div class="auth-gate-header">
@@ -104,33 +104,8 @@
         </div>
       </div>
 
-      <div class="form__group">
-        <label class="form__label" for="authEmail"><i class="fa-solid fa-envelope"></i> Email đăng nhập</label>
-        <input type="email" class="form__input" id="authEmail" placeholder="VD: an123@gmail.com" autocomplete="email" style="width:100%">
-      </div>
-      <div class="form__group" style="position:relative">
-        <label class="form__label" for="authPassword"><i class="fa-solid fa-key"></i> Mật khẩu</label>
-        <div style="position:relative">
-          <input type="password" class="form__input" id="authPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="current-password" style="padding-right:44px">
-          <button type="button" class="pw-eye" data-target="authPassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
-            <i class="fa-solid fa-eye"></i>
-          </button>
-        </div>
-      </div>
-      <div style="display:flex;gap:var(--space-sm)">
-        <button type="button" class="form__submit" id="authLoginBtn" style="flex:1">
-          <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
-        </button>
-        <button type="button" class="form__submit" id="authRegisterBtn" style="flex:1;background:var(--danger);box-shadow:0 4px 16px rgba(255,107,107,0.35)">
-          <i class="fa-solid fa-user-plus"></i> Đăng ký
-        </button>
-      </div>
-      <div style="text-align:center;margin:var(--space-md) 0;color:var(--text-muted);font-size:var(--font-size-sm)">— Hoặc —</div>
-      <button type="button" class="settings-btn" id="btnForgotPassword" style="width:100%;justify-content:center;margin-top:var(--space-sm);display:none">
-        <i class="fa-solid fa-key"></i> Quên mật khẩu? Nhận link đặt lại qua email
-      </button>
       <button type="button" id="authGoogleBtn" class="auth-google-btn" style="width:100%;padding:var(--space-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:9999px;font-weight:600;font-family:var(--font-family);font-size:var(--font-size-base);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--space-sm);box-shadow:var(--shadow-sm);transition:all var(--transition-fast)">
-        <i class="fa-brands fa-google" style="color:#EA4335"></i> Tiếp tục với Google
+        <i class="fa-brands fa-google" style="color:#EA4335"></i> Đăng nhập bằng tài khoản Google (Gmail)
       </button>
       <button type="button" id="authGoogleRedirectBtn" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:var(--font-size-xs);margin-top:var(--space-xs);cursor:pointer;text-align:center;text-decoration:underline">
         Không mở được popup? Bấm vào đây để chuyển hướng Google
@@ -143,62 +118,11 @@
         </button>
         <div style="font-size:var(--font-size-xs);color:var(--text-muted);margin-top:var(--space-xs);line-height:1.5">
           Dữ liệu lưu trên máy này, không đồng bộ lên mây.<br>
-          Vào <b>Cài đặt → Tài khoản</b> bất cứ lúc nào để đăng nhập và bật đồng bộ.
+          Vào <b>Cài đặt → Tài khoản</b> bất cứ lúc nào để đăng nhập Gmail và bật đồng bộ.
         </div>
       </div>
 
       <div id="authEnvironmentHint" style="display:none;margin-top:var(--space-sm);padding:8px 12px;background:var(--bg-hover);border-radius:var(--radius-md);font-size:var(--font-size-xs);color:var(--text-muted);text-align:center;line-height:1.5"></div>
-    </div>
-  </div>
-
-  <!-- ===== Register Overlay (Đăng ký tài khoản mới) ===== -->
-  <div class="modal-overlay" id="authRegisterOverlay" role="dialog" aria-modal="true" aria-label="Tạo tài khoản mới">
-    <div class="modal auth-gate-modal" style="position:relative">
-      <button class="modal__close" id="registerCloseBtn" style="position:absolute;top:var(--space-md);right:var(--space-md)" aria-label="Đóng form đăng ký">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      <div class="auth-gate-header">
-        <div class="auth-gate-logo auth-gate-logo--register">
-          <i class="fa-solid fa-user-plus"></i>
-        </div>
-        <h2 class="auth-gate-title">Tạo tài khoản SpendWise</h2>
-        <p class="auth-gate-subtitle">Tài khoản an toàn &amp; đồng bộ dữ liệu trên mọi thiết bị</p>
-      </div>
-      <div class="form__group">
-        <label class="form__label" for="registerName"><i class="fa-solid fa-envelope"></i> Email đăng ký</label>
-        <input type="email" class="form__input" id="registerName" placeholder="VD: an123@gmail.com" autocomplete="email" maxlength="60">
-        <p class="form__hint">Dùng email thật để có thể khôi phục mật khẩu khi quên.</p>
-        <p id="registerNameError" style="display:none;color:var(--danger);font-size:var(--font-size-xs);margin-top:var(--space-xs)">
-          <i class="fa-solid fa-circle-exclamation"></i> Email này đã được đăng ký!
-        </p>
-      </div>
-      <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-bottom:var(--space-sm)">
-        <i class="fa-solid fa-shield-halved"></i> Mật khẩu tối thiểu 8 ký tự, bao gồm cả chữ và số.
-      </p>
-      <div class="form__group" style="position:relative">
-        <label class="form__label" for="registerPassword"><i class="fa-solid fa-lock"></i> Mật khẩu</label>
-        <div style="position:relative">
-          <input type="password" class="form__input" id="registerPassword" placeholder="Tối thiểu 8 ký tự, có chữ và số" autocomplete="new-password" style="padding-right:44px">
-          <button type="button" class="pw-eye" data-target="registerPassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
-            <i class="fa-solid fa-eye"></i>
-          </button>
-        </div>
-      </div>
-      <div class="form__group" style="position:relative">
-        <label class="form__label" for="registerPassword2"><i class="fa-solid fa-lock"></i> Nhập lại mật khẩu</label>
-        <div style="position:relative">
-          <input type="password" class="form__input" id="registerPassword2" placeholder="Nhập lại mật khẩu" autocomplete="new-password" style="padding-right:44px">
-          <button type="button" class="pw-eye" data-target="registerPassword2" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
-            <i class="fa-solid fa-eye"></i>
-          </button>
-        </div>
-      </div>
-      <button type="button" class="form__submit" id="registerSubmitBtn" style="background:var(--danger);box-shadow:0 4px 16px rgba(255,107,107,0.35)">
-        <i class="fa-solid fa-user-plus"></i> Tạo tài khoản
-      </button>
-      <button type="button" class="settings-btn" id="registerBackBtn" style="width:100%;justify-content:center;margin-top:var(--space-sm)">
-        <i class="fa-solid fa-arrow-left"></i> Quay lại đăng nhập
-      </button>
     </div>
   </div>
 

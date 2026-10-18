@@ -64,8 +64,8 @@ const PWAManager = {
       );
       if (dataModalOpen) return true;
 
-      // Màn hình đăng nhập / đăng ký: chỉ hoãn reload nếu người dùng đang nhập dở
-      const authInputs = document.querySelectorAll('#authOverlay input, #authRegisterOverlay input');
+      // Màn hình đăng nhập: chỉ hoãn reload nếu người dùng đang nhập dở
+      const authInputs = document.querySelectorAll('#authOverlay input');
       for (const input of authInputs) {
         if (String(input.value || '').trim() !== '') return true;
       }

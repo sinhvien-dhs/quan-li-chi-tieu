@@ -95,8 +95,28 @@
         </div>
       </div>
 
+      <div class="form__group">
+        <label class="form__label" for="authEmail"><i class="fa-solid fa-envelope"></i> Email đăng nhập</label>
+        <input type="email" class="form__input" id="authEmail" placeholder="VD: an123@gmail.com" autocomplete="email" style="width:100%">
+      </div>
+      <div class="form__group" style="position:relative">
+        <label class="form__label" for="authPassword"><i class="fa-solid fa-key"></i> Mật khẩu</label>
+        <div style="position:relative">
+          <input type="password" class="form__input" id="authPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="current-password" style="padding-right:44px">
+          <button type="button" class="pw-eye" data-target="authPassword" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer" aria-label="Hiện mật khẩu">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <button type="button" class="form__submit" id="authLoginBtn" style="width:100%">
+        <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+      </button>
+      <button type="button" class="settings-btn" id="btnForgotPassword" style="width:100%;justify-content:center;margin-top:var(--space-sm);display:none">
+        <i class="fa-solid fa-key"></i> Quên mật khẩu? Nhận link đặt lại qua email
+      </button>
+      <div style="text-align:center;margin:var(--space-md) 0;color:var(--text-muted);font-size:var(--font-size-sm)">— Hoặc —</div>
       <button type="button" id="authGoogleBtn" class="auth-google-btn" style="width:100%;padding:var(--space-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);border-radius:9999px;font-weight:600;font-family:var(--font-family);font-size:var(--font-size-base);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:var(--space-sm);box-shadow:var(--shadow-sm);transition:all var(--transition-fast)">
-        <i class="fa-brands fa-google" style="color:#EA4335"></i> Đăng nhập bằng tài khoản Google (Gmail)
+        <i class="fa-brands fa-google" style="color:#EA4335"></i> Tiếp tục với Google
       </button>
       <button type="button" id="authGoogleRedirectBtn" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:var(--font-size-xs);margin-top:var(--space-xs);cursor:pointer;text-align:center;text-decoration:underline">
         Không mở được popup? Bấm vào đây để chuyển hướng Google

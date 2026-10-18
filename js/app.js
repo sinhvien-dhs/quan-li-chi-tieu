@@ -712,7 +712,9 @@ const SecuritySettings = {
       }
       if (router9UrlInput && !router9UrlInput.value) router9UrlInput.value = AIEntry.get9RouterUrl();
       if (router9KeyInput && !router9KeyInput.value) router9KeyInput.value = AIEntry.get9RouterKey();
-      if (router9ModelInput && !router9ModelInput.value) router9ModelInput.value = AIEntry.get9RouterModel();
+      if (router9ModelInput && (!router9ModelInput.value || router9ModelInput.value === 'gemini-2.0-flash')) {
+        router9ModelInput.value = AIEntry.get9RouterModel();
+      }
       if (keyInput && !keyInput.value) keyInput.value = AIEntry.getApiKey();
     };
 
@@ -736,7 +738,7 @@ const SecuritySettings = {
       router9ModelInput.addEventListener('change', () => {
         AIEntry.set9RouterModel(router9ModelInput.value);
         paintAi();
-        Toast.success('Đã cập nhật mô hình 9Router: ' + (router9ModelInput.value || 'gemini-2.0-flash'));
+        Toast.success('Đã cập nhật mô hình 9Router: ' + (router9ModelInput.value || 'gemini-3.8-flash'));
       });
     }
 

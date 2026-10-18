@@ -16,7 +16,7 @@ const AIEntry = {
   ROUTER9_KEY_STORAGE: 'spendwise_9router_key',
   ROUTER9_MODEL_STORAGE: 'spendwise_9router_model',
   DEFAULT_ROUTER9_URL: 'http://localhost:20128/v1',
-  DEFAULT_ROUTER9_MODEL: 'gemini-2.0-flash',
+  DEFAULT_ROUTER9_MODEL: 'gemini-3.8-flash',
 
   GEMINI_KEY_STORAGE: 'spendwise_gemini_key',
   MAX_ITEMS: 10,
@@ -83,7 +83,8 @@ const AIEntry = {
   },
 
   get9RouterModel() {
-    return Storage.get(this.ROUTER9_MODEL_STORAGE, this.DEFAULT_ROUTER9_MODEL) || this.DEFAULT_ROUTER9_MODEL;
+    const model = Storage.get(this.ROUTER9_MODEL_STORAGE, this.DEFAULT_ROUTER9_MODEL) || this.DEFAULT_ROUTER9_MODEL;
+    return model === 'gemini-2.0-flash' ? this.DEFAULT_ROUTER9_MODEL : model;
   },
 
   set9RouterModel(model) {
@@ -384,7 +385,7 @@ const AIEntry = {
     // Kiểm tra trực tiếp Google Gemini API
     try {
       const res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(directKey),
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(directKey),
         {
           method: 'POST',
           headers: {
@@ -410,7 +411,7 @@ const AIEntry = {
 
       return {
         ok: true,
-        message: 'Kết nối thành công tới Google Gemini 2.0 Direct!'
+        message: 'Kết nối thành công tới Google Gemini 3.8 Direct!'
       };
     } catch (err) {
       return { ok: false, message: 'Không gọi được Gemini (kiểm tra mạng): ' + err.message };
@@ -471,7 +472,7 @@ const AIEntry = {
     ].join('\n');
 
     const res = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + encodeURIComponent(key),
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + encodeURIComponent(key),
       {
         method: 'POST',
         headers: {

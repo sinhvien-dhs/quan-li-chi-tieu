@@ -180,7 +180,12 @@ test('Lưu & đọc cấu hình 9Router (URL, Key, Model)', () => {
   AIEntry.set9RouterKey('');
   AIEntry.set9RouterModel('');
   eq(AIEntry.has9Router(), false);
-  eq(AIEntry.get9RouterModel(), 'gemini-2.0-flash'); // Default fallback
+  eq(AIEntry.get9RouterModel(), 'gemini-3.8-flash'); // Default fallback
+
+  // Kiểm tra nâng cấp tự động bản ghi cũ gemini-2.0-flash
+  AIEntry.set9RouterModel('gemini-2.0-flash');
+  eq(AIEntry.get9RouterModel(), 'gemini-3.8-flash');
+  AIEntry.set9RouterModel('');
 });
 
 test('Trạng thái chế độ AI (Engine Mode)', () => {
@@ -191,7 +196,7 @@ test('Trạng thái chế độ AI (Engine Mode)', () => {
 
   // Khi có 9Router
   AIEntry.set9RouterUrl('http://localhost:20128/v1');
-  AIEntry.set9RouterModel('gemini-2.0-flash');
+  AIEntry.set9RouterModel('gemini-3.8-flash');
   const m9r = AIEntry.getEngineMode();
   eq(m9r.engine, '9router');
   eq(m9r.label, '9Router Gateway');

@@ -189,7 +189,7 @@ const HomeWidgets = {
       if (result.notice) {
         hint.textContent = result.notice;
       } else if (result.engine === '9router') {
-        const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-2.0-flash';
+        const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-3.8-flash';
         hint.textContent = `✨ Phân tích qua 9Router AI Gateway (${model}).`;
       } else if (result.engine === 'gemini') {
         hint.textContent = '✨ Phân tích qua Google Gemini Direct.';

@@ -115,9 +115,11 @@ const AuthManager = {
     this.bindUI();
     this.checkEnvironment();
 
-    // Nếu trên máy chưa có phiên đăng nhập, lập tức khóa ứng dụng bằng màn hình đăng nhập
-    // (trừ khi người dùng đã chọn "Tiếp tục không cần tài khoản")
-    if (!localStorage.getItem('spendwise_uid') && !this.isLocalMode()) {
+    // Nếu trên máy đã có phiên đăng nhập hoặc đang ở chế độ dùng trên máy (local mode)
+    // thì lập tức mở khóa ứng dụng, tránh bị chớp hoặc kẹt ở màn hình đăng nhập khi tải lại trang
+    if (this.isLocalMode() || localStorage.getItem('spendwise_uid')) {
+      this.hideAuthGate();
+    } else {
       this.showAuthGate();
     }
 
@@ -135,12 +137,19 @@ const AuthManager = {
     this.auth = firebase.auth();
     this.db = firebase.firestore();
 
+    if (this.auth && typeof this.auth.setPersistence === 'function' && typeof firebase !== 'undefined' && firebase.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
+      this.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => {
+        console.warn('Firebase setPersistence LOCAL:', e && e.message);
+      });
+    }
+
     // Xử lý kết quả đăng nhập nếu chuyển hướng (Redirect) từ Google
     if (this.auth && typeof this.auth.getRedirectResult === 'function') {
       this.auth.getRedirectResult().then(result => {
         if (result && result.user) {
           this.currentUser = result.user;
           localStorage.setItem('spendwise_uid', result.user.uid);
+          localStorage.removeItem('spendwise_local_mode');
           this.hideAuthGate();
           this.updateAccountUI(result.user);
           Toast.success(`Đăng nhập Google thành công! Chào ${result.user.displayName || result.user.email}`);
@@ -186,9 +195,14 @@ const AuthManager = {
           PWAManager.initOnboarding();
         }
       } else {
-        localStorage.removeItem('spendwise_uid');
         this.updateAccountUI(null);
-        this.showAuthGate();
+        // Nếu người dùng đang ở chế độ dùng trên máy (local mode), không khóa app khi auth = null
+        if (this.isLocalMode()) {
+          this.hideAuthGate();
+        } else {
+          localStorage.removeItem('spendwise_uid');
+          this.showAuthGate();
+        }
       }
     });
   },
@@ -444,6 +458,7 @@ const AuthManager = {
       if (result && result.user) {
         this.currentUser = result.user;
         localStorage.setItem('spendwise_uid', result.user.uid);
+        localStorage.removeItem('spendwise_local_mode');
         this.hideAuthGate();
         this.updateAccountUI(result.user);
         Toast.success('Đăng nhập Google thành công!');

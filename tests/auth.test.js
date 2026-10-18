@@ -68,6 +68,7 @@ const documentMock = {
     },
     style: { overflow: '' }
   },
+  querySelectorAll: () => [],
   getElementById: (id) => {
     if (!elemCache[id]) {
       if (!domClasses[id]) domClasses[id] = new Set();
@@ -78,6 +79,7 @@ const documentMock = {
         parentElement: {
           querySelector: () => ({ textContent: '' })
         },
+        addEventListener: () => {},
         classList: {
           add: (c) => domClasses[id].add(c),
           remove: (c) => domClasses[id].delete(c),
@@ -95,7 +97,18 @@ const sandbox = {
   localStorage: localStorageMock,
   document: documentMock,
   FIREBASE_CONFIG: { apiKey: 'AIzaSyTest123' },
-  firebase: { initializeApp: () => {}, auth: () => {}, firestore: () => {} },
+  firebase: {
+    initializeApp: () => {},
+    auth: () => ({
+      onAuthStateChanged: () => {},
+      setPersistence: async () => {},
+      getRedirectResult: async () => null,
+      signOut: async () => {}
+    }),
+    firestore: () => ({
+      enablePersistence: () => Promise.resolve()
+    })
+  },
   Business: { mergeById: (a, b) => a.concat(b) },
   Storage: { get: () => null, set: () => {}, KEYS: {} },
   Toast: { success: () => {}, error: () => {}, warning: () => {} },
@@ -218,6 +231,54 @@ const AuthManager = sandbox.AuthManager;
 
     await AuthManager.pullFromCloud({ silent: true });
     eq(toastCalled, false, 'pullFromCloud silent không được gọi Toast.success');
+  });
+
+  await test('init: tải lại trang khi đã đăng nhập (spendwise_uid) lập tức mở khóa ứng dụng', () => {
+    localStorageMock.setItem('spendwise_uid', 'user123');
+    localStorageMock.removeItem('spendwise_local_mode');
+    domClasses.authOverlay.add('active');
+    domClasses.html.add('auth-pending');
+
+    AuthManager.init();
+
+    ok(!domClasses.html.has('auth-pending'), 'auth-pending phải bị gỡ khi có spendwise_uid');
+    ok(!domClasses.authOverlay.has('active'), 'authOverlay active phải bị gỡ khi có spendwise_uid');
+  });
+
+  await test('init: tải lại trang ở chế độ trên máy (local mode) không bị khóa màn hình đăng nhập', () => {
+    localStorageMock.removeItem('spendwise_uid');
+    localStorageMock.setItem('spendwise_local_mode', '1');
+    domClasses.authOverlay.add('active');
+    domClasses.html.add('auth-pending');
+
+    AuthManager.init();
+
+    ok(!domClasses.html.has('auth-pending'), 'auth-pending phải bị gỡ ở local mode');
+    ok(!domClasses.authOverlay.has('active'), 'authOverlay active phải bị gỡ ở local mode');
+  });
+
+  await test('onAuthStateChanged: user = null khi đang ở local mode không bị đẩy về màn hình đăng nhập', async () => {
+    localStorageMock.removeItem('spendwise_uid');
+    localStorageMock.setItem('spendwise_local_mode', '1');
+    domClasses.authOverlay.clear();
+    domClasses.html.clear();
+
+    let authStateCallback = null;
+    sandbox.firebase.auth = () => ({
+      onAuthStateChanged: (cb) => { authStateCallback = cb; },
+      setPersistence: async () => {},
+      getRedirectResult: async () => null
+    });
+
+    AuthManager.init();
+    ok(typeof authStateCallback === 'function', 'Phải đăng ký onAuthStateChanged');
+
+    // Kích hoạt onAuthStateChanged với null
+    await authStateCallback(null);
+
+    ok(!domClasses.html.has('auth-pending'), 'auth-pending không được bật khi null ở local mode');
+    ok(!domClasses.authOverlay.has('active'), 'authOverlay không được active khi null ở local mode');
+    eq(localStorageMock.getItem('spendwise_local_mode'), '1', 'local mode phải được bảo lưu');
   });
 
   console.log(`\nKết quả: ${passed} đạt, ${failed} không đạt\n`);

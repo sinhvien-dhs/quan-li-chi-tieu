@@ -85,7 +85,7 @@ const HomeWidgets = {
     if (!hint) return;
     const mode = (typeof AIEntry !== 'undefined' && AIEntry.getEngineMode) ? AIEntry.getEngineMode() : { online: true, engine: 'local' };
     if (!mode.online) {
-      hint.innerHTML = '⚡ <strong>Chế độ Ngoại tuyến:</strong> Model AI chạy ngay trong máy — 0ms, không cần mạng hay API key.';
+      hint.innerHTML = '⚡ <strong>Chế độ Ngoại tuyến:</strong> Model AI xử lý trực tiếp trên máy, không cần mạng hay API key.';
     } else if (mode.engine === '9router') {
       const model = (typeof AIEntry !== 'undefined' && AIEntry.get9RouterModel) ? AIEntry.get9RouterModel() : 'gemini-3.8-flash';
       hint.innerHTML = `✨ <strong>9Router AI:</strong> Đang kết nối Gateway (${model}). <a href="#" id="aiConfigLink">Cài đặt</a>`;
@@ -194,7 +194,7 @@ const HomeWidgets = {
       } else if (result.engine === 'gemini') {
         hint.textContent = '✨ Phân tích qua Google Gemini Direct.';
       } else {
-        hint.textContent = '⚡ Phân tích bằng AI nội bộ trong máy — 0ms.';
+        hint.textContent = '⚡ Phân tích tức thì bằng AI nội bộ trong máy.';
       }
     }
   },

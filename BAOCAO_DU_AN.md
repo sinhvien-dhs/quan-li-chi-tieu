@@ -94,7 +94,7 @@ D:\web số 1\
 | **Icon & Typography** | Font Awesome 6.5.0, Google Fonts (Inter) | Giao diện hiện đại, chuẩn nhận diện tài chính |
 | **Backend & Cloud** | Firebase Authentication + Cloud Firestore | Đăng nhập Email/Password, Google OAuth, lưu trữ thời gian thực |
 | **Offline & PWA** | Service Worker (`sw.js`), Web App Manifest | Chạy ngoại tuyến, lưu cache tài nguyên, cài đặt như Native App |
-| **AI Assistant (Hybrid)** | Web Speech API + Regex Engine (Offline 0ms) + 9Router AI Gateway (Gemini / GPT) | Phân tích tiếng Việt thông minh qua 9Router Gateway, tự động fallback 0ms khi ngoại tuyến |
+| **AI Assistant (Hybrid)** | Web Speech API + Regex Engine (Offline) + 9Router AI Gateway (Gemini / GPT) | Phân tích tiếng Việt thông minh qua 9Router Gateway, tự động fallback về AI cục bộ khi ngoại tuyến |
 | **Banking QR** | VietQR Open API (`img.vietqr.io`) | Sinh mã QR chuẩn NAPAS chuyển khoản nhanh chính xác số tiền |
 | **Security** | Web Crypto API (SubtleCrypto: PBKDF2-SHA256) | Băm mật mã PIN 150.000 vòng bảo vệ thiết bị cá nhân |
 

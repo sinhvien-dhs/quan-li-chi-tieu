@@ -2,7 +2,7 @@
  * ai.js — Nhập nhanh giao dịch bằng câu văn tự nhiên / giọng nói
  *
  * Hệ thống AI Đa tầng (Hybrid AI Router):
- *  1. Ngoại tuyến / Cục bộ (luôn chạy, không cần mạng, 0ms, bảo mật tối đa):
+ *  1. Ngoại tuyến / Cục bộ (luôn chạy, không cần mạng, xử lý trực tiếp trên máy):
  *     - Nhận diện mệnh đề, danh mục, ví, số tiền kèm tiếng lóng (cành, lít, loét, củ, xu, nửa củ, nửa lít)
  *     - Nhận diện thời gian tương đối (hôm qua, hôm kia, sáng nay, ngày cụ thể)
  *  2. Trực tuyến qua 9Router AI Gateway (Cục bộ/Mạng nội bộ thông minh):
@@ -418,7 +418,7 @@ const AIEntry = {
   },
 
   // ============================================================
-  //  1. PARSER CỤC BỘ (Không cần mạng, 0ms)
+  //  1. PARSER CỤC BỘ (Không cần mạng, xử lý trực tiếp trên máy)
   // ============================================================
   parseLocal(text) {
     const clauses = this.splitClauses(text);
@@ -639,7 +639,7 @@ const AIEntry = {
   // ============================================================
   /**
    * Phân tích câu nhập:
-   * - Nếu offline: chạy ngay parser cục bộ trong máy (0ms).
+   * - Nếu offline: chạy ngay parser cục bộ trong máy.
    * - Nếu online và có 9Router AI Gateway: gọi 9Router, tự động fallback cục bộ nếu lỗi/chậm (>8s).
    * - Nếu online và có direct Gemini API key: gọi Gemini direct, fallback cục bộ nếu lỗi.
    * - Mặc định: chạy parser cục bộ trong máy.
@@ -654,10 +654,10 @@ const AIEntry = {
     const router9Url = this.get9RouterUrl();
     const directKey = this.getApiKey();
 
-    // 1. Khi ngoại tuyến: ưu tiên chạy local 0ms, không đợi network timeout
+    // 1. Khi ngoại tuyến: ưu tiên chạy bộ phân tích cục bộ, không đợi network timeout
     if (!isOnline) {
       const localResult = this.parseLocal(clean);
-      localResult.notice = '⚡ Đang ngoại tuyến — dùng bộ phân tích trong máy (0ms).';
+      localResult.notice = '⚡ Đang ngoại tuyến — dùng bộ phân tích tức thì trong máy.';
       return localResult;
     }
 

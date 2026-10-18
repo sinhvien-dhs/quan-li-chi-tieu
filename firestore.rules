@@ -13,11 +13,20 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // Ngày hợp lệ: YYYY-MM-DD, chặn ngày không tồn tại (như 31 ở tháng 30 ngày hoặc tháng 2)
+    // Ngày hợp lệ: YYYY-MM-DD, kiểm tra tháng 30/31 ngày và ngày 29/2 chuẩn năm nhuận
     function validDate(d) {
       return d is string
         && d.size() == 10
-        && d.matches('^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|[12][0-9]))$');
+        && (
+             // Tháng 1, 3, 5, 7, 8, 10, 12 có tối đa 31 ngày
+             d.matches('^[0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])$')
+             // Tháng 4, 6, 9, 11 có tối đa 30 ngày
+             || d.matches('^[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)$')
+             // Tháng 2 ngày 1-28 ở mọi năm
+             || d.matches('^[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])$')
+             // Tháng 2 ngày 29 CHỈ ở năm nhuận (đuôi 00, 04, 08, 12, 16, 20, 24, 28, 32...)
+             || d.matches('^[0-9]{2}([02468][048]|[13579][26])-02-29$')
+           );
     }
 
     function validTs(v) {
@@ -98,16 +107,29 @@ service cloud.firestore {
         && (!('createdAt' in r.keys()) || validTs(r.createdAt));
     }
 
+    function validBudgetLimitVal(v) {
+      return v is number && v >= 0 && v <= 1000000000000;
+    }
+
     // Ngân sách: { limits: { <danhMuc>: <soTien> } }
-    // Lưu ý: không dùng keys().all(...) vì không phải mọi phiên bản rules engine
-    // đều hỗ trợ — giữ biểu thức tối giản để luôn biên dịch được.
     function validBudgetDoc(b) {
       return b is map
         && b.keys().hasOnly(['limits','updatedAt'])
         && 'limits' in b.keys()
         && b.limits is map
         && b.limits.size() <= 50
-        && (!('updatedAt' in b.keys()) || validTs(b.updatedAt));
+        && (!('updatedAt' in b.keys()) || validTs(b.updatedAt))
+        && (!('food' in b.limits) || validBudgetLimitVal(b.limits.food))
+        && (!('shopping' in b.limits) || validBudgetLimitVal(b.limits.shopping))
+        && (!('transport' in b.limits) || validBudgetLimitVal(b.limits.transport))
+        && (!('bills' in b.limits) || validBudgetLimitVal(b.limits.bills))
+        && (!('entertainment' in b.limits) || validBudgetLimitVal(b.limits.entertainment))
+        && (!('health' in b.limits) || validBudgetLimitVal(b.limits.health))
+        && (!('education' in b.limits) || validBudgetLimitVal(b.limits.education))
+        && (!('family' in b.limits) || validBudgetLimitVal(b.limits.family))
+        && (!('travel' in b.limits) || validBudgetLimitVal(b.limits.travel))
+        && (!('insurance' in b.limits) || validBudgetLimitVal(b.limits.insurance))
+        && (!('other' in b.limits) || validBudgetLimitVal(b.limits.other));
     }
 
     function validSettingsDoc(s) {

@@ -203,7 +203,7 @@ const Business = {
    * - Bản ghi nằm trong `tombstones` (đã xoá trên máy này) bị loại khỏi cả
    *   bản cloud lẫn kết quả → không bao giờ "hồi sinh" bản ghi đã xoá.
    */
-  mergeById(localArr, cloudArr, tombstones) {
+  mergeById(localArr, cloudArr, tombstones, isAccountInitialized = false) {
     const tombs = Array.isArray(tombstones) ? tombstones : [];
     const map = new Map();
     const cloudIds = new Set();
@@ -220,8 +220,8 @@ const Business = {
       if (tombs.indexOf(item.id) > -1) return;
 
       // Nếu bản ghi địa phương đã từng được đồng bộ (synced) nhưng trên server
-      // không còn nữa (và server có dữ liệu), tức là bản ghi đã bị xóa trên thiết bị khác!
-      if (item.syncState === 'synced' && cloudIds.size > 0 && !cloudIds.has(item.id)) {
+      // không còn nữa (khi server có dữ liệu hoặc tài khoản đã từng khởi tạo), tức là bản ghi đã bị xóa trên thiết bị khác!
+      if (item.syncState === 'synced' && (cloudIds.size > 0 || isAccountInitialized) && !cloudIds.has(item.id)) {
         return; // Không hồi sinh bản ghi đã bị xóa trên cloud
       }
 

@@ -22,7 +22,7 @@
 ---
 
 ### 🤖 2. Nhập nhanh bằng AI (Tích hợp sẵn — Không cần API Key)
-- **Dùng ngay không cần cài đặt:** Ứng dụng tích hợp sẵn mô hình NLP tiếng Việt cục bộ (0ms latency, không tốn dữ liệu mạng, bảo mật tuyệt đối).
+- **Dùng ngay không cần cài đặt:** Ứng dụng tích hợp sẵn mô hình NLP tiếng Việt xử lý trực tiếp trên thiết bị (phản hồi tức thì, không tốn dữ liệu mạng, bảo vệ quyền riêng tư).
 - **Hiểu tiếng lóng tài chính Việt Nam:**
   - Tiền tệ: `cành`, `lít`, `loét`, `củ`, `xu`, `nửa củ`, `nửa lít` (VD: *"ăn phở 40 cành, mua áo 2 lít"*).
   - Mốc thời gian linh hoạt: `hôm qua`, `hôm kia`, `sáng nay`, `ngày 15/10`.

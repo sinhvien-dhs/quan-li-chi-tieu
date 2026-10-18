@@ -42,6 +42,18 @@ const SyncManager = {
   },
 
   /**
+   * Xóa đúng các entry trong snapshot đã được server xác nhận (chống race condition khi có thay đổi mới trong lúc push)
+   */
+  removeQueueEntries(entriesToRemove) {
+    if (!Array.isArray(entriesToRemove) || entriesToRemove.length === 0) return;
+    const current = this.getQueue();
+    const removeKeys = new Set(entriesToRemove.map(e => `${e.key}_${e.at}`));
+    const updated = current.filter(e => !removeKeys.has(`${e.key}_${e.at}`));
+    localStorage.setItem(this.QUEUE_KEY, JSON.stringify(updated));
+    this.updateBadge();
+  },
+
+  /**
    * Ghi nhận "đã xóa" để không bị ghi đè khi đồng bộ (xóa offline)
    * @param {string} txId
    */
@@ -59,6 +71,17 @@ const SyncManager = {
 
   clearTombstones() {
     Storage.remove(this.TOMBSTONE_KEY);
+  },
+
+  /**
+   * Xóa đúng các tombstone trong snapshot đã được server xác nhận (bảo vệ tombstone mới phát sinh trong lúc push)
+   */
+  removeTombstones(idsToRemove) {
+    if (!Array.isArray(idsToRemove) || idsToRemove.length === 0) return;
+    const current = this.getTombstones();
+    const removeSet = new Set(idsToRemove);
+    const updated = current.filter(id => !removeSet.has(id));
+    Storage.set(this.TOMBSTONE_KEY, updated);
   },
 
   /**

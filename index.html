@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" data-theme="light">
+<html lang="vi" data-theme="light" class="auth-pending">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,7 @@
        Khi deploy lên https/web, nguồn file: không có tác dụng nên không hở cửa bảo mật. -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self' file:;
-    script-src 'self' 'unsafe-inline' file: https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com https://apis.google.com https://*.firebaseapp.com;
+    script-src 'self' file: https://cdn.jsdelivr.net https://cdn.sheetjs.com https://www.gstatic.com https://apis.google.com https://*.firebaseapp.com;
     style-src 'self' 'unsafe-inline' file: https://fonts.googleapis.com https://cdnjs.cloudflare.com;
     font-src 'self' file: https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
     img-src 'self' file: data: blob: https://img.vietqr.io https://*.googleusercontent.com https://*.gstatic.com;
@@ -63,11 +63,6 @@
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
 
-  <script>
-    // Luôn kích hoạt Auth Wall khóa toàn bộ ứng dụng từ đầu
-    // Chỉ mở khi Firebase Auth chính thức xác nhận người dùng đã đăng nhập
-    document.documentElement.classList.add('auth-pending');
-  </script>
 </head>
 <body>
   <div id="printReport"></div>

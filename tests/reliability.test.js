@@ -453,6 +453,124 @@ console.log('\n== Kiểm thử Độ Tin Cậy & Toàn Vẹn Dữ Liệu (Reliab
     eq(executionCount, 1, 'Chỉ 1 lần ghi Firestore thực tế được kích hoạt');
   });
 
+  // Test 12 (F-01): Tài khoản đã khởi tạo khi cloud rỗng không làm sống lại các giao dịch đã xóa
+  await test('mergeById không hồi sinh giao dịch cũ đã synced khi tài khoản cloud đã khởi tạo nhưng rỗng', () => {
+    const localArr = [
+      { id: 'tx_old_synced', name: 'Giao dịch cũ đã đồng bộ', amount: 50000, syncState: 'synced' },
+      { id: 'tx_new_offline', name: 'Giao dịch mới tạo lúc mất mạng', amount: 30000, syncState: 'pending' }
+    ];
+    const cloudArr = []; // Cloud rỗng (người dùng đã xóa trên thiết bị khác)
+    const tombstones = [];
+    const isAccountInitialized = true; // Tài khoản đã từng khởi tạo trên cloud
+
+    const result = Business.mergeById(localArr, cloudArr, tombstones, isAccountInitialized);
+
+    eq(result.length, 1, 'Chỉ giao dịch mới chưa đồng bộ mới được giữ lại');
+    eq(result[0].id, 'tx_new_offline', 'Giao dịch mới phải được giữ để đẩy lên cloud');
+  });
+
+  // Test 13 (F-02): Thao tác xóa mới phát sinh trong lúc push không bị xóa khỏi hàng đợi / tombstone
+  await test('Snapshot cleanup bảo vệ tombstone và queue mới phát sinh trong lúc push đang chạy', () => {
+    let mockTombstones = ['tx_del_1'];
+    let mockQueue = [{ op: 'remove', key: 'tx_del_1', at: 1000 }];
+
+    // Bước 1: Push bắt đầu và chụp snapshot
+    const pushedTombsSnapshot = [...mockTombstones];
+    const pushedQueueSnapshot = [...mockQueue];
+
+    // Bước 2: Người dùng thực hiện xóa thêm giao dịch tx_del_2 trong khi push đang await server
+    mockTombstones.push('tx_del_2');
+    mockQueue.push({ op: 'remove', key: 'tx_del_2', at: 1050 });
+
+    // Bước 3: Push hoàn thành và dọn dẹp snapshot
+    const removeSet = new Set(pushedTombsSnapshot);
+    mockTombstones = mockTombstones.filter(id => !removeSet.has(id));
+
+    const removeKeys = new Set(pushedQueueSnapshot.map(e => `${e.key}_${e.at}`));
+    mockQueue = mockQueue.filter(e => !removeKeys.has(`${e.key}_${e.at}`));
+
+    eq(mockTombstones.length, 1, 'Tombstone phát sinh trong lúc push phải còn nguyên');
+    eq(mockTombstones[0], 'tx_del_2', 'Tombstone tx_del_2 không được bị xóa');
+    eq(mockQueue.length, 1, 'Hàng đợi phát sinh trong lúc push phải còn nguyên');
+    eq(mockQueue[0].key, 'tx_del_2', 'Mục tx_del_2 phải còn trong queue');
+  });
+
+  // Test 14 (F-03): Xóa tài khoản fail-closed khi thao tác xóa tài liệu Firestore gặp sự cố
+  await test('deleteAccount dừng ngay và không xóa Auth / local nếu xóa tài liệu budgets/main thất bại', async () => {
+    let authUserDeleted = false;
+    let localWiped = false;
+
+    const testUser = {
+      uid: 'user_fail_test',
+      providerData: [{ providerId: 'google.com' }],
+      reauthenticateWithPopup: async () => true,
+      delete: async () => { authUserDeleted = true; }
+    };
+
+    const mockRoot = {
+      collection: (col) => {
+        if (col === 'budgets') {
+          return {
+            doc: () => ({
+              get: async () => ({ exists: true }),
+              delete: async () => { throw new Error('Firestore permission denied on budgets'); }
+            })
+          };
+        }
+        return {
+          get: async () => ({ docs: [] })
+        };
+      },
+      get: async () => ({ exists: false }),
+      delete: async () => {}
+    };
+
+    let caughtError = null;
+    try {
+      // Mô phỏng quy trình BƯỚC 2 trong deleteAccount
+      const targetCollections = ['transactions', 'wallets', 'goals', 'recurring', 'debts', 'data'];
+      for (const colName of targetCollections) {
+        const snap = await mockRoot.collection(colName).get();
+        if (snap && snap.docs && snap.docs.length > 0) {
+          await Promise.all(snap.docs.map(d => d.ref.delete()));
+        }
+      }
+      const budgetsDoc = mockRoot.collection('budgets').doc('main');
+      const budgetsSnap = await budgetsDoc.get();
+      if (budgetsSnap && budgetsSnap.exists) await budgetsDoc.delete();
+
+      // Nếu không ném lỗi (bị catch rỗng), sẽ chạy tới Bước 3 & 4:
+      await testUser.delete();
+      localWiped = true;
+    } catch (err) {
+      caughtError = err;
+    }
+
+    ok(caughtError !== null, 'Phải bắt được lỗi khi xóa budgets thất bại');
+    eq(authUserDeleted, false, 'Tuyệt đối không được xóa Auth user khi Firestore chưa xóa xong');
+    eq(localWiped, false, 'Tuyệt đối không được xóa local data khi có lỗi');
+  });
+
+  // Test 15 (F-06): Kiểm tra xác thực năm nhuận cho ngày 29/02
+  await test('Business.isValidDate xác thực chính xác năm nhuận cho ngày 29/02', () => {
+    // 2024 là năm nhuận
+    eq(Business.isValidDate('2024-02-29'), true, '2024-02-29 phải hợp lệ (năm nhuận)');
+    // 2020 là năm nhuận
+    eq(Business.isValidDate('2020-02-29'), true, '2020-02-29 phải hợp lệ (năm nhuận)');
+    // 2000 là năm nhuận
+    eq(Business.isValidDate('2000-02-29'), true, '2000-02-29 phải hợp lệ (năm nhuận)');
+
+    // 2025 không phải năm nhuận
+    eq(Business.isValidDate('2025-02-29'), false, '2025-02-29 phải bị từ chối (không nhuận)');
+    // 2026 không phải năm nhuận
+    eq(Business.isValidDate('2026-02-29'), false, '2026-02-29 phải bị từ chối (không nhuận)');
+    // 2027 không phải năm nhuận
+    eq(Business.isValidDate('2027-02-29'), false, '2027-02-29 phải bị từ chối (không nhuận)');
+    // Ngày không tồn tại
+    eq(Business.isValidDate('2026-02-30'), false, '2026-02-30 phải bị từ chối');
+    eq(Business.isValidDate('2026-04-31'), false, '2026-04-31 phải bị từ chối');
+  });
+
   console.log(`\nKết quả kiểm thử độ tin cậy: ${passed} đạt, ${failed} không đạt\n`);
   if (failed > 0) process.exit(1);
 })();

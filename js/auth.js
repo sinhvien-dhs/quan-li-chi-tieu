@@ -572,8 +572,11 @@ const AuthManager = {
         message: 'Dữ liệu mới nhất chưa được xác nhận lưu lên máy chủ (có thể do mất mạng hoặc quá thời gian chờ). Nếu đăng xuất lúc này, các thay đổi trên máy có thể bị mất. Bạn có muốn tải file sao lưu trước khi đăng xuất?',
         confirmText: 'Sao lưu & Đăng xuất',
         onConfirm: async () => {
-          if (typeof ExportManager !== 'undefined' && typeof ExportManager.exportJSON === 'function') {
-            try { ExportManager.exportJSON(); } catch (err) { console.warn(err); }
+          if (typeof ExportManager !== 'undefined') {
+            const expFn = ExportManager.backupJSON || ExportManager.exportJSON;
+            if (typeof expFn === 'function') {
+              try { expFn.call(ExportManager, false); } catch (err) { console.warn('Lỗi tạo sao lưu JSON trước đăng xuất:', err); }
+            }
           }
           await doFinalSignOut();
         }
@@ -660,9 +663,16 @@ const AuthManager = {
               await Promise.all(snap.docs.map(d => d.ref.delete()));
             }
           }
-          await root.collection('budgets').doc('main').delete().catch(() => {});
-          await root.collection('settings').doc('main').delete().catch(() => {});
-          await root.delete().catch(() => {});
+          const budgetsDoc = root.collection('budgets').doc('main');
+          const budgetsSnap = await budgetsDoc.get();
+          if (budgetsSnap && budgetsSnap.exists) await budgetsDoc.delete();
+
+          const settingsDoc = root.collection('settings').doc('main');
+          const settingsSnap = await settingsDoc.get();
+          if (settingsSnap && settingsSnap.exists) await settingsDoc.delete();
+
+          const rootSnap = await root.get();
+          if (rootSnap && rootSnap.exists) await root.delete();
 
           // BƯỚC 3: Xóa tài khoản Firebase Auth
           try {
@@ -854,6 +864,9 @@ const AuthManager = {
       const settingsSnap = await root.collection('settings').doc('main').get();
       cloud.settings = settingsSnap.exists ? settingsSnap.data() : {};
 
+      const userDocSnap = (typeof root.get === 'function') ? await root.get().catch(() => null) : null;
+      const isAccountInitialized = Boolean((userDocSnap && userDocSnap.exists) || budgetsSnap.exists || settingsSnap.exists);
+
       const hasCloudData =
         cloud.spendwise_transactions.length > 0 ||
         cloud.spendwise_wallets.length > 0 ||
@@ -862,8 +875,9 @@ const AuthManager = {
         cloud.spendwise_debts.length > 0 ||
         Object.keys(cloud.spendwise_budgets).length > 0;
 
-      if (!hasCloudData) {
-        // Nếu trên cloud chưa có dữ liệu, kiểm tra xem có bản sao lưu offline của tài khoản này không
+      if (!isAccountInitialized && !hasCloudData) {
+        // Tài khoản hoàn toàn mới trên cloud (chưa từng tạo root doc, settings hay subcollection)
+        // Nếu trên máy có bản sao lưu offline của tài khoản này hoặc giao dịch tạm, nạp lại để khởi tạo
         const backupRaw = localStorage.getItem('spendwise_backup_' + this.currentUser.uid);
         if (backupRaw && (!local.spendwise_transactions || local.spendwise_transactions.length === 0)) {
           try {
@@ -879,7 +893,10 @@ const AuthManager = {
             }
           } catch (bErr) { console.warn('Lỗi đọc bản sao lưu dự phòng:', bErr); }
         }
-        // Tài khoản mới → đẩy dữ liệu cục bộ (nếu có) lên cloud
+        // Đánh dấu tài khoản đã khởi tạo trên Firestore
+        if (typeof root.set === 'function') {
+          await root.set({ initializedAt: new Date().toISOString(), email: this.currentUser.email || '' }, { merge: true });
+        }
         await this.pushToCloud();
         this.rerender();
         if (!silent) Toast.success('Đã tạo kho dữ liệu trên máy chủ!');
@@ -890,10 +907,12 @@ const AuthManager = {
       const tombs = (typeof SyncManager !== 'undefined') ? SyncManager.getTombstones() : [];
 
       // Gộp danh sách: giữ bản local chưa kịp đồng bộ + bản cloud, ưu tiên bản mới hơn
+      // Truyền isAccountInitialized để không hồi sinh bản ghi đã bị xóa trên cloud khi cloud rỗng
       const mergedTxs = this.mergeById(
         Array.isArray(local.spendwise_transactions) ? local.spendwise_transactions : [],
         cloud.spendwise_transactions,
-        tombs
+        tombs,
+        isAccountInitialized
       );
       const safeTxs = (typeof ExportManager !== 'undefined')
         ? ExportManager.sanitizeTransactions(mergedTxs)
@@ -901,14 +920,14 @@ const AuthManager = {
       localStorage.setItem('spendwise_transactions', JSON.stringify(safeTxs));
 
       localStorage.setItem('spendwise_wallets', JSON.stringify(
-        this.mergeById(local.spendwise_wallets || [], cloud.spendwise_wallets, tombs)));
+        this.mergeById(local.spendwise_wallets || [], cloud.spendwise_wallets, tombs, isAccountInitialized)));
       localStorage.setItem('spendwise_goals', JSON.stringify(
-        this.mergeById(local.spendwise_goals || [], cloud.spendwise_goals, tombs)));
+        this.mergeById(local.spendwise_goals || [], cloud.spendwise_goals, tombs, isAccountInitialized)));
       localStorage.setItem('spendwise_recurring', JSON.stringify(
-        this.mergeById(local.spendwise_recurring || [], cloud.spendwise_recurring, tombs)));
+        this.mergeById(local.spendwise_recurring || [], cloud.spendwise_recurring, tombs, isAccountInitialized)));
 
       // Sổ nợ nhóm: gộp như các danh sách khác rồi kiểm tra tổng khớp trước khi lưu
-      const mergedDebts = this.mergeById(local.spendwise_debts || [], cloud.spendwise_debts, tombs);
+      const mergedDebts = this.mergeById(local.spendwise_debts || [], cloud.spendwise_debts, tombs, isAccountInitialized);
       const safeDebts = (typeof ExportManager !== 'undefined')
         ? ExportManager.sanitizeDebts(mergedDebts)
         : mergedDebts;
@@ -964,8 +983,8 @@ const AuthManager = {
   /**
    * Gộp hai mảng theo id (dùng Business.mergeById để có thể kiểm thử)
    */
-  mergeById(localArr, cloudArr, tombstones = []) {
-    return Business.mergeById(localArr, cloudArr, tombstones);
+  mergeById(localArr, cloudArr, tombstones = [], isAccountInitialized = false) {
+    return Business.mergeById(localArr, cloudArr, tombstones, isAccountInitialized);
   },
 
   /**
@@ -990,8 +1009,10 @@ const AuthManager = {
         const colName = this.COLLECTIONS[key];
         const list = Storage.get(key, []) || [];
 
-        // Loại bản ghi đã bị xóa trên máy (theo tombstone) trước khi đẩy
-        const tombs = (typeof SyncManager !== 'undefined') ? SyncManager.getTombstones() : [];
+        // Chụp ảnh snapshot của tombstones và queue tại thời điểm bắt đầu push (chống race condition)
+        const pushedTombsSnapshot = (typeof SyncManager !== 'undefined') ? [...SyncManager.getTombstones()] : [];
+        const pushedQueueSnapshot = (typeof SyncManager !== 'undefined') ? [...SyncManager.getQueue()] : [];
+        const tombs = pushedTombsSnapshot;
         // Dữ liệu demo chỉ có ở máy này, tuyệt đối không đẩy lên tài khoản thật
         const real = (typeof DemoData !== 'undefined') ? DemoData.filterForCloud(list) : list;
         const toPush = tombs.length ? real.filter(t => !tombs.includes(t.id)) : real;
@@ -1059,11 +1080,23 @@ const AuthManager = {
       if (reminderTime) settingsPayload.reminderTime = reminderTime;
 
       await root.collection('settings').doc('main').set(settingsPayload, { merge: true });
+      if (typeof root.set === 'function') {
+        await root.set({ initializedAt: now }, { merge: true });
+      }
 
-      // Server đã xác nhận → mới coi là đồng bộ xong
+      // Server đã xác nhận → chỉ dọn đúng những tombstone & queue entry trong snapshot đã xử lý
+      // Tuyệt đối không xóa các tombstone/queue mới phát sinh trong lúc push đang chạy (bảo vệ race condition)
       if (typeof SyncManager !== 'undefined') {
-        SyncManager.clearTombstones();
-        SyncManager.clearQueue();
+        if (typeof SyncManager.removeTombstones === 'function') {
+          SyncManager.removeTombstones(pushedTombsSnapshot);
+        } else {
+          SyncManager.clearTombstones();
+        }
+        if (typeof SyncManager.removeQueueEntries === 'function') {
+          SyncManager.removeQueueEntries(pushedQueueSnapshot);
+        } else {
+          SyncManager.clearQueue();
+        }
         localStorage.setItem(SyncManager.LAST_SYNC_KEY, now);
         SyncManager.updateBadge();
       }

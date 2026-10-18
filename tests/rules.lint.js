@@ -33,7 +33,7 @@ const funcs = new Set([...src.matchAll(/function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(
 // 4) Cac ham duoc goi trong dieu kien allow/return
 const goi = new Set([...src.matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)].map(m => m[1]));
 const tapDung = ['validDate','validTs','validReceipt','validTransaction','validWallet','validGoal',
-  'validRecurring','validBudgetDoc','validSettingsDoc','validDebt','validDebtItem','isOwner'];
+  'validRecurring','validBudgetDoc','validSettingsDoc','validDebt','validDebtItem','validBudgetLimitVal','isOwner'];
 tapDung.forEach(f => {
   if (!funcs.has(f) && /match\s*\/|allow\s+create|allow\s+update|return\s/.test(src)) {
     // chi bao loi neu ham do that su duoc goi

@@ -124,31 +124,48 @@ const ExportManager = {
 
   /**
    * Sao lưu toàn bộ cấu hình & giao dịch ra file JSON
+   * @returns {boolean} true nếu xuất thành công, false nếu lỗi
    */
   backupJSON(silent = false) {
-    const data = {
-      app: 'SpendWise',
-      version: 3,
-      exportedAt: new Date().toISOString(),
-      transactions: Storage.getTransactions(),
-      budgets: BudgetManager.getBudgets(),
-      wallets: Storage.get('spendwise_wallets', []),
-      goals: Storage.get('spendwise_goals', []),
-      recurring: Storage.get('spendwise_recurring', []),
-      // Sổ nợ nhóm cũng phải được sao lưu, nếu không mất khi đổi máy
-      debts: SplitManager ? SplitManager.getDebts() : [],
-      currency: Storage.get('spendwise_currency', 'VND'),
-      theme: Storage.getTheme(),
-      reminderTime: localStorage.getItem('spendwise_reminder_time') || null
-    };
+    try {
+      const data = {
+        app: 'SpendWise',
+        version: 3,
+        exportedAt: new Date().toISOString(),
+        transactions: (typeof Storage !== 'undefined' && typeof Storage.getTransactions === 'function')
+          ? Storage.getTransactions() : [],
+        budgets: (typeof BudgetManager !== 'undefined' && typeof BudgetManager.getBudgets === 'function')
+          ? BudgetManager.getBudgets() : (Storage.get('spendwise_budgets', {}) || {}),
+        wallets: Storage.get('spendwise_wallets', []),
+        goals: Storage.get('spendwise_goals', []),
+        recurring: Storage.get('spendwise_recurring', []),
+        debts: (typeof SplitManager !== 'undefined' && typeof SplitManager.getDebts === 'function')
+          ? SplitManager.getDebts() : Storage.get('spendwise_debts', []),
+        currency: Storage.get('spendwise_currency', 'VND'),
+        theme: Storage.getTheme(),
+        reminderTime: localStorage.getItem('spendwise_reminder_time') || null
+      };
 
-    const jsonStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `SpendWise_Backup_${Utils.getToday()}.json`;
-    link.click();
-    if (!silent) Toast.success('Đã tải xuống file sao lưu!');
+      const jsonStr = JSON.stringify(data, null, 2);
+      if (typeof Blob === 'undefined' || typeof document === 'undefined') {
+        return true; // Môi trường kiểm thử không có DOM
+      }
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `SpendWise_Backup_${Utils.getToday()}.json`;
+      link.click();
+      if (!silent) Toast.success('Đã tải xuống file sao lưu!');
+      return true;
+    } catch (e) {
+      console.error('Lỗi tạo bản sao lưu JSON:', e);
+      if (!silent) Toast.error('Không thể tạo file sao lưu: ' + e.message);
+      return false;
+    }
+  },
+
+  exportJSON(silent = false) {
+    return this.backupJSON(silent);
   },
 
   /**

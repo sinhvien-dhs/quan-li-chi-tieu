@@ -1003,19 +1003,19 @@ const AuthManager = {
     this._currentPushPromise = (async () => {
       try {
         const root = this.userRoot();
-      const now = new Date().toISOString();
-
-      for (const key of Object.keys(this.COLLECTIONS)) {
-        const colName = this.COLLECTIONS[key];
-        const list = Storage.get(key, []) || [];
+        const now = new Date().toISOString();
 
         // Chụp ảnh snapshot của tombstones và queue tại thời điểm bắt đầu push (chống race condition)
         const pushedTombsSnapshot = (typeof SyncManager !== 'undefined') ? [...SyncManager.getTombstones()] : [];
         const pushedQueueSnapshot = (typeof SyncManager !== 'undefined') ? [...SyncManager.getQueue()] : [];
-        const tombs = pushedTombsSnapshot;
-        // Dữ liệu demo chỉ có ở máy này, tuyệt đối không đẩy lên tài khoản thật
-        const real = (typeof DemoData !== 'undefined') ? DemoData.filterForCloud(list) : list;
-        const toPush = tombs.length ? real.filter(t => !tombs.includes(t.id)) : real;
+
+        for (const key of Object.keys(this.COLLECTIONS)) {
+          const colName = this.COLLECTIONS[key];
+          const list = Storage.get(key, []) || [];
+          const tombs = pushedTombsSnapshot;
+          // Dữ liệu demo chỉ có ở máy này, tuyệt đối không đẩy lên tài khoản thật
+          const real = (typeof DemoData !== 'undefined') ? DemoData.filterForCloud(list) : list;
+          const toPush = tombs.length ? real.filter(t => !tombs.includes(t.id)) : real;
 
         const ops = [];
         toPush.forEach(item => {

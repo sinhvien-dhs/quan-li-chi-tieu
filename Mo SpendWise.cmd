@@ -13,7 +13,7 @@ netstat -ano | findstr ":%PORT% " | findstr "LISTENING" >nul
 if not errorlevel 1 (
   echo.
   echo   Server da chay san tren cong %PORT% - dang mo...
-  start "" "http://localhost:%PORT%/?v=80"
+  start "" "http://localhost:%PORT%/"
   exit /b 0
 )
 
@@ -24,7 +24,7 @@ start "SpendWise Server" /min powershell.exe -NoProfile -ExecutionPolicy Bypass 
 
 REM Cho may chu kip khoi dong (ping de tranh loi khi co chuyen huong dau vao)
 ping -n 5 127.0.0.1 >nul
-start "" "http://localhost:%PORT%/?v=80"
+start "" "http://localhost:%PORT%/"
 
 echo.
 echo   Da mo xong!

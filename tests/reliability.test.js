@@ -470,25 +470,73 @@ console.log('\n== Kiểm thử Độ Tin Cậy & Toàn Vẹn Dữ Liệu (Reliab
   });
 
   // Test 13 (F-02): Thao tác xóa mới phát sinh trong lúc push không bị xóa khỏi hàng đợi / tombstone
-  await test('Snapshot cleanup bảo vệ tombstone và queue mới phát sinh trong lúc push đang chạy', () => {
+  await test('Snapshot cleanup bảo vệ tombstone và queue mới phát sinh trong lúc push đang chạy', async () => {
     let mockTombstones = ['tx_del_1'];
     let mockQueue = [{ op: 'remove', key: 'tx_del_1', at: 1000 }];
 
-    // Bước 1: Push bắt đầu và chụp snapshot
-    const pushedTombsSnapshot = [...mockTombstones];
-    const pushedQueueSnapshot = [...mockQueue];
+    const authSrc = fs.readFileSync(path.join(__dirname, '..', 'js', 'auth.js'), 'utf8');
+    const authSandbox = {
+      console,
+      localStorage: {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {}
+      },
+      Storage: {
+        get: (k) => (k === 'spendwise_budgets' ? {} : []),
+        set: () => true,
+        getTheme: () => 'light',
+        getTransactions: () => []
+      },
+      SyncManager: {
+        LAST_SYNC_KEY: 'spendwise_last_sync',
+        getTombstones: () => mockTombstones,
+        getQueue: () => mockQueue,
+        removeTombstones: (toRemove) => {
+          const removeSet = new Set(toRemove);
+          mockTombstones = mockTombstones.filter(id => !removeSet.has(id));
+        },
+        removeQueueEntries: (toRemove) => {
+          const removeKeys = new Set(toRemove.map(e => `${e.key}_${e.at}`));
+          mockQueue = mockQueue.filter(e => !removeKeys.has(`${e.key}_${e.at}`));
+        },
+        updateBadge: () => {}
+      },
+      setTimeout,
+      clearTimeout,
+      Promise
+    };
 
-    // Bước 2: Người dùng thực hiện xóa thêm giao dịch tx_del_2 trong khi push đang await server
-    mockTombstones.push('tx_del_2');
-    mockQueue.push({ op: 'remove', key: 'tx_del_2', at: 1050 });
+    vm.createContext(authSandbox);
+    vm.runInContext(authSrc + '\n;this.AuthManager = AuthManager;', authSandbox);
+    const AM = authSandbox.AuthManager;
 
-    // Bước 3: Push hoàn thành và dọn dẹp snapshot
-    const removeSet = new Set(pushedTombsSnapshot);
-    mockTombstones = mockTombstones.filter(id => !removeSet.has(id));
+    AM.currentUser = { uid: 'test_user_sync' };
+    AM.db = {
+      batch: () => ({
+        delete: () => {},
+        set: () => {},
+        commit: async () => {
+          // Giả lập trong lúc batch commit (mạng đang chờ server), người dùng xóa thêm tx_del_2
+          if (!mockTombstones.includes('tx_del_2')) {
+            mockTombstones.push('tx_del_2');
+            mockQueue.push({ op: 'remove', key: 'tx_del_2', at: 1050 });
+          }
+        }
+      })
+    };
+    AM.userRoot = () => ({
+      collection: () => ({
+        get: async () => ({
+          docs: [{ id: 'tx_del_1', ref: {} }]
+        }),
+        doc: () => ({ set: async () => {} })
+      }),
+      set: async () => {}
+    });
 
-    const removeKeys = new Set(pushedQueueSnapshot.map(e => `${e.key}_${e.at}`));
-    mockQueue = mockQueue.filter(e => !removeKeys.has(`${e.key}_${e.at}`));
-
+    const pushResult = await AM.pushToCloud();
+    eq(pushResult, true, 'pushToCloud phải chạy thành công không ném lỗi phạm vi');
     eq(mockTombstones.length, 1, 'Tombstone phát sinh trong lúc push phải còn nguyên');
     eq(mockTombstones[0], 'tx_del_2', 'Tombstone tx_del_2 không được bị xóa');
     eq(mockQueue.length, 1, 'Hàng đợi phát sinh trong lúc push phải còn nguyên');

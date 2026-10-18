@@ -575,7 +575,17 @@ const AuthManager = {
           if (typeof ExportManager !== 'undefined') {
             const expFn = ExportManager.backupJSON || ExportManager.exportJSON;
             if (typeof expFn === 'function') {
-              try { expFn.call(ExportManager, false); } catch (err) { console.warn('Lỗi tạo sao lưu JSON trước đăng xuất:', err); }
+              try {
+                const exported = expFn.call(ExportManager, false);
+                if (exported === false) {
+                  if (typeof Toast !== 'undefined') Toast.error('Không thể tạo file sao lưu! Đã hủy đăng xuất để bảo vệ dữ liệu.');
+                  return;
+                }
+              } catch (err) {
+                console.warn('Lỗi tạo sao lưu JSON trước đăng xuất:', err);
+                if (typeof Toast !== 'undefined') Toast.error('Không thể tạo file sao lưu! Đã hủy đăng xuất để bảo vệ dữ liệu.');
+                return;
+              }
             }
           }
           await doFinalSignOut();

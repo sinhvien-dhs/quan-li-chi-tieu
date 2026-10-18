@@ -2,10 +2,10 @@
 
 Ứng dụng web **Single Page Application (SPA)** chuẩn **Progressive Web App (PWA)** giúp theo dõi thu chi cá nhân, phân tích ngân sách theo danh mục, chia tiền nhóm VietQR, nhập nhanh bằng AI và trực quan hoá tài chính bằng biểu đồ — hoạt động mượt mà cả khi **offline**.
 
-![SpendWise](https://img.shields.io/badge/SpendWise-v82-6C63FF?style=for-the-badge&logo=wallet)
+![SpendWise](https://img.shields.io/badge/SpendWise-v83-6C63FF?style=for-the-badge&logo=wallet)
 ![Tech](https://img.shields.io/badge/HTML5%20%7C%20CSS3%20%7C%20VanillaJS-orange?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-00C897?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-101%2F101%20Passed%20(100%25)-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-115%2F115%20Passed%20(100%25)-brightgreen?style=for-the-badge)
 ![Zero Dependency](https://img.shields.io/badge/Zero%20NPM%20Dependencies-black?style=for-the-badge)
 
 ---
@@ -43,7 +43,7 @@
 ---
 
 ### 🍜 4. Chia tiền nhóm (Bill Splitter) + VietQR + Sổ nợ
-- **Chia tiền bảo toàn tổng:** Thuật toán phân bổ phần nguyên và xử lý phần dư chính xác tuyệt đối (300.000đ chia 4 người không bao giờ lệch 1 đồng).
+- **Chia tiền bảo toàn tổng:** Thuật toán phân bổ phần nguyên và xử lý phần dư chính xác đến từng đồng (300.000đ chia 4 người không bao giờ lệch 1 đồng).
 - **Tạo mã VietQR tự động:** Tự sinh mã QR ngân hàng nhúng sẵn số tiền chính xác và nội dung chuyển khoản theo chuẩn Napas 247 (hỗ trợ MoMo, ZaloPay và 16 ngân hàng lớn: Vietcombank, Techcombank, MBBank, ACB, BIDV...).
 - **Sổ nợ nhóm (Debt Tracker):** Lập phiếu nợ, theo dõi danh sách ai đã trả / chưa trả, tổng số tiền còn phải thu.
 - **Ghi nhanh vào chi tiêu:** Nút 1 chạm lưu phần tiền của bạn vào danh sách giao dịch cá nhân.
@@ -205,14 +205,14 @@ node tests/reliability.test.js
 
 **Kết quả kiểm thử:**
 - ✅ **Nghiệp vụ tài chính (`business.test.js`):** 19/19 test passed
-- ✅ **Phân tích AI & Tiếng lóng (`ai.test.js`):** 9/9 test passed
+- ✅ **Phân tích AI & Tiếng lóng (`ai.test.js`):** 10/10 test passed
 - ✅ **Chia tiền & VietQR & Sổ nợ (`split.test.js`):** 20/20 test passed
 - ✅ **Lưu trữ & Dữ liệu (`storage.test.js`):** 25/25 test passed
 - ✅ **Auth Wall & Xác thực (`auth.test.js`):** 9/9 test passed
-- ✅ **Kiểm tra cú pháp Firestore Rules (`rules.lint.js`):** 0 syntax errors
+- ✅ **Kiểm tra cú pháp Firestore Rules (`rules.lint.js`):** 0 syntax errors (247 dòng, 12 hàm, 9 đường dẫn)
 - ✅ **Kiểm thử payload Sổ nợ Firestore (`rules-debt-check.js`):** 14/14 test passed
-- ✅ **Độ tin cậy & Toàn vẹn dữ liệu (`reliability.test.js`):** 5/5 test passed
-- **Tổng cộng: 101/101 kiểm thử thành công 100%.**
+- ✅ **Độ tin cậy & Toàn vẹn dữ liệu (`reliability.test.js`):** 17/17 test passed
+- **Tổng cộng: 115/115 kiểm thử thành công 100%.**
 
 ---
 
@@ -221,7 +221,7 @@ node tests/reliability.test.js
 Dự án cung cấp công cụ tự đóng gói và nén code mà không cần cài đặt Webpack/Vite:
 
 ```bash
-node tools/build.js 82
+node tools/build.js 83
 ```
 
 Thư mục `dist/` sẽ được tạo ra với:

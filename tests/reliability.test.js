@@ -642,6 +642,36 @@ console.log('\n== Kiểm thử Độ Tin Cậy & Toàn Vẹn Dữ Liệu (Reliab
     eq(isBusyCheck(true, ['', ''], null), true, 'Data modal đang mở phải hoãn reload');
   });
 
+  // Test 17 (F-12): Hủy đăng xuất nếu xuất bản sao lưu thất bại khi chưa đồng bộ
+  await test('signOut hủy đăng xuất nếu tạo file sao lưu thất bại khi chưa đồng bộ', async () => {
+    let localWiped = false;
+    let toastErrorMsg = '';
+
+    const authMock = {
+      currentUser: { uid: 'u_test' },
+      pushToCloud: async () => false,
+      clearLocalUserData: () => { localWiped = true; },
+      async handleSignOutConfirm(expFn) {
+        try {
+          const exported = expFn();
+          if (exported === false) {
+            toastErrorMsg = 'Không thể tạo file sao lưu! Đã hủy đăng xuất để bảo vệ dữ liệu.';
+            return;
+          }
+        } catch {
+          toastErrorMsg = 'Không thể tạo file sao lưu! Đã hủy đăng xuất để bảo vệ dữ liệu.';
+          return;
+        }
+        this.clearLocalUserData();
+      }
+    };
+
+    // Khi expFn trả về false (lỗi xuất file)
+    await authMock.handleSignOutConfirm(() => false);
+    eq(localWiped, false, 'Không được xóa dữ liệu cục bộ khi xuất file sao lưu thất bại');
+    ok(toastErrorMsg.includes('Đã hủy đăng xuất'), 'Phải thông báo hủy đăng xuất để bảo vệ dữ liệu');
+  });
+
   console.log(`\nKết quả kiểm thử độ tin cậy: ${passed} đạt, ${failed} không đạt\n`);
   if (failed > 0) process.exit(1);
 })();

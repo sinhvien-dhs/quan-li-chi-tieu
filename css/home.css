@@ -38,16 +38,17 @@
   padding: var(--space-sm) var(--space-md);
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--primary-dark);
+  background: var(--primary);
   color: #fff;
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
+  transition: background-color var(--transition-fast);
 }
 
 .side-card__btn:hover {
-  background: var(--primary);
+  background: var(--primary-hover);
 }
 
 .side-card__link {
@@ -69,8 +70,8 @@
 
 .side-card--demo {
   border-style: dashed;
-  border-color: var(--primary-light);
-  background: var(--primary-bg);
+  border-color: var(--border);
+  background: var(--bg-card);
 }
 
 /* ===== Nhập nhanh bằng AI ===== */
@@ -164,6 +165,8 @@
 .ai-preview__amount {
   font-weight: 700;
   color: var(--danger-text);
+  font-feature-settings: 'tnum' 1, 'cv05' 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .ai-preview__amount--income {
@@ -181,18 +184,28 @@
   padding: var(--space-sm);
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--primary-dark);
+  background: var(--primary);
   color: #fff;
   font-family: var(--font-family);
   font-size: var(--font-size-xs);
   font-weight: 600;
   cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.ai-preview__btn:hover {
+  background: var(--primary-hover);
 }
 
 .ai-preview__btn--ghost {
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   color: var(--text-secondary);
   border: 1px solid var(--border);
+}
+
+.ai-preview__btn--ghost:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 /* ===== Chuyển tiền giữa các ví ===== */

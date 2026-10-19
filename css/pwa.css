@@ -4,11 +4,11 @@
   width: calc(100% - var(--space-lg) * 2);
   max-width: var(--max-width);
   margin: var(--space-sm) auto;
-  background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
-  border: 1px solid var(--primary-light);
-  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -37,8 +37,9 @@
 .pwa-install-banner__icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-xs);
 }
 
 .pwa-install-banner__title {
@@ -73,7 +74,7 @@
 }
 
 .pwa-install-btn:hover {
-  background: var(--primary-dark);
+  background: var(--primary-hover);
 }
 
 .pwa-close-btn {
@@ -95,7 +96,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
   z-index: 400;
   display: flex;
   align-items: center;
@@ -112,7 +113,8 @@
 
 .onboarding-card {
   background: var(--bg-card);
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   width: calc(100% - var(--space-xl) * 2);
   max-width: 380px;
   padding: var(--space-2xl) var(--space-xl) var(--space-xl);
@@ -137,19 +139,21 @@
 }
 
 .onboarding-icon-circle {
-  width: 76px;
-  height: 76px;
+  width: 68px;
+  height: 68px;
   border-radius: var(--radius-full);
   margin: 0 auto var(--space-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.2rem;
+  font-size: 2rem;
+  border: 1px solid var(--border-light);
 }
 
 .onboarding-title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: 700;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-sm);
   color: var(--text-primary);
 }
@@ -185,17 +189,22 @@
 
 .onboarding-btn {
   width: 100%;
-  padding: var(--space-md);
+  padding: 10px var(--space-md);
   border: none;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius-sm);
+  background: var(--primary);
   color: white;
   font-family: var(--font-family);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow-primary);
+  box-shadow: var(--shadow-xs);
   transition: all var(--transition-fast);
+}
+
+.onboarding-btn:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .onboarding-btn:hover {

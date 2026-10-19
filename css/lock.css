@@ -15,27 +15,31 @@
   width: 100%;
   max-width: 340px;
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   padding: var(--space-xl);
   text-align: center;
   box-shadow: var(--shadow-lg);
 }
 
 .lock-card__icon {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   margin: 0 auto var(--space-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
   color: var(--primary-text);
-  font-size: 1.4rem;
+  font-size: 1.3rem;
 }
 
 .lock-card__title {
   font-size: var(--font-size-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-xs);
 }
 
@@ -48,19 +52,20 @@
 .lock-card__btn {
   width: 100%;
   margin-top: var(--space-sm);
-  padding: var(--space-md);
+  padding: 10px var(--space-md);
   border: none;
-  border-radius: var(--radius-md);
-  background: var(--primary-dark);
+  border-radius: var(--radius-sm);
+  background: var(--primary);
   color: #fff;
   font-family: var(--font-family);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
+  transition: background-color var(--transition-fast);
 }
 
 .lock-card__btn:hover {
-  background: var(--primary);
+  background: var(--primary-hover);
 }
 
 .lock-card__error {

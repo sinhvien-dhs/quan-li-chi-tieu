@@ -149,9 +149,9 @@
 .vietqr {
   margin-top: var(--space-md);
   padding: var(--space-md);
-  border: 1px dashed var(--primary-light);
+  border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   text-align: center;
 }
 
@@ -165,6 +165,7 @@
   display: inline-block;
   padding: var(--space-sm);
   background: #fff;
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   line-height: 0;
 }
@@ -178,8 +179,11 @@
 .vietqr__amount {
   margin-top: var(--space-sm);
   font-size: var(--font-size-lg);
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--primary-text);
+  font-feature-settings: 'tnum' 1, 'cv05' 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .vietqr__content {

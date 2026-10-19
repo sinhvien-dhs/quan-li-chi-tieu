@@ -1438,6 +1438,7 @@ body.auth-locked #fabAdd {
 
 /* Khi đã đăng nhập trước đó: Ẩn màn hình khóa */
 html.auth-authenticated #authOverlay:not(.force-show) {
+  display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;

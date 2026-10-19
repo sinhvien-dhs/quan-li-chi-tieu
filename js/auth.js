@@ -58,6 +58,7 @@ const AuthManager = {
   showAuthGate() {
     const overlay = document.getElementById('authOverlay');
     if (overlay) {
+      overlay.style.display = 'flex';
       overlay.classList.add('active');
       overlay.classList.add('force-show');
     }
@@ -76,8 +77,12 @@ const AuthManager = {
     if (overlay) {
       overlay.classList.remove('active');
       overlay.classList.remove('force-show');
+      overlay.style.display = 'none';
     }
-    if (regOverlay) regOverlay.classList.remove('active');
+    if (regOverlay) {
+      regOverlay.classList.remove('active');
+      regOverlay.style.display = 'none';
+    }
     document.documentElement.classList.add('auth-authenticated');
     document.documentElement.classList.remove('auth-pending');
     document.body.classList.remove('auth-locked');
@@ -185,9 +190,15 @@ const AuthManager = {
       console.warn('Firestore persistence:', e.code);
     }
 
+    let authCheckTimer = null;
     this.auth.onAuthStateChanged(async user => {
-      this.currentUser = user;
+      if (authCheckTimer) {
+        clearTimeout(authCheckTimer);
+        authCheckTimer = null;
+      }
+
       if (user) {
+        this.currentUser = user;
         this.hideAuthGate();
         this.updateAccountUI(user);
 
@@ -206,12 +217,26 @@ const AuthManager = {
           PWAManager.initOnboarding();
         }
       } else {
-        this.updateAccountUI(null);
         // Nếu người dùng đang ở chế độ dùng trên máy (local mode), không khóa app khi auth = null
         if (this.isLocalMode()) {
+          this.currentUser = null;
+          this.updateAccountUI(null);
           this.hideAuthGate();
+        } else if (localStorage.getItem('spendwise_uid')) {
+          // Trên điện thoại (mobile), Firebase Auth phát ra null tạm thời khi khởi động
+          // hoặc sau khi chuyển tab/popup Google trong khi chờ nạp lại phiên từ IndexedDB.
+          // Cho Firebase một khoảng chờ ngắn (1.5s) trước khi xác nhận người dùng đã thực sự mất phiên.
+          authCheckTimer = setTimeout(() => {
+            if ((!this.auth || !this.auth.currentUser) && !this.isLocalMode()) {
+              this.currentUser = null;
+              localStorage.removeItem('spendwise_uid');
+              this.updateAccountUI(null);
+              this.showAuthGate();
+            }
+          }, 1500);
         } else {
-          localStorage.removeItem('spendwise_uid');
+          this.currentUser = null;
+          this.updateAccountUI(null);
           this.showAuthGate();
         }
       }

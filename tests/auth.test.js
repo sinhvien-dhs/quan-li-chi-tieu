@@ -148,6 +148,7 @@ const AuthManager = sandbox.AuthManager;
     ok(domClasses.body.has('auth-locked'), 'body phải có class auth-locked');
     ok(domClasses.authOverlay.has('active'), 'authOverlay phải có class active');
     ok(domClasses.authOverlay.has('force-show'), 'authOverlay phải có class force-show');
+    eq(documentMock.getElementById('authOverlay').style.display, 'flex', 'authOverlay.style.display phải là flex');
     eq(documentMock.body.style.overflow, 'hidden', 'body.style.overflow phải là hidden');
   });
 
@@ -157,6 +158,7 @@ const AuthManager = sandbox.AuthManager;
     ok(!domClasses.body.has('auth-locked'), 'auth-locked phải bị xóa');
     ok(!domClasses.authOverlay.has('active'), 'authOverlay active phải bị xóa');
     ok(!domClasses.authOverlay.has('force-show'), 'authOverlay force-show phải bị xóa');
+    eq(documentMock.getElementById('authOverlay').style.display, 'none', 'authOverlay.style.display phải là none');
     eq(documentMock.body.style.overflow, '', 'body.style.overflow phải rỗng');
   });
 
@@ -281,6 +283,35 @@ const AuthManager = sandbox.AuthManager;
     ok(!domClasses.html.has('auth-pending'), 'auth-pending không được bật khi null ở local mode');
     ok(!domClasses.authOverlay.has('active'), 'authOverlay không được active khi null ở local mode');
     eq(localStorageMock.getItem('spendwise_local_mode'), '1', 'local mode phải được bảo lưu');
+  });
+
+  await test('onAuthStateChanged: user = null tạm thời trên mobile khi có spendwise_uid không lập tức xóa uid và khóa app', async () => {
+    localStorageMock.setItem('spendwise_uid', 'user_mobile_123');
+    localStorageMock.removeItem('spendwise_local_mode');
+    domClasses.authOverlay.clear();
+    domClasses.html.clear();
+
+    let authStateCallback = null;
+    sandbox.firebase.auth = () => ({
+      onAuthStateChanged: (cb) => { authStateCallback = cb; },
+      setPersistence: async () => {},
+      getRedirectResult: async () => null
+    });
+
+    AuthManager.init();
+    ok(typeof authStateCallback === 'function', 'Phải đăng ký onAuthStateChanged');
+
+    // Giả lập Firebase phát ra null tạm thời lúc khởi động
+    await authStateCallback(null);
+
+    ok(!domClasses.html.has('auth-pending'), 'không được bật auth-pending trong thời gian chờ IndexedDB');
+    ok(!domClasses.authOverlay.has('active'), 'không được bật active authOverlay trong thời gian chờ IndexedDB');
+    eq(localStorageMock.getItem('spendwise_uid'), 'user_mobile_123', 'spendwise_uid không được bị xóa vội vã');
+
+    // Sau đó Firebase hoàn tất nạp user từ IndexedDB
+    await authStateCallback({ uid: 'user_mobile_123', email: 'user@spendwise.app' });
+    eq(AuthManager.currentUser.uid, 'user_mobile_123', 'currentUser phải được thiết lập');
+    ok(!domClasses.authOverlay.has('active'), 'authOverlay vẫn không bị active');
   });
 
   await test('isInAppBrowser nhận diện đúng Zalo và Facebook', () => {

@@ -115,6 +115,8 @@ const sandbox = {
   PWAManager: { initOnboarding: () => {} },
   ConfirmDialog: { show: (opts) => { if (opts && opts.onConfirm) opts.onConfirm(); } },
   PageManager: { switchTo: () => {} },
+  navigator: { userAgent: 'Node' },
+  window: { location: { protocol: 'https:', hostname: 'sinhvien-dhs.github.io' } },
   setTimeout,
   clearTimeout,
   Promise
@@ -279,6 +281,40 @@ const AuthManager = sandbox.AuthManager;
     ok(!domClasses.html.has('auth-pending'), 'auth-pending không được bật khi null ở local mode');
     ok(!domClasses.authOverlay.has('active'), 'authOverlay không được active khi null ở local mode');
     eq(localStorageMock.getItem('spendwise_local_mode'), '1', 'local mode phải được bảo lưu');
+  });
+
+  await test('isInAppBrowser nhận diện đúng Zalo và Facebook', () => {
+    sandbox.navigator.userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148 [FBAN/FBIOS;FBAV/400.0]';
+    ok(AuthManager.isInAppBrowser(), 'FB user agent phải là in-app browser');
+
+    sandbox.navigator.userAgent = 'Mozilla/5.0 (Linux; U; Android 14; vi-vn; SM-G991B Build/TP1A.220624.014) Zalo/24.01.01';
+    ok(AuthManager.isInAppBrowser(), 'Zalo user agent phải là in-app browser');
+
+    sandbox.navigator.userAgent = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36';
+    ok(!AuthManager.isInAppBrowser(), 'Chrome Android chuẩn không phải in-app browser');
+  });
+
+  await test('signInWithGoogle trên điện thoại ưu tiên signInWithPopup (tránh lỗi kết nối redirect)', async () => {
+    let popupCalled = false;
+    let redirectCalled = false;
+    AuthManager.auth = {
+      signInWithPopup: async () => {
+        popupCalled = true;
+        return { user: { uid: 'u_mobile_123', email: 'mobile@spendwise.app' } };
+      },
+      signInWithRedirect: async () => { redirectCalled = true; }
+    };
+    sandbox.navigator.userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1';
+    sandbox.firebase.auth.GoogleAuthProvider = function() {
+      this.addScope = () => {};
+      this.setCustomParameters = () => {};
+    };
+
+    await AuthManager.signInWithGoogle();
+
+    ok(popupCalled, 'signInWithGoogle trên mobile phải gọi signInWithPopup');
+    ok(!redirectCalled, 'không được ép redirect khi popup chạy được');
+    eq(localStorageMock.getItem('spendwise_uid'), 'u_mobile_123', 'phải lưu uid thành công');
   });
 
   console.log(`\nKết quả: ${passed} đạt, ${failed} không đạt\n`);

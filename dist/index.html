@@ -14,13 +14,13 @@
     style-src 'self' 'unsafe-inline' file: https://fonts.googleapis.com https://cdnjs.cloudflare.com;
     font-src 'self' file: https://fonts.gstatic.com https://cdnjs.cloudflare.com data:;
     img-src 'self' file: data: blob: https://img.vietqr.io https://*.googleusercontent.com https://*.gstatic.com;
-    frame-src 'self' https://spendwise-364bd.firebaseapp.com https://*.firebaseapp.com https://accounts.google.com;
+    frame-src 'self' https://spendwise-364bd.firebaseapp.com https://*.firebaseapp.com https://accounts.google.com https://*.google.com;
     manifest-src 'self' file:;
-    connect-src 'self' file: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://accounts.google.com https://cdn.sheetjs.com;
+    connect-src 'self' file: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.cloudfunctions.net https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://accounts.google.com https://apis.google.com https://*.google.com https://cdn.sheetjs.com;
     worker-src 'self' file: blob:;
     object-src 'none';
     base-uri 'self';
-    form-action 'self' https://accounts.google.com https://*.firebaseapp.com">
+    form-action 'self' https://accounts.google.com https://*.firebaseapp.com https://*.google.com">
   <title>SpendWise - Ứng dụng Quản lý Chi tiêu &amp; Chia tiền Nhóm cho Sinh viên</title>
   <link rel="canonical" href="https://sinhvien-dhs.github.io/quan-li-chi-tieu/">
   <meta name="keywords" content="quản lý chi tiêu, chia tiền nhóm, quản lý tài chính sinh viên, spendwise, vietqr, ngân sách, tiết kiệm, pwa">
@@ -49,7 +49,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json?v=86">
+  <link rel="manifest" href="manifest.json?v=87">
   <meta name="theme-color" content="#6C63FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -59,7 +59,7 @@
   <!-- Favicon -->
   <link rel="icon" href="assets/icon-192.png">
 
-  <link rel="stylesheet" href="style.min.css?v=86">
+  <link rel="stylesheet" href="style.min.css?v=87">
 </head>
 <body>
   <div id="printReport"></div>
@@ -125,7 +125,7 @@
         <i class="fa-brands fa-google" style="color:#EA4335"></i> Tiếp tục với Google
       </button>
       <button type="button" id="authGoogleRedirectBtn" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:var(--font-size-xs);margin-top:var(--space-xs);cursor:pointer;text-align:center;text-decoration:underline">
-        Không mở được popup? Bấm vào đây để chuyển hướng Google
+        Không mở được cửa sổ Google? Bấm vào đây để chuyển hướng
       </button>
 
       <!-- Lối ra cho người chưa có tài khoản: dữ liệu lưu trên máy này -->
@@ -1263,7 +1263,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-    <script src="app.min.js?v=86"></script>
+    <script src="app.min.js?v=87"></script>
   <!-- ===== JavaScript Modules ===== -->
   </body>
 </html>

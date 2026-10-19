@@ -146,6 +146,9 @@ const AuthManager = {
     // Xử lý kết quả đăng nhập nếu chuyển hướng (Redirect) từ Google
     if (this.auth && typeof this.auth.getRedirectResult === 'function') {
       this.auth.getRedirectResult().then(result => {
+        const wasRedirect = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('spendwise_pending_redirect') === '1';
+        if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('spendwise_pending_redirect');
+
         if (result && result.user) {
           this.currentUser = result.user;
           localStorage.setItem('spendwise_uid', result.user.uid);
@@ -155,9 +158,17 @@ const AuthManager = {
           Toast.success(`Đăng nhập Google thành công! Chào ${result.user.displayName || result.user.email}`);
         }
       }).catch(err => {
-        if (err && err.code) {
+        const wasRedirect = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('spendwise_pending_redirect') === '1';
+        if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('spendwise_pending_redirect');
+
+        // Chỉ hiện thông báo nếu người dùng thực sự vừa từ luồng redirect trở về
+        if (wasRedirect && err && err.code) {
           console.warn('Lỗi Redirect Google Auth:', err);
-          Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(err));
+          if (err.code === 'auth/network-request-failed' || err.code === 'auth/internal-error') {
+            Toast.error('Không thể kết nối xác thực chuyển hướng (do trình duyệt chặn cookie bên thứ 3). Vui lòng bấm trực tiếp "Tiếp tục với Google".');
+          } else {
+            Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(err));
+          }
         }
       });
     }
@@ -383,6 +394,13 @@ const AuthManager = {
     }
   },
 
+  isInAppBrowser() {
+    if (typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /FBAN|FBAV|Instagram|Line|MicroMessenger|musical_ly|Snapchat|TikTok|Twitter|WeChat|Zalo/i.test(ua) ||
+      (/\bwv\b/i.test(ua) && /Android/i.test(ua));
+  },
+
   checkEnvironment() {
     if (typeof window === 'undefined' || !window.location) return;
     const hint = document.getElementById('authEnvironmentHint');
@@ -395,6 +413,9 @@ const AuthManager = {
       hint.style.display = 'block';
       const targetUrl = window.location.href.replace('127.0.0.1', 'localhost');
       hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i> Đang mở bằng 127.0.0.1. Hãy <a href="' + targetUrl + '" style="color:var(--primary);font-weight:600;text-decoration:underline">chuyển sang localhost</a> để đăng nhập Google.';
+    } else if (this.isInAppBrowser()) {
+      hint.style.display = 'block';
+      hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i> Đang mở trong ứng dụng (Zalo/Facebook). Google sẽ chặn đăng nhập. Hãy bấm <b>•••</b> hoặc <b>⋮</b> ở góc trên và chọn <b>"Mở bằng trình duyệt"</b> (Chrome/Safari).';
     }
   },
 
@@ -416,6 +437,11 @@ const AuthManager = {
         window.location.href = targetUrl;
       }, 1200);
       return;
+    }
+
+    // 3. Cảnh báo nếu mở trong Webview/In-App browser (Zalo, Facebook)
+    if (this.isInAppBrowser()) {
+      Toast.warning('Trình duyệt trong ứng dụng (Zalo/Facebook) chặn Google. Vui lòng bấm dấu 3 chấm góc trên và chọn "Mở bằng trình duyệt" (Chrome/Safari)!');
     }
 
     if (!this.auth) {
@@ -444,16 +470,9 @@ const AuthManager = {
       provider.addScope('email');
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      // Thiết bị di động hoặc PWA standalone dùng redirect để tránh bị chặn popup
-      const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isStandalone = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-
-      if (isMobile || isStandalone) {
-        await this.auth.signInWithRedirect(provider);
-        return;
-      }
-
-      // Trên desktop, dùng signInWithPopup
+      // Ưu tiên signInWithPopup cho TẤT CẢ thiết bị (kể cả di động).
+      // Trên điện thoại, popup mở tab Google trực tiếp và truyền token qua postMessage,
+      // hoàn toàn tránh được lỗi chặn cookie bên thứ ba / partitioned storage / không thể kết nối của signInWithRedirect.
       const result = await this.auth.signInWithPopup(provider);
       if (result && result.user) {
         this.currentUser = result.user;
@@ -466,10 +485,11 @@ const AuthManager = {
     } catch (e) {
       console.warn('Lỗi đăng nhập Google:', e);
 
-      // Nếu popup bị chặn, bị hủy hoặc lỗi internal/network do partitioned storage, tự động fallback sang signInWithRedirect
-      if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/internal-error' || e.code === 'auth/network-request-failed')) {
+      // Nếu popup bị chặn hoặc bị hủy bởi trình duyệt, tự động fallback sang signInWithRedirect
+      if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request' || e.code === 'auth/internal-error')) {
         try {
-          Toast.warning('Đang tự động chuyển hướng sang trang Google...');
+          if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('spendwise_pending_redirect', '1');
+          Toast.warning('Cửa sổ đăng nhập bị chặn, đang chuyển hướng sang trang Google...');
           const provider = new firebase.auth.GoogleAuthProvider();
           provider.addScope('profile');
           provider.addScope('email');
@@ -477,10 +497,11 @@ const AuthManager = {
           await this.auth.signInWithRedirect(provider);
           return;
         } catch (redirectErr) {
+          if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('spendwise_pending_redirect');
           Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(redirectErr));
         }
       } else if (e && e.code === 'auth/popup-closed-by-user') {
-        Toast.warning('Bạn đã đóng cửa sổ Google. Nếu popup bị đơ hoặc trắng trang, hãy bấm nút "Không mở được popup?" bên dưới.');
+        Toast.warning('Bạn đã đóng cửa sổ Google. Nếu gặp lỗi, hãy bấm nút "Chuyển hướng Google" bên dưới hoặc thử lại.');
       } else {
         Toast.error('Đăng nhập Google thất bại: ' + this.friendlyError(e));
       }
@@ -499,6 +520,7 @@ const AuthManager = {
       return;
     }
     try {
+      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('spendwise_pending_redirect', '1');
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('profile');
       provider.addScope('email');
@@ -506,6 +528,7 @@ const AuthManager = {
       Toast.info('Đang chuyển hướng sang Google...');
       await this.auth.signInWithRedirect(provider);
     } catch (e) {
+      if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('spendwise_pending_redirect');
       Toast.error('Lỗi chuyển hướng Google: ' + this.friendlyError(e));
     }
   },

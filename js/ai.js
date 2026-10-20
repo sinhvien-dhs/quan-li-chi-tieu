@@ -498,14 +498,19 @@ const AIEntry = {
       data.candidates[0].content.parts[0].text;
     if (!raw) throw new Error('Gemini không trả về nội dung');
 
+    let jsonStr = String(raw).trim();
+    const matchFence = jsonStr.match(/\x60{3}(?:json)?\s*([\s\S]*?)\s*\x60{3}/i);
+    if (matchFence) jsonStr = matchFence[1].trim();
+
     let parsed;
     try {
-      parsed = JSON.parse(raw);
+      parsed = JSON.parse(jsonStr);
     } catch (e) {
       throw new Error('Gemini trả về dữ liệu không hợp lệ');
     }
 
-    const items = (parsed.items || []).map((it) => {
+    const rawList = Array.isArray(parsed) ? parsed : (parsed.items || []);
+    const items = rawList.map((it) => {
       const amount = Business.parseAmount(it.amount);
       const wallet = (typeof Features !== 'undefined')
         ? Features.getWallets().find(w => Utils.normalizeText(w.name) === Utils.normalizeText(it.wallet))

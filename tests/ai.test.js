@@ -244,5 +244,45 @@ test('Phân loại chính xác các từ nhạy cảm (thuốc, thuê, lương, 
   eq(t4.items[0].amount, 50000);
 });
 
+test('parseWithGemini xử lý an toàn phản hồi bọc trong markdown code fence và mảng', async () => {
+  AIEntry.setApiKey('test-key');
+  const originalFetch = sandbox.fetch;
+
+  // Case 1: Markdown code fence
+  sandbox.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      candidates: [{
+        content: {
+          parts: [{ text: '\x60\x60\x60json\n{"items":[{"name":"Cà phê","amount":35000,"type":"expense","category":"food"}]}\n\x60\x60\x60' }]
+        }
+      }]
+    })
+  });
+  const res1 = await AIEntry.parseWithGemini('uống cà phê 35k');
+  eq(res1.items.length, 1);
+  eq(res1.items[0].name, 'Cà phê');
+  eq(res1.items[0].amount, 35000);
+
+  // Case 2: Direct array
+  sandbox.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      candidates: [{
+        content: {
+          parts: [{ text: '[{"name":"Ăn trưa","amount":40000,"type":"expense","category":"food"}]' }]
+        }
+      }]
+    })
+  });
+  const res2 = await AIEntry.parseWithGemini('ăn trưa 40k');
+  eq(res2.items.length, 1);
+  eq(res2.items[0].name, 'Ăn trưa');
+  eq(res2.items[0].amount, 40000);
+
+  sandbox.fetch = originalFetch;
+  AIEntry.setApiKey('');
+});
+
 console.log(`\nKết quả: ${passed} đạt, ${failed} không đạt\n`);
 if (failed > 0) process.exit(1);

@@ -127,6 +127,17 @@ test('ngân sách: tổng, đã chi, còn lại, phần trăm', () => {
   eq(s.percent, 55);
 });
 
+test('filterThisMonth lọc đúng theo tháng giờ địa phương (tránh lỗi lệch UTC)', () => {
+  const d = new Date(2026, 9, 1, 3, 0, 0); // 01/10/2026 03:00 sáng
+  const tx = [
+    { id: '1', date: '2026-10-01', amount: 50000, type: 'expense' },
+    { id: '2', date: '2026-09-30', amount: 30000, type: 'expense' }
+  ];
+  const filtered = Business.filterThisMonth(tx, d);
+  eq(filtered.length, 1);
+  eq(filtered[0].id, '1');
+});
+
 test('ngân sách: giao dịch tháng khác không bị tính nhầm', () => {
   const budgets = { food: 3000000 };
   const tx = [

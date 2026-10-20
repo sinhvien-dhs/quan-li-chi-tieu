@@ -48,9 +48,11 @@ const Business = {
     });
   },
 
-  /** Lọc theo tháng hiện tại (YYYY-MM của now) */
+  /** Lọc theo tháng hiện tại (YYYY-MM của now theo giờ địa phương) */
   filterThisMonth(transactions, now = new Date()) {
-    const prefix = now.toISOString().slice(0, 7);
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const prefix = `${y}-${m}`;
     return (transactions || []).filter(t => t && typeof t.date === 'string' && t.date.startsWith(prefix));
   },
 
@@ -192,7 +194,7 @@ const Business = {
       wallet: from,
       fromWallet: from,
       toWallet: to,
-      date: o.date || new Date().toISOString().slice(0, 10),
+      date: o.date || (typeof Utils !== 'undefined' ? Utils.getToday() : new Date().toLocaleDateString('sv')),
       note: o.note ? String(o.note).slice(0, 200) : ''
     };
   },

@@ -419,7 +419,6 @@ const ChartManager = {
         const d = new Date(now);
         d.setDate(now.getDate() - i);
         const key = `${d.getDate()}/${d.getMonth() + 1}`;
-        const dateStr = d.toISOString().split('T')[0];
         labels.push(key);
         expenseMap[key] = 0;
         incomeMap[key] = 0;
@@ -569,7 +568,6 @@ const ChartManager = {
         const d = new Date(now);
         d.setDate(now.getDate() - i);
         const key = `${d.getDate()}/${d.getMonth() + 1}`;
-        const dateStr = d.toISOString().split('T')[0];
         labels.push(key);
         dateMap[key] = 0;
       }

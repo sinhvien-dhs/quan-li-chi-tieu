@@ -176,33 +176,39 @@
     grid-column: 1 / -1;
   }
 
-  /* Trang Ngân Sách trên máy tính: Cột trái Ngân Sách, Cột phải Mục tiêu tiết kiệm */
+  /* Trang Ngân Sách trên máy tính: Card dàn lưới linh hoạt, không vỡ layout */
   .page--budget {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    gap: var(--space-lg);
     padding: 0 var(--space-lg);
-    align-items: start;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .budget-summary {
-    grid-column: 1 / -1;
-    margin-left: 0;
-    margin-right: 0;
+    margin: 0 0 var(--space-lg);
+    max-width: 100%;
   }
 
   .budget-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-md);
     padding: 0;
-    margin-bottom: 0;
+    margin-bottom: var(--space-xl);
   }
 
   .section__header--spaced {
     padding: 0;
-    margin-top: 0;
+    margin-top: var(--space-lg);
   }
 
   .goal-block {
     padding: 0;
+  }
+
+  #goalList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-md);
   }
 
   /* Trang Cài đặt trên máy tính */
@@ -305,6 +311,19 @@
     padding: 0 var(--space-md);
   }
 
+  .goal-block {
+    padding: 0 var(--space-md);
+  }
+
+  .goal-form {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .goal-form__btn {
+    width: 100%;
+  }
+
   /* Mục cài đặt xếp dọc trên mobile: Mô tả trên, nút hành động dưới */
   .settings-section {
     margin: 0 var(--space-md) var(--space-lg);
@@ -352,6 +371,21 @@
     padding: 0 !important;
     justify-content: center !important;
     border-radius: var(--radius-full) !important;
+  }
+}
+
+/* ===== Màn hình điện thoại nhỏ (<= 400px) ===== */
+@media (max-width: 400px) {
+  .budget-summary__stats {
+    grid-template-columns: 1fr;
+    text-align: left;
+    gap: var(--space-xs);
+  }
+
+  .budget-summary__stat {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
 }
 

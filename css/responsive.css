@@ -1,16 +1,16 @@
-/* ===== Responsive Design ===== */
+/* ============================================================
+   responsive.css — Tương thích hiển thị đa màn hình (Desktop & Mobile)
+   - Mobile (< 481px)    : 1 cột tinh gọn, chạm bấm thuận tiện, không tràn viền
+   - Tablet (481px-1023px): Khung app căn giữa, modal cân đối
+   - Desktop (>= 1024px) : Điều hướng thành Sidebar trái, mở rộng 2-3 cột
+   ============================================================ */
 
-/* Tablets and small desktops */
+/* ===== Tablet & Desktop Căn Bản (>= 481px) ===== */
 @media (min-width: 481px) {
   .app {
-    border-left: 1px solid var(--border-light);
-    border-right: 1px solid var(--border-light);
-    box-shadow: var(--shadow-xs);
-  }
-
-  .modal {
+    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    margin-bottom: var(--space-xl);
+    box-shadow: var(--shadow-xs);
   }
 
   .bottom-nav {
@@ -18,23 +18,51 @@
   }
 }
 
-/* Large screens (Tablets) — show centered app */
+/* ===== Hộp thoại (Modal) trên màn hình lớn: Căn giữa dạng Dialog ===== */
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+    padding: var(--space-lg);
+  }
+
+  .modal {
+    border-radius: var(--radius-lg) !important;
+    border: 1px solid var(--border);
+    max-width: 520px;
+    margin: auto;
+    transform: scale(0.96);
+    max-height: 85vh;
+  }
+
+  .modal-overlay.active .modal {
+    transform: scale(1);
+  }
+
+  /* Ẩn thanh kéo vuốt của mobile trên máy tính */
+  .modal__handle {
+    display: none;
+  }
+}
+
+/* ===== Tablet (768px – 1023px): Căn giữa thanh lịch ===== */
 @media (min-width: 768px) and (max-width: 1023px) {
   body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: var(--space-xl) 0;
+    padding: var(--space-xl) var(--space-md);
   }
 
   .app {
+    width: 100%;
+    max-width: 720px;
     border-radius: var(--radius-lg);
     min-height: calc(100vh - var(--space-xl) * 2);
     box-shadow: var(--shadow-md);
   }
 }
 
-/* Desktop (min-width: 1024px) — chuyển Bottom Nav thành Sidebar trái, mở rộng 3 cột */
+/* ===== Desktop (>= 1024px): Chuyển Bottom Nav thành Sidebar trái ===== */
 @media (min-width: 1024px) {
   body {
     display: flex;
@@ -45,7 +73,7 @@
     background-color: var(--bg-primary);
   }
 
-  /* Chuyển bottom-nav thành sidebar điều hướng bên trái, không còn ở đáy màn hình */
+  /* Sidebar điều hướng bên trái cố định */
   .bottom-nav {
     position: sticky;
     top: var(--space-xl);
@@ -100,9 +128,11 @@
     font-weight: 700;
   }
 
+  /* Khung ứng dụng chính chiếm phần còn lại, mở rộng tối đa 1120px */
   .app {
-    max-width: 1100px;
-    width: calc(100% - 240px);
+    flex: 1;
+    min-width: 0;
+    max-width: 1120px;
     margin: 0;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
@@ -113,9 +143,10 @@
 
   .fab {
     bottom: var(--space-2xl);
-    right: max(var(--space-xl), calc(50% - 550px + var(--space-xl)));
+    right: max(var(--space-xl), calc(50% - 560px + var(--space-xl)));
   }
 
+  /* Trang Thống Kê trên máy tính: Bộ lọc & tóm tắt dàn ngang, biểu đồ 2 cột */
   .page--stats {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -124,48 +155,95 @@
     padding: 0 var(--space-lg);
   }
 
-  .stats-header-card {
+  .stats-period,
+  .stats-summary,
+  .stats-info-bar,
+  .stats-empty {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .stats-chart-section {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Biểu đồ thứ 3 (xu hướng) trải rộng toàn hàng bên dưới */
+  .stats-chart-section:last-of-type {
     grid-column: 1 / -1;
   }
+
+  /* Trang Ngân Sách trên máy tính: Cột trái Ngân Sách, Cột phải Mục tiêu tiết kiệm */
+  .page--budget {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: var(--space-lg);
+    padding: 0 var(--space-lg);
+    align-items: start;
+  }
+
+  .budget-summary {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .budget-list {
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .section__header--spaced {
+    padding: 0;
+    margin-top: 0;
+  }
+
+  .goal-block {
+    padding: 0;
+  }
+
+  /* Trang Cài đặt trên máy tính */
+  .settings-section {
+    margin-left: var(--space-lg);
+    margin-right: var(--space-lg);
+  }
 }
 
-/* Small phones */
-@media (max-width: 360px) {
-  :root {
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-  }
-
-  .summary__balance-amount {
-    font-size: var(--font-size-2xl);
-  }
-
-  .form__categories {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .summary__card-amount {
-    font-size: var(--font-size-lg);
-  }
-}
-
-/* Touch devices — always show action buttons */
-@media (hover: none) {
-  .transaction-item__actions {
-    opacity: 1;
-  }
-}
-
-/* Mobile — keep transaction names readable */
+/* ===== Tối ưu Thiết bị Di động (Mobile < 480px) ===== */
 @media (max-width: 480px) {
-  .transaction-item {
-    gap: var(--space-sm);
+  .summary {
+    padding: 0 var(--space-md);
+  }
+
+  .summary__card {
     padding: var(--space-md);
   }
 
+  .summary__card-amount {
+    font-size: 1.125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .summary__balance-amount {
+    font-size: clamp(1.5rem, 6vw, 1.875rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .transaction-item {
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+  }
+
   .transaction-item__icon {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
   }
 
   .transaction-item__amount {
@@ -180,9 +258,73 @@
   .transaction-item__date {
     font-size: var(--font-size-xs);
   }
+
+  /* Thẻ thống kê 3 ô trên mobile không bị chèn chữ */
+  .stats-summary {
+    padding: 0 var(--space-md);
+    gap: 6px;
+  }
+
+  .stats-summary__card {
+    padding: var(--space-sm) 4px;
+  }
+
+  .stats-summary__icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+  }
+
+  .stats-summary__label {
+    font-size: 0.7rem;
+  }
+
+  .stats-summary__value {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stats-info-bar {
+    margin: 0 var(--space-md) var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .stats-chart-section {
+    margin: 0 var(--space-md) var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .budget-summary {
+    margin: 0 var(--space-md) var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .budget-list {
+    padding: 0 var(--space-md);
+  }
+
+  /* Mục cài đặt xếp dọc trên mobile: Mô tả trên, nút hành động dưới */
+  .settings-section {
+    margin: 0 var(--space-md) var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .settings-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .settings-item .settings-btn,
+  .settings-item .status-tag,
+  .settings-item .settings-time-input {
+    align-self: flex-start;
+  }
 }
 
-/* Mobile Header — icon-only buttons to avoid overflow */
+/* ===== Header trên điện thoại: Tinh gọn nút bấm ===== */
 @media (max-width: 520px) {
   .header__actions {
     gap: 6px;
@@ -210,5 +352,60 @@
     padding: 0 !important;
     justify-content: center !important;
     border-radius: var(--radius-full) !important;
+  }
+}
+
+/* ===== Điện thoại nhỏ (<= 380px) ===== */
+@media (max-width: 380px) {
+  :root {
+    --space-lg: 1rem;
+    --space-xl: 1.25rem;
+  }
+
+  .header {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .header__logo {
+    font-size: var(--font-size-base);
+  }
+
+  .header__actions {
+    gap: 4px;
+  }
+
+  .header__btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .header__btn--pill,
+  .header__btn--user {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+  }
+
+  .summary__cards {
+    gap: var(--space-sm);
+  }
+
+  .summary__card {
+    padding: var(--space-sm);
+  }
+
+  .summary__card-amount {
+    font-size: 1rem;
+  }
+
+  .form__categories {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Thiết bị cảm ứng: Giữ nút sửa/xóa dễ bấm ===== */
+@media (hover: none) {
+  .transaction-item__actions {
+    opacity: 1;
   }
 }

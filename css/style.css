@@ -29,10 +29,6 @@ body {
   min-height: 100vh;
   position: relative;
   padding-bottom: calc(var(--bottom-nav-height) + 56px + var(--space-lg) * 2 + env(safe-area-inset-bottom, 0px));
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  border-top: 1px solid var(--border);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   box-sizing: border-box;
 }
 
@@ -516,10 +512,10 @@ body {
   cursor: pointer;
 }
 
-/* Desktop: khung app rộng 1120px → 3 ô nằm cùng một hàng */
-@media (min-width: 900px) {
+/* Màn hình lớn: 3 ô nằm cùng một hàng và tự co giãn không tràn */
+@media (min-width: 1200px) {
   .search-bar {
-    grid-template-columns: minmax(240px, 1fr) 190px 190px;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
   }
 

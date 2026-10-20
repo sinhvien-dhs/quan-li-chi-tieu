@@ -4,7 +4,7 @@ REM  Publish Firestore Rules len Firebase
 REM  Cach dung: nhan doi vao file nay
 REM ============================================================
 setlocal
-cd /d "D:\web số 1"
+cd /d "%~dp0.."
 
 echo ============================================================
 echo   DANG DANG NHAP FIREBASE CLI

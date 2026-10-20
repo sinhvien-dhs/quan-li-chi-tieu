@@ -155,7 +155,7 @@ body {
 
 .summary__cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-md);
 }
 
@@ -459,7 +459,7 @@ body {
    ("Tất cả danh mục" dài hơn "Tất cả ví" — trước đây bị cắt mất chữ) */
 .search-bar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-sm);
   padding: 0 var(--space-lg);
   margin-bottom: var(--space-md);

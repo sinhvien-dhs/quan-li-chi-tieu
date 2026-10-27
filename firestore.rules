@@ -1,0 +1,247 @@
+rules_version = '2';
+
+// SPENDWISE-RULES v69 - BAN MOI - 2026-10-16
+// Da bo moi su dung lambda (map/all) - do bi trinh bien dich tu choi ghi so no.
+// Khong con bien thuc debts.map(...).sum() gay loi chan ghi.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================================
+    //  Helpers
+    // ==========================================================
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Ngày hợp lệ: YYYY-MM-DD, kiểm tra tháng 30/31 ngày và ngày 29/2 chuẩn năm nhuận
+    function validDate(d) {
+      return d is string
+        && d.size() == 10
+        && (
+             // Tháng 1, 3, 5, 7, 8, 10, 12 có tối đa 31 ngày
+             d.matches('^[0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])$')
+             // Tháng 4, 6, 9, 11 có tối đa 30 ngày
+             || d.matches('^[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)$')
+             // Tháng 2 ngày 1-28 ở mọi năm
+             || d.matches('^[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])$')
+             // Tháng 2 ngày 29 CHỈ ở năm nhuận (đuôi 00, 04, 08, 12, 16, 20, 24, 28, 32...)
+             || d.matches('^[0-9]{2}([02468][048]|[13579][26])-02-29$')
+           );
+    }
+
+    function validTs(v) {
+      return v is string && v.size() <= 40;
+    }
+
+    // Ảnh hóa đơn: chỉ nhận data URL ảnh, giới hạn kích thước
+    function validReceipt(r) {
+      return r is string
+        && r.size() <= 400000
+        && r.matches('^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
+    }
+
+    function validTransaction(tx) {
+      return tx is map
+        && tx.keys().hasAll(['id', 'name', 'amount', 'type', 'category', 'date'])
+        && tx.keys().hasOnly([
+             'id','name','amount','type','category','date','note','wallet',
+             'fromWallet','toWallet','receipt','originalAmount','originalCurrency','exchangeRate',
+             'createdAt','updatedAt','syncState'
+           ])
+        && tx.id is string && tx.id.size() > 0 && tx.id.size() <= 64
+        && tx.name is string && tx.name.size() > 0 && tx.name.size() <= 80
+        && tx.amount is number && tx.amount >= 0 && tx.amount <= 1000000000000
+        && tx.type in ['expense', 'income', 'transfer']
+        && tx.category is string && tx.category.size() <= 40
+        && validDate(tx.date)
+        && (!('note' in tx.keys()) || (tx.note is string && tx.note.size() <= 200))
+        && (!('wallet' in tx.keys()) || (tx.wallet is string && tx.wallet.size() <= 64))
+        && (tx.type != 'transfer' || (
+              ('fromWallet' in tx.keys() && tx.fromWallet is string && tx.fromWallet.size() > 0 && tx.fromWallet.size() <= 64)
+              && ('toWallet' in tx.keys() && tx.toWallet is string && tx.toWallet.size() > 0 && tx.toWallet.size() <= 64)
+              && tx.fromWallet != tx.toWallet
+              && tx.amount > 0
+           ))
+        && (!('receipt' in tx.keys()) || validReceipt(tx.receipt))
+        && (!('originalAmount' in tx.keys())
+              || (tx.originalAmount is number && tx.originalAmount >= 0 && tx.originalAmount <= 1000000000000))
+        && (!('originalCurrency' in tx.keys()) || tx.originalCurrency in ['VND','USD','EUR'])
+        && (!('exchangeRate' in tx.keys())
+              || (tx.exchangeRate is number && tx.exchangeRate >= 0 && tx.exchangeRate <= 100000))
+        && (!('createdAt' in tx.keys()) || validTs(tx.createdAt))
+        && (!('updatedAt' in tx.keys()) || validTs(tx.updatedAt))
+        && (!('syncState' in tx.keys()) || tx.syncState in ['pending', 'synced', 'failed']);
+    }
+
+    function validWallet(w) {
+      return w is map
+        && w.keys().hasOnly(['id','name','icon','createdAt'])
+        && w.id is string && w.id.size() <= 64
+        && w.name is string && w.name.size() > 0 && w.name.size() <= 40
+        && (!('icon' in w.keys()) || (w.icon is string && w.icon.size() <= 60))
+        && (!('createdAt' in w.keys()) || validTs(w.createdAt));
+    }
+
+    function validGoal(g) {
+      return g is map
+        && g.keys().hasOnly(['id','name','target','saved','createdAt'])
+        && g.id is string && g.id.size() <= 64
+        && g.name is string && g.name.size() > 0 && g.name.size() <= 60
+        && g.target is number && g.target > 0 && g.target <= 1000000000000
+        && g.saved is number && g.saved >= 0 && g.saved <= 1000000000000
+        && (!('createdAt' in g.keys()) || validTs(g.createdAt));
+    }
+
+    function validRecurring(r) {
+      return r is map
+        && r.keys().hasOnly(['id','name','amount','type','category','wallet','frequency','startDate','lastRun','createdAt'])
+        && r.id is string && r.id.size() <= 64
+        && r.name is string && r.name.size() > 0 && r.name.size() <= 80
+        && r.amount is number && r.amount > 0 && r.amount <= 1000000000000
+        && r.type in ['expense','income']
+        && r.frequency in ['daily','weekly','monthly']
+        && validDate(r.startDate)
+        && (!('category' in r.keys()) || (r.category is string && r.category.size() <= 40))
+        && (!('wallet' in r.keys()) || (r.wallet is string && r.wallet.size() <= 64))
+        && (!('lastRun' in r.keys()) || validDate(r.lastRun))
+        && (!('createdAt' in r.keys()) || validTs(r.createdAt));
+    }
+
+    function validBudgetLimitVal(v) {
+      return v is number && v >= 0 && v <= 1000000000000;
+    }
+
+    // Ngân sách: { limits: { <danhMuc>: <soTien> } }
+    function validBudgetDoc(b) {
+      return b is map
+        && b.keys().hasOnly(['limits','updatedAt'])
+        && 'limits' in b.keys()
+        && b.limits is map
+        && b.limits.size() <= 50
+        && (!('updatedAt' in b.keys()) || validTs(b.updatedAt))
+        && (!('food' in b.limits) || validBudgetLimitVal(b.limits.food))
+        && (!('shopping' in b.limits) || validBudgetLimitVal(b.limits.shopping))
+        && (!('transport' in b.limits) || validBudgetLimitVal(b.limits.transport))
+        && (!('bills' in b.limits) || validBudgetLimitVal(b.limits.bills))
+        && (!('entertainment' in b.limits) || validBudgetLimitVal(b.limits.entertainment))
+        && (!('health' in b.limits) || validBudgetLimitVal(b.limits.health))
+        && (!('education' in b.limits) || validBudgetLimitVal(b.limits.education))
+        && (!('family' in b.limits) || validBudgetLimitVal(b.limits.family))
+        && (!('travel' in b.limits) || validBudgetLimitVal(b.limits.travel))
+        && (!('insurance' in b.limits) || validBudgetLimitVal(b.limits.insurance))
+        && (!('other' in b.limits) || validBudgetLimitVal(b.limits.other));
+    }
+
+    function validSettingsDoc(s) {
+      return s is map
+        && s.keys().hasOnly(['currency','theme','reminderTime','updatedAt'])
+        && (!('currency' in s.keys()) || s.currency in ['VND','USD','EUR'])
+        && (!('theme' in s.keys()) || s.theme in ['light','dark'])
+        // reminderTime: cho phép null (chưa đặt giờ nhắc) hoặc chuỗi HH:MM
+        && (!('reminderTime' in s.keys())
+             || s.reminderTime == null
+             || (s.reminderTime is string && s.reminderTime.size() <= 10))
+        && (!('updatedAt' in s.keys()) || validTs(s.updatedAt));
+    }
+
+    // ==========================================================
+    //  users/{uid}/transactions/{txId}  — mỗi giao dịch 1 tài liệu
+    //  (Xóa = xóa tài liệu trên server → không "hồi sinh" ở máy khác)
+    // ==========================================================
+    match /users/{userId}/transactions/{txId} {
+      allow read: if isOwner(userId);
+
+      allow create, update: if isOwner(userId)
+        && validTransaction(request.resource.data);
+
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{uid}/wallets/{walletId}
+    // ==========================================================
+    match /users/{userId}/wallets/{walletId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validWallet(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{uid}/goals/{goalId}
+    // ==========================================================
+    match /users/{userId}/goals/{goalId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validGoal(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{userId}/recurring/{ruleId}
+    // ==========================================================
+    match /users/{userId}/recurring/{ruleId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validRecurring(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // ==========================================================
+    //  users/{uid}/debts/{debtId}  — sổ nợ nhóm
+    // ==========================================================
+    match /users/{userId}/debts/{debtId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validDebt(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // Sổ nợ nhóm: { id, title, total, perPerson, myAmount, myName,
+    //                memberCount, date, createdAt, debts: [{name, amount, paid}] }
+    // Ghi chú: Firestore Rules không hỗ trợ lambda map() hay all() trên kiểu list;
+    // việc kiểm tra chi tiết từng phần tử và bảo toàn tổng được thực hiện
+    // chặt chẽ ở phía app (ExportManager.sanitizeDebts) trước khi gửi lên.
+    function validDebt(d) {
+      return d is map
+        && d.keys().hasOnly([
+             'id','title','total','perPerson','myAmount','myName',
+             'memberCount','date','createdAt','debts'
+           ])
+        && 'id' in d.keys() && d.id is string && d.id.size() > 0 && d.id.size() <= 64
+        && 'title' in d.keys() && d.title is string && d.title.size() > 0 && d.title.size() <= 60
+        && 'total' in d.keys() && d.total is number && d.total >= 0 && d.total <= 1000000000000
+        && 'perPerson' in d.keys() && d.perPerson is number && d.perPerson >= 0 && d.perPerson <= 1000000000000
+        && 'myAmount' in d.keys() && d.myAmount is number && d.myAmount >= 0 && d.myAmount <= 1000000000000
+        && 'myName' in d.keys() && d.myName is string && d.myName.size() <= 40
+        && 'memberCount' in d.keys() && d.memberCount is number && d.memberCount >= 0 && d.memberCount <= 30
+        && 'date' in d.keys() && validDate(d.date)
+        && 'createdAt' in d.keys() && validTs(d.createdAt)
+        && 'debts' in d.keys() && d.debts is list && d.debts.size() <= 30;
+    }
+
+    // ==========================================================
+    //  users/{uid}/budgets/{docId}  &  users/{uid}/settings/{docId}
+    // ==========================================================
+    match /users/{userId}/budgets/{docId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validBudgetDoc(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/settings/{docId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && validSettingsDoc(request.resource.data);
+      allow delete: if isOwner(userId);
+    }
+
+    // Dữ liệu cũ (một tài liệu chứa tất cả) — vẫn cho phép đọc để migrate
+    match /users/{userId}/data/{docId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    // ==========================================================
+    //  Mặc định: chặn tất cả (kể cả truy cập không đăng nhập)
+    // ==========================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

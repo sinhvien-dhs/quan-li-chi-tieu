@@ -1,0 +1,481 @@
+/* ============================================================
+   responsive.css — Tương thích hiển thị đa màn hình (Desktop & Mobile)
+   - Mobile (< 481px)    : 1 cột tinh gọn, chạm bấm thuận tiện, không tràn viền
+   - Tablet (481px-1023px): Khung app căn giữa, modal cân đối
+   - Desktop (>= 1024px) : Điều hướng thành Sidebar trái, mở rộng 2-3 cột
+   ============================================================ */
+
+/* Khóa chặt chống tràn ngang trên toàn bộ trang và mọi kích thước */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ===== Tablet & Desktop Căn Bản (>= 481px) ===== */
+@media (min-width: 481px) {
+  .app {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .bottom-nav {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+}
+
+/* ===== Hộp thoại (Modal) trên màn hình lớn: Căn giữa dạng Dialog ===== */
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+    padding: var(--space-lg);
+  }
+
+  .modal {
+    border-radius: var(--radius-lg) !important;
+    border: 1px solid var(--border);
+    max-width: 520px;
+    margin: auto;
+    transform: scale(0.96);
+    max-height: 85vh;
+  }
+
+  .modal-overlay.active .modal {
+    transform: scale(1);
+  }
+
+  /* Ẩn thanh kéo vuốt của mobile trên máy tính */
+  .modal__handle {
+    display: none;
+  }
+}
+
+/* ===== Tablet (768px – 1023px): Căn giữa thanh lịch ===== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .app {
+    width: 100%;
+    max-width: 720px;
+    border-radius: var(--radius-lg);
+    min-height: calc(100vh - var(--space-xl) * 2);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* ===== Desktop (>= 1024px): Chuyển Bottom Nav thành Sidebar trái ===== */
+@media (min-width: 1024px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-xl) var(--space-md);
+    background-color: var(--bg-primary);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Sidebar điều hướng bên trái cố định */
+  .bottom-nav {
+    position: sticky;
+    top: var(--space-xl);
+    left: auto;
+    bottom: auto;
+    transform: none;
+    order: -1;
+    width: 190px;
+    min-width: 190px;
+    flex-shrink: 0;
+    height: auto;
+    min-height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--space-xs);
+    padding: var(--space-md) var(--space-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+    z-index: 95;
+    box-sizing: border-box;
+  }
+
+  .bottom-nav__item {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    justify-content: flex-start;
+    width: 100%;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .bottom-nav__item i {
+    font-size: var(--font-size-base);
+    width: 20px;
+    text-align: center;
+  }
+
+  .bottom-nav__item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .bottom-nav__item.active {
+    background: var(--primary-bg);
+    color: var(--primary-text);
+    font-weight: 700;
+  }
+
+  /* Khung ứng dụng chính chiếm phần còn lại, mở rộng tối đa 1120px */
+  .app {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 1120px;
+    width: 100%;
+    margin: 0;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    min-height: calc(100vh - var(--space-xl) * 2);
+    box-shadow: var(--shadow-sm);
+    padding-bottom: var(--space-2xl);
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .fab {
+    bottom: var(--space-2xl);
+    right: max(var(--space-xl), calc(50% - 560px + var(--space-xl)));
+  }
+
+  /* Trang Thống Kê trên máy tính: Bộ lọc & tóm tắt dàn ngang, biểu đồ 2 cột */
+  .page--stats {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-lg);
+    align-items: start;
+    padding: 0 var(--space-lg);
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .stats-period,
+  .stats-summary,
+  .stats-info-bar,
+  .stats-empty {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .stats-chart-section {
+    margin-left: 0;
+    margin-right: 0;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .stats-chart-container {
+    min-width: 0;
+    max-width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stats-chart-container canvas {
+    max-width: 100% !important;
+  }
+
+  /* Biểu đồ thứ 3 (xu hướng) trải rộng toàn hàng bên dưới */
+  .stats-chart-section:last-of-type {
+    grid-column: 1 / -1;
+  }
+
+  /* Trang Ngân Sách trên máy tính: Card dàn lưới linh hoạt, không vỡ layout */
+  .page--budget {
+    padding: 0 var(--space-lg);
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .budget-summary {
+    margin: 0 0 var(--space-lg);
+    max-width: 100%;
+  }
+
+  .budget-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-md);
+    padding: 0;
+    margin-bottom: var(--space-xl);
+  }
+
+  .section__header--spaced {
+    padding: 0;
+    margin-top: var(--space-lg);
+  }
+
+  .goal-block {
+    padding: 0;
+  }
+
+  #goalList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-md);
+  }
+
+  /* Trang Cài đặt trên máy tính */
+  .settings-section {
+    margin-left: var(--space-lg);
+    margin-right: var(--space-lg);
+  }
+}
+
+/* ===== Tối ưu Thiết bị Di động (Mobile < 480px) ===== */
+@media (max-width: 480px) {
+  .summary {
+    padding: 0 var(--space-md);
+  }
+
+  .summary__card {
+    padding: var(--space-md);
+  }
+
+  .summary__card-amount {
+    font-size: 1.125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .summary__balance-amount {
+    font-size: clamp(1.5rem, 6vw, 1.875rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .transaction-item {
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .transaction-item__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .transaction-item__amount {
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+  }
+
+  .transaction-item__name {
+    font-size: var(--font-size-sm);
+  }
+
+  .transaction-item__date {
+    font-size: var(--font-size-xs);
+  }
+
+  /* Thẻ thống kê 3 ô trên mobile không bị chèn chữ */
+  .stats-summary {
+    padding: 0 var(--space-md);
+    gap: 6px;
+  }
+
+  .stats-summary__card {
+    padding: var(--space-sm) 4px;
+  }
+
+  .stats-summary__icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+  }
+
+  .stats-summary__label {
+    font-size: 0.7rem;
+  }
+
+  .stats-summary__value {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stats-info-bar {
+    margin: 0 var(--space-md) var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .stats-chart-section {
+    margin: 0 var(--space-md) var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .budget-summary {
+    margin: 0 var(--space-md) var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .budget-list {
+    padding: 0 var(--space-md);
+  }
+
+  .goal-block {
+    padding: 0 var(--space-md);
+  }
+
+  .goal-form {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .goal-form__btn {
+    width: 100%;
+  }
+
+  /* Mục cài đặt xếp dọc trên mobile: Mô tả trên, nút hành động dưới */
+  .settings-section {
+    margin: 0 var(--space-md) var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .settings-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .settings-item .settings-btn,
+  .settings-item .status-tag,
+  .settings-item .settings-time-input {
+    align-self: flex-start;
+  }
+}
+
+/* ===== Header trên điện thoại: Tinh gọn nút bấm ===== */
+@media (max-width: 520px) {
+  .header__actions {
+    gap: 6px;
+  }
+
+  .header__user-email {
+    display: none !important;
+  }
+
+  .header__btn--user {
+    padding: 0 !important;
+    width: 38px !important;
+    height: 38px !important;
+    justify-content: center !important;
+    border-radius: var(--radius-full) !important;
+  }
+
+  .header__btn--pill span {
+    display: none !important;
+  }
+
+  .header__btn--pill {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border-radius: var(--radius-full) !important;
+  }
+}
+
+/* ===== Màn hình điện thoại nhỏ (<= 400px) ===== */
+@media (max-width: 400px) {
+  .budget-summary__stats {
+    grid-template-columns: 1fr;
+    text-align: left;
+    gap: var(--space-xs);
+  }
+
+  .budget-summary__stat {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* ===== Điện thoại nhỏ (<= 380px) ===== */
+@media (max-width: 380px) {
+  :root {
+    --space-lg: 1rem;
+    --space-xl: 1.25rem;
+  }
+
+  .header {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .header__logo {
+    font-size: var(--font-size-base);
+  }
+
+  .header__actions {
+    gap: 4px;
+  }
+
+  .header__btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .header__btn--pill,
+  .header__btn--user {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+  }
+
+  .summary__cards {
+    gap: var(--space-sm);
+  }
+
+  .summary__card {
+    padding: var(--space-sm);
+  }
+
+  .summary__card-amount {
+    font-size: 1rem;
+  }
+
+  .form__categories {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ===== Thiết bị cảm ứng: Giữ nút sửa/xóa dễ bấm ===== */
+@media (hover: none) {
+  .transaction-item__actions {
+    opacity: 1;
+  }
+}

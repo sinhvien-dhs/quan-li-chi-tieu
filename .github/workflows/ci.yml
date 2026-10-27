@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Unit test - lop nghiep vu
+        run: node tests/business.test.js
+
+      - name: Unit test - phan tich AI va tieng long
+        run: node tests/ai.test.js
+
+      - name: Unit test - chia tien va so no
+        run: node tests/split.test.js
+
+      - name: Unit test - luu du lieu va bao cao
+        run: node tests/storage.test.js
+
+      - name: Unit test - xac thuc va auth wall
+        run: node tests/auth.test.js
+
+      - name: Lint Firestore security rules
+        run: node tests/rules.lint.js
+
+      - name: Test Firestore rules debt model
+        run: node tests/rules-debt-check.js
+
+      - name: Unit test - do tin cay va toan ven du lieu
+        run: node tests/reliability.test.js
+
+      - name: Build release package verification (dist/)
+        # Không ghim số phiên bản ở đây — tools/build.js tự đọc từ sw.js
+        run: node tools/build.js
+
+      - name: Syntax check
+        run: |
+          for f in js/*.js tools/*.js; do node --check "$f" || exit 1; done

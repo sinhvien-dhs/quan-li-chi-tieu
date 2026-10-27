@@ -1,0 +1,150 @@
+/* ===== CSS Variables — Modern Utility-First Design Tokens ===== */
+:root {
+  /* Brand Accent: Sophisticated Indigo/Slate (tính thẩm mỹ tài chính chuyên nghiệp, bỏ màu tím template AI) */
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --primary-light: #6366F1;
+  --primary-dark: #3730A3;
+  --primary-text: #4338CA;
+  --primary-btn-deep: #4338CA;
+  --primary-bg: #EEF2FF;
+  --primary-border: #C7D2FE;
+
+  /* Semantic Colors: Chuẩn mực tài chính, độ tương phản WCAG AA cao */
+  --success: #10B981;
+  --success-light: #ECFDF5;
+  --success-border: #A7F3D0;
+  --success-text: #047857;
+
+  --danger: #EF4444;
+  --danger-light: #FEF2F2;
+  --danger-border: #FECACA;
+  --danger-text: #B91C1C;
+
+  --warning: #F59E0B;
+  --warning-light: #FFFBEB;
+  --warning-border: #FDE68A;
+  --warning-text: #B45309;
+
+  /* Neutral Surfaces (Slate Palette) */
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-hover: #F1F5F9;
+  --bg-color: var(--bg-primary);
+
+  /* Typography Colors */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-color: var(--text-primary);
+
+  /* Borders & Dividers */
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
+  --border-focus: #4F46E5;
+
+  /* Hero Balance Card (Executive Dark Surface) */
+  --balance-card-bg: #0F172A;
+  --balance-card-text: #F8FAFC;
+  --balance-card-muted: #94A3B8;
+  --balance-card-border: #1E293B;
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+
+  /* Spacing Scale (4px baseline) */
+  --space-xs: 0.25rem;  /* 4px */
+  --space-sm: 0.5rem;   /* 8px */
+  --space-md: 1rem;     /* 16px */
+  --space-lg: 1.5rem;   /* 24px */
+  --space-xl: 2rem;     /* 32px */
+  --space-2xl: 2.5rem;  /* 40px */
+
+  /* Border Radius: Phân cấp tinh tế, loại bỏ bo góc 24px lố bịch */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Subtle Layered Shadows (Bỏ shadow màu neon) */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --shadow-primary: 0 2px 6px 0 rgba(79, 70, 229, 0.2);
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout */
+  --max-width: 480px;
+  --header-height: 60px;
+  --bottom-nav-height: 64px;
+}
+
+/* ===== Dark Mode — Deep Slate Studio ===== */
+[data-theme="dark"],
+.dark-theme,
+.dark {
+  --primary: #6366F1;
+  --primary-hover: #818CF8;
+  --primary-light: #818CF8;
+  --primary-dark: #4F46E5;
+  --primary-text: #A5B4FC;
+  --primary-btn-deep: #4F46E5;
+  --primary-bg: rgba(99, 102, 241, 0.14);
+  --primary-border: rgba(99, 102, 241, 0.3);
+
+  --success: #10B981;
+  --success-light: rgba(16, 185, 129, 0.12);
+  --success-border: rgba(16, 185, 129, 0.25);
+  --success-text: #34D399;
+
+  --danger: #EF4444;
+  --danger-light: rgba(239, 68, 68, 0.12);
+  --danger-border: rgba(239, 68, 68, 0.25);
+  --danger-text: #F87171;
+
+  --warning: #F59E0B;
+  --warning-light: rgba(245, 158, 11, 0.12);
+  --warning-border: rgba(245, 158, 11, 0.25);
+  --warning-text: #FBBF24;
+
+  --bg-primary: #0B0F19;
+  --bg-secondary: #131C2E;
+  --bg-card: #131C2E;
+  --bg-hover: #1E293B;
+  --bg-color: var(--bg-primary);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-color: var(--text-primary);
+
+  --border: #1E293B;
+  --border-light: #162032;
+  --border-focus: #6366F1;
+
+  --balance-card-bg: #131C2E;
+  --balance-card-text: #F8FAFC;
+  --balance-card-muted: #94A3B8;
+  --balance-card-border: #1E293B;
+
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.35), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-primary: 0 2px 8px 0 rgba(99, 102, 241, 0.25);
+}

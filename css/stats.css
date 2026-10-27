@@ -1,0 +1,382 @@
+/* ===== Biểu đồ không tải được thư viện ===== */
+.chart-unavailable {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  padding: var(--space-lg);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+/* ===== Page System ===== */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+  animation: pageIn 0.3s ease;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Placeholder for future pages */
+.page-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl) var(--space-lg);
+  text-align: center;
+  color: var(--text-muted);
+  min-height: 60vh;
+}
+
+.page-placeholder i {
+  font-size: 4rem;
+  margin-bottom: var(--space-lg);
+  opacity: 0.4;
+}
+
+.page-placeholder h3 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-sm);
+  color: var(--text-secondary);
+}
+
+.page-placeholder p {
+  font-size: var(--font-size-sm);
+}
+
+/* ===== Stats Period Filter ===== */
+.stats-period {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.stats-period-btn {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  /* Đồng bộ bo góc với nút trong app (8px) */
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.stats-period-btn:hover {
+  border-color: var(--primary-light);
+  color: var(--primary-text);
+}
+
+.stats-period-btn.active {
+  background: var(--primary-btn-deep);
+  border-color: var(--primary-btn-deep);
+  color: #FFFFFF;
+}
+
+/* ===== Stats Summary Cards ===== */
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  padding: 0 var(--space-lg);
+  margin-bottom: var(--space-md);
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.stats-summary__card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  text-align: center;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.stats-summary__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+}
+
+.stats-summary__card--expense .stats-summary__icon {
+  background: var(--danger-light);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-border);
+}
+
+.stats-summary__card--income .stats-summary__icon {
+  background: var(--success-light);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+}
+
+.stats-summary__card--avg .stats-summary__icon {
+  background: var(--primary-bg);
+  color: var(--primary-text);
+  border: 1px solid var(--primary-border);
+}
+
+.stats-summary__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stats-summary__label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stats-summary__value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-feature-settings: 'tnum' 1, 'cv05' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Stats Info Bar ===== */
+.stats-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-lg);
+  margin: 0 var(--space-lg) var(--space-md);
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.stats-info-bar strong {
+  color: var(--primary-text);
+  font-feature-settings: 'tnum' 1, 'cv05' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Chart Section ===== */
+.stats-chart-section {
+  background: var(--bg-card);
+  margin: 0 var(--space-lg) var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.stats-chart-section__header {
+  margin-bottom: var(--space-md);
+}
+
+.stats-chart-section__header h3 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.stats-chart-section__header h3 i {
+  color: var(--primary-text);
+  font-size: var(--font-size-sm);
+}
+
+/* Chart containers */
+.stats-chart-container {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.stats-chart-container canvas {
+  max-width: 100% !important;
+}
+
+.stats-chart-container--pie {
+  height: 220px;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+.stats-chart-container--bar {
+  height: 250px;
+}
+
+.stats-chart-container--line {
+  height: 250px;
+}
+
+/* ===== Pie Chart Legend ===== */
+.stats-legend {
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.legend-item:last-child {
+  border-bottom: none;
+}
+
+.legend-item__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.legend-item__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.legend-item__name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.legend-item__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.legend-item__amount {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.legend-item__percent {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ===== Responsive Stats ===== */
+@media (max-width: 360px) {
+  .stats-summary {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .stats-summary__card {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .stats-chart-container--pie {
+    height: 180px;
+    max-width: 180px;
+  }
+
+  .stats-chart-container--bar,
+  .stats-chart-container--line {
+    height: 200px;
+  }
+}
+
+/* ===== Trạng thái rỗng của trang Thống kê ===== */
+.page--stats[data-empty='true'] .stats-chart-section {
+  display: none;
+}
+
+.stats-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-sm);
+  margin: var(--space-md) var(--space-lg) 0;
+  padding: var(--space-xl) var(--space-lg);
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.stats-empty[hidden] {
+  display: none;
+}
+
+.stats-empty__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--primary-bg);
+  color: var(--primary-text);
+  font-size: var(--font-size-xl);
+}
+
+.stats-empty__title {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stats-empty__text {
+  margin: 0;
+  max-width: 34ch;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.stats-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}

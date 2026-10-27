@@ -1,0 +1,265 @@
+/* ===== PWA Install Banner ===== */
+.pwa-install-banner {
+  position: relative;
+  width: calc(100% - var(--space-lg) * 2);
+  max-width: var(--max-width);
+  margin: var(--space-sm) auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  z-index: 101;
+  animation: bannerFadeIn 0.3s ease;
+}
+
+@keyframes bannerFadeIn {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.pwa-install-banner__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.pwa-install-banner__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-xs);
+}
+
+.pwa-install-banner__title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pwa-install-banner__desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.pwa-install-banner__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.pwa-install-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.pwa-install-btn:hover {
+  background: var(--primary-hover);
+}
+
+.pwa-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  font-size: var(--font-size-base);
+  transition: color var(--transition-fast);
+}
+
+.pwa-close-btn:hover {
+  color: var(--text-primary);
+}
+
+/* ===== Onboarding Tour Modal ===== */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-base);
+}
+
+.onboarding-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.onboarding-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: calc(100% - var(--space-xl) * 2);
+  max-width: 380px;
+  padding: var(--space-2xl) var(--space-xl) var(--space-xl);
+  text-align: center;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  transform: scale(0.95);
+  transition: transform var(--transition-base);
+}
+
+.onboarding-overlay.active .onboarding-card {
+  transform: scale(1);
+}
+
+.onboarding-step {
+  display: none;
+}
+
+.onboarding-step.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+.onboarding-icon-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: var(--radius-full);
+  margin: 0 auto var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border: 1px solid var(--border-light);
+}
+
+.onboarding-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+}
+
+.onboarding-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-xl);
+}
+
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: var(--space-xl);
+}
+
+.onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--border);
+  transition: all var(--transition-fast);
+}
+
+.onboarding-dot.active {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.onboarding-btn {
+  width: 100%;
+  padding: 10px var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: white;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-fast);
+}
+
+.onboarding-btn:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.onboarding-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* ===== Bill Splitter (Chia tiền nhóm) ===== */
+.splitter-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.splitter-result {
+  background: var(--primary-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+  margin: var(--space-md) 0;
+}
+
+.splitter-result__label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.splitter-result__amount {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--primary-text);
+}
+
+.splitter-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  width: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.splitter-copy-btn:hover {
+  background: var(--primary);
+  color: white;
+}

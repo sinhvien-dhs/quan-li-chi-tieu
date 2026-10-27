@@ -1,0 +1,85 @@
+/* ===== Màn hình khoá ứng dụng ===== */
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background: rgba(15, 16, 30, 0.92);
+  backdrop-filter: blur(6px);
+}
+
+.lock-card {
+  width: 100%;
+  max-width: 340px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.lock-card__icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+  color: var(--primary-text);
+  font-size: 1.3rem;
+}
+
+.lock-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-xs);
+}
+
+.lock-card__text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.lock-card__btn {
+  width: 100%;
+  margin-top: var(--space-sm);
+  padding: 10px var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.lock-card__btn:hover {
+  background: var(--primary-hover);
+}
+
+.lock-card__error {
+  min-height: 1.2em;
+  margin-top: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--danger-text);
+}
+
+/* ===== Ẩn số dư ===== */
+.balance-hidden-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}

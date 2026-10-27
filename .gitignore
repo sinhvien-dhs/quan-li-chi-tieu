@@ -1,0 +1,21 @@
+# ===== Firebase config chứa key thật — KHÔNG COMMIT =====
+js/config.local.js
+
+# ===== Logs =====
+*.log
+firebase-debug.log
+
+# ===== Node =====
+node_modules/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
